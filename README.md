@@ -823,7 +823,7 @@ fetch cursor row
 
 ### AT-XY
 _u1 u2 --_
-set row x to u1 and column y to u2
+set column x to u1 (0 to 23) and row y to u2 (0 to 5)
 
     : AT-XY Y! X! ;
 
@@ -1001,16 +1001,19 @@ input from port u1
 ### DRAW
 _c-addr u --_
 draw pixel patterns on screen at xy;
-writes string c-addr u of pixel patterns at xy
+writes string c-addr u of pixel patterns at xy;
+               specify xy with AT-XY, xy not changed after DRAW
 
 ### VIEW
 _c-addr u --_
 view screen pixels at xy;
 read string of screen pixel patterns at xy into buffer c-addr u
+               specify xy with AT-XY, xy not changed after VIEW
 
 ### REVERSE
 _+n --_
-reverse video of the +n characters displayed at xy
+reverse video of the +n characters displayed at xy;
+               specify xy with AT-XY
 
 ### INKEY
 _-- x_

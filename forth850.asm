@@ -2568,7 +2568,7 @@ y:		.db 0			; cursor row 0 to win_rows-1
 		JP_NEXT			; continue
 
 ; AT-XY		u1 u2 --
-;		set row x to u1 and column y to u2
+;		set column x to u1 (0 to 23) and row y to u2 (0 to 5)
 ;
 ;    : AT-XY Y! X! ;
 
@@ -2997,7 +2997,8 @@ set_base:	ld (base+3),hl		; 10->[base]
 
 ; DRAW		c-addr u --
 ;		draw pixel patterns on screen at xy;
-;		writes string c-addr u of pixel patterns at xy
+;		writes string c-addr u of pixel patterns at xy;
+;               specify xy with AT-XY, xy not changed after DRAW
 
 		CODE DRAW,draw
 		push de			; save TOS
@@ -3014,6 +3015,7 @@ set_base:	ld (base+3),hl		; 10->[base]
 ; VIEW		c-addr u --
 ;		view screen pixels at xy;
 ;		read string of screen pixel patterns at xy into buffer c-addr u
+;               specify xy with AT-XY, xy not changed after VIEW
 
 		CODE VIEW,view
 		push de			; save TOS
@@ -3028,7 +3030,8 @@ set_base:	ld (base+3),hl		; 10->[base]
 		JP_NEXT			; continue
 
 ; REVERSE	+n --
-;		reverse video of the +n characters displayed at xy
+;		reverse video of the +n characters displayed at xy;
+;               specify xy with AT-XY
 
 		CODE REVERSE,reverse
 		push de			; save TOS
