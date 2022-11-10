@@ -2898,15 +2898,15 @@ max 88 cycles x 16 iterations = 1408 cycles, excluding entry/exit overhead
 
 ## Sharp PC-G850(V)(S)
 
-Manual: <http://basic.hopto.org/basic/manual/Sharp%20PC-G850V.pdf>
-HP Forum thread: <https://www.hpmuseum.org/forum/thread-10520.html>
-Sharp PC-G850(V)(S) software (Japanese site): <http://ver0.sakura.ne.jp/g800/index.html>
+- Manual: <http://basic.hopto.org/basic/manual/Sharp%20PC-G850V.pdf>
+- HP Forum thread: <https://www.hpmuseum.org/forum/thread-10520.html>
+- Sharp PC-G850(V)(S) software (Japanese site): <http://ver0.sakura.ne.jp/g800/index.html>
 
 ## Forth resources
 
-Forth for the Sharp PC-E500(S): <https://github.com/Robert-van-Engelen/Forth500>
-Forth 2012 Standard: <https://forth-standard.org/standard/intro>
-Moving Forth: <https://www.bradrodriguez.com/papers/moving1.htm>
+- Forth for the Sharp PC-E500(S): <https://github.com/Robert-van-Engelen/Forth500>
+- Forth 2012 Standard: <https://forth-standard.org/standard/intro>
+- Moving Forth: <https://www.bradrodriguez.com/papers/moving1.htm>
 
 Forth850 benefits from the work done by many others to offer inspiration, but
 the system does not include licensed code of the following implementations or
@@ -2914,15 +2914,15 @@ any other not listed here.  Some parts of Forth850 are derived from freely
 available Forth resources listed above and the Z80 resources listed further
 below:
 
-CamelForth for the Z80: <http://www.camelforth.com/page.php?5>
-eForth: <https://github.com/lispnik/eforth/blob/master/z80efort/EFZ80.ASM>
-Jupiter Ace ROM listing: <http://www.jupiter-ace.co.uk/romlisting.html#L085F>
+- CamelForth for the Z80: <http://www.camelforth.com/page.php?5>
+- eForth: <https://github.com/lispnik/eforth/blob/master/z80efort/EFZ80.ASM>
+- Jupiter Ace ROM listing: <http://www.jupiter-ace.co.uk/romlisting.html#L085F>
 
 ## Z80 resources
 
-Z80 assembler and linker: <https://shop-pdp.net/ashtml/asz80.htm>
-Zilog Z80 CPU User Manual: <https://www.zilog.com/docs/z80/um0080.pdf>
-Z80 Instruction Set: <https://wikiti.brandonw.net/index.php?title=Z80_Instruction_Set>
-Z80 Instruction Set: <https://www.smspower.org/Development/InstructionSet>
-Z80 Math Routines: <https://wikiti.brandonw.net/index.php?title=Category:Z80_Routines:Math>
-Z80 Advanced Math: <http://z80-heaven.wikidot.com/advanced-math>
+- Z80 assembler and linker: <https://shop-pdp.net/ashtml/asz80.htm>
+- Zilog Z80 CPU User Manual: <https://www.zilog.com/docs/z80/um0080.pdf>
+- Z80 Instruction Set: <https://wikiti.brandonw.net/index.php?title=Z80_Instruction_Set>
+- Z80 Instruction Set: <https://www.smspower.org/Development/InstructionSet>
+- Z80 Math Routines: <https://wikiti.brandonw.net/index.php?title=Category:Z80_Routines:Math>
+- Z80 Advanced Math: <http://z80-heaven.wikidot.com/advanced-math>
