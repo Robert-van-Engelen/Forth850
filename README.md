@@ -2587,6 +2587,10 @@ Exit:
 - DE with TOS: truncated string length u2
 - 2OS: string address c-addr
 
+Performance:
+21 cycles per character for non-BL char to chop, 40 cycles per character for BL
+to chop white space char, 33 cycles to trim non-BL char
+
     chop:           ld a,e                  ; char->a
                     exx                     ; save bc with ip
                     ex af,af'               ; save a with char
@@ -2679,7 +2683,7 @@ Exit:
 - 2OS: string address if not found or execution token when found
 
 Performance:
-95 cycles per dictionary entry
+95 cycles per dictionary entry,
 51 or 102 cycles per character comparison when characters match
 
     findword:       ld a,d                  ;
