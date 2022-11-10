@@ -1,5 +1,5 @@
 
-![PC-G850](PC-G850.jpeg)
+![PC-G850](PC-G850.jpg)
 
 A modern Forth 2012 standard compliant system for the vintage SHARP
 PC-G850(V)(S) pocket computer.
@@ -77,8 +77,6 @@ words with an explanation is given below.
 List of Forth850 built-in words.  Reference implementations in Forth are
 included when applicable, although many words are implemented in code in
 Forth850 rather than in Forth for speed.
-
-## Forth words
 
 ### (:)
 _-- ; R: -- ip_
@@ -410,40 +408,40 @@ double difference d1-d2
 
     : D- DNEGATE D+ ;
 
-### UM\*
+### UM*
 _u1 u2 -- ud_
-unsigned double product u1\*u2
+unsigned double product u1*u2
 
-### M\*
+### M*
 _n1 n2 -- d_
-signed double product n1\*n2
+signed double product n1*n2
 
-    : M\*
+    : M*
       2DUP XOR >R
-      ABS SWAP ABS UM\*
-      R> 0\< IF DNEGATE THEN ;
+      ABS SWAP ABS UM*
+      R> 0< IF DNEGATE THEN ;
 
-### \*
+### *
 _n1|u1 n2|u2 -- n3|u3_
-signed and unsigned product n1\*n2
+signed and unsigned product n1*n2
 
-    : \* UM\* DROP ;
+    : * UM* DROP ;
 
-### UMD\*
+### UMD*
 _ud1 u -- ud2_
-unsigned double product ud1\*u
+unsigned double product ud1*u
 
-    : UMD\* DUP>R UM\* DROP SWAP R> UM\* ROT + ;
+    : UMD* DUP>R UM* DROP SWAP R> UM* ROT + ;
 
-### MD\*
+### MD*
 _d1 n -- d2_
-signed double product d1\*n
+signed double product d1*n
 
-    : MD\*
+    : MD*
       2DUP XOR >R
       ABS -ROT DABS ROT
-      UMD\*
-      R> 0\< IF DNEGATE THEN ;
+      UMD*
+      R> 0< IF DNEGATE THEN ;
 
 ### UM/MOD
 _ud u1 -- u2 u3_
@@ -461,9 +459,9 @@ the result is undefined when n1=0
       ABS >R
       DABS R> UM/MOD
       SWAP
-      R> 0\< IF NEGATE THEN
+      R> 0< IF NEGATE THEN
       SWAP
-      R> 0\< IF NEGATE THEN ;
+      R> 0< IF NEGATE THEN ;
 
 ### FM/MOD
 _d1 n1 -- n2 n3_
@@ -473,7 +471,7 @@ the result is undefined when n1=0
     : FM/MOD
       DUP>R
       SM/REM
-      DUP 0\< IF
+      DUP 0< IF
         SWAP R> + SWAP 1-
       ELSE
         RDROP
@@ -500,26 +498,26 @@ the result is undefined when n2=0
 
     : / /MOD NIP ;
 
-### \*/MOD
+### */MOD
 _n1 n2 n3 -- n4 n5_
-signed product symmetric remainder and quotient n1\*n2/n3
+signed product symmetric remainder and quotient n1*n2/n3
 the result is undefined when n3=0
 
-    : \*/MOD -ROT M\* ROT SM/REM ;
+    : */MOD -ROT M* ROT SM/REM ;
 
-### \*/
+### */
 _n1 n2 n3 -- n4_
-signed product and symmetric quotient n1\*n2/n3
+signed product and symmetric quotient n1*n2/n3
 the result is undefined when n3=0
 
-    : \*/ \*/MOD NIP ;
+    : */ */MOD NIP ;
 
-### M\*/
+### M*/
 _d1 n1 n2 -- d2_
-signed double product and quotient d1\*n1/n2
+signed double product and quotient d1*n1/n2
 the result is undefined when n3=0
 
-    : M\*/ >R MD\* R> SM/REM NIP ;
+    : M*/ >R MD* R> SM/REM NIP ;
 
 ### AND
 _x1 x2 -- x1&x2_
@@ -537,51 +535,51 @@ bitwise xor x1 with x2
 _x1 x2 -- flag_
 true if x1=x2
 
-### \<>
+### <>
 _x1 x2 -- flag_
-true if x1\<>x2
+true if x1<>x2
 
-### \<
+### <
 _n1 n2 -- flag_
-true if n1\<n2 signed
+true if n1<n2 signed
 
-    : \<
-      2DUP XOR 0\< IF
-        DROP 0\<
+    : <
+      2DUP XOR 0< IF
+        DROP 0<
         EXIT
       THEN
-      - 0\< ;
+      - 0< ;
 
 ### >
 _n1 n2 -- flag_
 true if n1>n2 signed
 
-    : > SWAP \< ;
+    : > SWAP < ;
 
-### U\<
+### U<
 _u1 u2 -- flag_
-true if u1\<u2 unsigned
+true if u1<u2 unsigned
 
-    : U\<
-      2DUP XOR 0\< IF
-        NIP 0\<
+    : U<
+      2DUP XOR 0< IF
+        NIP 0<
         EXIT
       THEN
-      - 0\< ;
+      - 0< ;
 
 ### U>
 _u1 u2 -- flag_
 true if u1>u2 unsigned
 
-    : U> SWAP U\< ;
+    : U> SWAP U< ;
 
 ### 0=
 _x -- flag_
 true if x=0
 
-### 0\<
+### 0<
 _n -- flag_
-true if n\<0
+true if n<0
 
 ### D0=
 _dx -- flag_
@@ -589,11 +587,11 @@ true if dx=0
 
     : D0= OR 0= ;
 
-### D0\<
+### D0<
 _d -- flag_
-true if d\<0
+true if d<0
 
-    : D0\< NIP 0\< ;
+    : D0< NIP 0< ;
 
 ### S>D
 _n -- d_
@@ -609,7 +607,7 @@ _n1 n2 -- n3_
 signed max of n1 and n2
 
     : MAX
-      2DUP \< IF SWAP THEN
+      2DUP < IF SWAP THEN
       DROP ;
 
 ### MIN
@@ -625,7 +623,7 @@ _u1 u2 -- u3_
 unsigned max of u1 and u2
 
     : UMAX
-      2DUP U\< IF SWAP THEN
+      2DUP U< IF SWAP THEN
       DROP ;
 
 ### UMIN
@@ -640,7 +638,7 @@ unsigned min of u1 and u2
 _x1 x2 x3 -- flag_
 true if x1 is within x2 up to x3 exclusive
 
-    : WITHIN OVER - >R - R> U\< ;
+    : WITHIN OVER - >R - R> U< ;
 
 ### INVERT
 _x1 -- x2_
@@ -656,7 +654,7 @@ two's complement -n
 _n1 -- n2_
 absolute value |n1|
 
-    : ABS DUP 0\< IF NEGATE THEN ;
+    : ABS DUP 0< IF NEGATE THEN ;
 
 ### DNEGATE
 _d1 -- d2_
@@ -668,11 +666,11 @@ two's complement -d1
 _d1 -- d2_
 absolute value |d1|
 
-    : DABS DUP 0\< IF DNEGATE THEN ;
+    : DABS DUP 0< IF DNEGATE THEN ;
 
 ### LSHIFT
 _x1 u -- x2_
-logical shift left x1\<\<u
+logical shift left x1<<u
 
 ### RSHIFT
 _x1 u -- x2_
@@ -702,11 +700,11 @@ decrement n1-2
 
     : 2- 2 - ;
 
-### 2\*
+### 2*
 _n1 -- n2_
-arithmetic shift left n1\<\<1
+arithmetic shift left n1<<1
 
-    : 2\* 2 \* ;
+    : 2* 2 * ;
 
 ### 2/
 _n1 -- n2_
@@ -750,7 +748,7 @@ move u bytes from c-addr1 to c-addr2
 
     : MOVE
       -ROT
-      2DUP U\< IF
+      2DUP U< IF
         ROT CMOVE>
       ELSE
         ROT CMOVE
@@ -860,7 +858,7 @@ _n --_
 emit n spaces
 
     : SPACES
-      DUP 0\< IF
+      DUP 0< IF
         DROP
         EXIT
       THEN
@@ -896,11 +894,11 @@ hold pointer
 
     0 VALUE HP
 
-### \<#
+### <#
 _-- _
 begin pictured numeric output
 
-    : \<# HERE h_size + TO HP ;
+    : <# HERE h_size + TO HP ;
 
 ### HOLD
 _char --_
@@ -929,9 +927,9 @@ hold all remaining digits
 
 ### SIGN
 _n --_
-hold minus sign if n\<0
+hold minus sign if n<0
 
-    : SIGN 0\< IF '- HOLD THEN ;
+    : SIGN 0< IF '- HOLD THEN ;
 
 ### #>
 _ud -- c-addr u_
@@ -943,7 +941,7 @@ end pictured numeric output, leave string
 _d +n --_
 output signed double d right aligned in field of +n chars wide
 
-    : D.R -ROT TUCK DABS \<# #S ROT SIGN #> ROT OVER - SPACES TYPE ;
+    : D.R -ROT TUCK DABS <# #S ROT SIGN #> ROT OVER - SPACES TYPE ;
 
 ### D.
 _d --_
@@ -1091,19 +1089,19 @@ attempt to refill the input buffer
 leaves false when end of input
 
 ### SKIPS
-_char "\<chars>" --_
+_char "<chars>" --_
 skips chars in input, 0x20 (bl) skips 0x00 to 0x20
 
     : SKIPS SOURCE >IN @ /STRING ROT TRIM DROP SOURCE DROP - >IN ! ;
 
 ### PARSE
-_char "ccc\<char>" -- c-addr u_
+_char "ccc<char>" -- c-addr u_
 parse "ccc" up to char when present
 
     : PARSE SOURCE >IN @ /STRING ROT CHOP DUP 1+ >IN @ + SOURCE NIP UMIN >IN ! ;
 
 ### PARSE-WORD
-_char "\<chars>ccc\<char>" -- c-addr u_
+_char "<chars>ccc<char>" -- c-addr u_
 parse char-delimited word
 may throw -18 "parsed string overflow"
 
@@ -1122,14 +1120,14 @@ may throw -19 "definition name too long"
       DUP length_bits U> IF -19 THROW THEN ;
 
 ### PARSE-NAME
-_"\<spaces>name\<space>" -- c-addr u_
+_"<spaces>name<space>" -- c-addr u_
 parse space-delimited name
 check if name length is valid
 
     : PARSE-NAME BL PARSE-WORD CHECK-NAME ;
 
 ### (
-_"ccc\<paren>" --_
+_"ccc<paren>" --_
 start a comment block
 parse and skip input up to the closing )
 
@@ -1140,7 +1138,7 @@ parse and skip input up to the closing )
         SOURCE + = IF
           DROP REFILL
         ELSE
-          C@ ') \<> IF
+          C@ ') <> IF
             REFILL
           ELSE
             FALSE
@@ -1149,14 +1147,14 @@ parse and skip input up to the closing )
       0= UNTIL ; IMMEDIATE
 
 ### \
-_"ccc\<eol>" --_
+_"ccc<eol>" --_
 start a comment line
 parse and skip input up to the end of line
 
     : \ $A PARSE 2SROP ;
 
 ### .(
-_"ccc\<paren>" --_
+_"ccc<paren>" --_
 emit CR then type "ccc" up to the closing )
 
     : .( ') PARSE CR TYPE ; IMMEDIATE
@@ -1175,13 +1173,13 @@ leaves string with the remaining unconvertable chars or empty
     : >NUMBER
       BEGIN DUP WHILE
         NEXT-CHAR >DIGIT
-        DUP 0\< IF
+        DUP 0< IF
           DROP -1 /STRING
           EXIT
         THEN
         >R
         2SWAP
-        BASE @ UMD\*
+        BASE @ UMD*
         R> M+
         2SWAP
       REPEAT ;
@@ -1226,7 +1224,7 @@ leaves execution token and 1=immediate or -1=not immediate
 leaves c-addr and 0 when not found
 
 ### '
-_"\<spaces>name\<space>" -- xt_
+_"<spaces>name<space>" -- xt_
 parse name and get execution token
 may throw -13 "undefined word"
 
@@ -1330,7 +1328,7 @@ append double cell to dictionary
     : 2, , , ;
 
 ### NFA,
-_"\<spaces>name\<space>" --_
+_"<spaces>name<space>" --_
 parse name and append dictionary entry with name
 set LASTXT to HERE
 
@@ -1349,7 +1347,7 @@ start compiling
     : CFA:, ] HERE colon_sys ['] (:) CFA, CURRENT TO CONTEXT ;
 
 ### POSTPONE
-_"\<spaces>name\<space>" --_
+_"<spaces>name<space>" --_
 postpone compile action of name
 if name is immediate, then compile name instead of executing it
 otherwise compile name into the current colon definition
@@ -1358,7 +1356,7 @@ may throw -13 "undefined word"
 may throw -14 "interpreting a compile-only word"
 
 ### :
-_-- ; C: "\<spaces>name\<space>" -- addr colon_sys_
+_-- ; C: "<spaces>name<space>" -- addr colon_sys_
 define name and start compiling
 
     : : NFA, HIDE CFA:, ;
@@ -1369,7 +1367,7 @@ end colon definition and stop compiling
 may throw -14 "interpreting a compile-only word"
 may throw -22 "control structure mismatch"
 
-    : ; ?COMP colon_sys \<> IF -22 THROW THEN DROP POSTPONE (;) REVEAL [ ; IMMEDIATE
+    : ; ?COMP colon_sys <> IF -22 THROW THEN DROP POSTPONE (;) REVEAL [ ; IMMEDIATE
 
 ### EXIT
 _--_
@@ -1378,7 +1376,7 @@ exit colon definition
     : EXIT ?COMP POSTPONE (EXIT) ; IMMEDIATE
 
 ### CREATE
-_"\<spaces>name\<space>" -- ; -- addr_
+_"<spaces>name<space>" -- ; -- addr_
 create name
 executing name leaves address (HERE addr after CREATE)
 
@@ -1391,21 +1389,21 @@ change CREATE name behavior to execute code after DOES>
     : DOES> ?COMP POSTPONE (;CODE) ['] (DOES) CFA, ; IMMEDIATE
 
 ### VARIABLE
-_"\<spaces>name\<space>" -- ; -- addr_
+_"<spaces>name<space>" -- ; -- addr_
 define a variable
 executing name leaves address of value (initialized to zero)
 
     : VARIABLE CREATE 0 , ;
 
 ### 2VARIABLE
-_"\<spaces>name\<space>" -- ; -- addr_
+_"<spaces>name<space>" -- ; -- addr_
 define a double variable
 executing name leaves address of double value (initialized to zero)
 
     : 2VARIABLE CREATE 0 0 2, ;
 
 ### CONSTANT
-_x "\<spaces>name\<space>" -- ; -- x_
+_x "<spaces>name<space>" -- ; -- x_
 define a constant
 executing name leaves x
 
@@ -1413,7 +1411,7 @@ executing name leaves x
     : CONSTANT CREATE , DOES> @ ;
 
 ### 2CONSTANT
-_x1 x2 "\<spaces>name\<space>" -- ; -- x1 x2_
+_x1 x2 "<spaces>name<space>" -- ; -- x1 x2_
 define a double constant
 executing name leaves x1 x2
 
@@ -1421,21 +1419,21 @@ executing name leaves x1 x2
     : 2CONSTANT CREATE 2, DOES> 2@ ;
 
 ### VALUE
-_x "\<spaces>name\<space>" -- ; -- x_
+_x "<spaces>name<space>" -- ; -- x_
 define a value
 executing name leaves x
 
     : VALUE NFA, ['] (VAL) CFA, , ;
 
 ### 2VALUE
-_dx "\<spaces>name\<space>" -- ; -- dx_
+_dx "<spaces>name<space>" -- ; -- dx_
 define a double value
 executing name leaves dx
 
     : 2VALUE NFA, ['] (2VAL) CFA, 2, ;
 
 ### TO
-_"\<spaces>name\<space>" -- ; x --_
+_"<spaces>name<space>" -- ; x --_
 assign value name
 may throw -32 "invalid name argument"
 
@@ -1464,7 +1462,7 @@ may throw -32 "invalid name argument"
       #-32 THROW ; IMMEDIATE
 
 ### +TO
-_"\<spaces>name\<space>" -- ; n --_
+_"<spaces>name<space>" -- ; n --_
 increment value name
 may throw -32 "invalid name argument"
 
@@ -1483,7 +1481,7 @@ may throw -32 "invalid name argument"
       #-32 THROW ; IMMEDIATE
 
 ### DEFER
-_"\<spaces>name\<space>" -- ; ... -- ..._
+_"<spaces>name<space>" -- ; ... -- ..._
 define a deferred name
 
     : DEFER NFA, ['] (DEF) CFA, ['] UNDEF , ;
@@ -1507,7 +1505,7 @@ fetch execution token from deferred xt1
     : DEFER@ >BODY @ ;
 
 ### IS
-_xt "\<spaces>name\<space>" --_
+_xt "<spaces>name<space>" --_
 assign execution token to deferred name
 may throw -32 "invalid name argument"
 
@@ -1525,7 +1523,7 @@ may throw -32 "invalid name argument"
       #-32 THROW ; IMMEDIATE
 
 ### ACTION-OF
-_"\<spaces>name\<space>" -- xt_
+_"<spaces>name<space>" -- xt_
 fetch execution token of deferred name
 may throw -32 "invalid name argument"
 
@@ -1567,13 +1565,13 @@ max literal string length is 255
       HERE OVER ALLOT SWAP CMOVE ; IMMEDIATE
 
 ### ."
-_"ccc\<quote>" -- ; --_
+_"ccc<quote>" -- ; --_
 type "ccc" (compiled)
 
     : ." '" PARSE SLITERAL POSTPONE TYPE ; IMMEDIATE
 
 ### S"
-_"ccc\<quote>" -- ; -- c-addr u_
+_"ccc<quote>" -- ; -- c-addr u_
 leave string "ccc" (compiled and interpreted)
 
     : S"
@@ -1612,13 +1610,13 @@ only permit FORGET past the dictionary FENCE address
     0 VALUE FENCE
 
 ### FORGET
-_"\<spaces>name\<space>" --_
+_"<spaces>name<space>" --_
 delete name and all following definitions
 beware of vocabulary definitions crossings
 may throw -15 "invalid FORGET"
 
 ### [']
-_"\<spaces>name\<space>" -- ; -- xt_
+_"<spaces>name<space>" -- ; -- xt_
 compile xt of name as literal
 may throw -14 "interpreting a compile-only word"
 
@@ -1659,7 +1657,7 @@ runtime of the AHEAD, ELSE and ENDOF compile-only words
 
 ### (OF)
 _x1 x2 -- x1 or x1 x2 --_
-branch if x1\<>x2
+branch if x1<>x2
 runtime of the OF compile-only word
 
 ### (LOOP)
@@ -1804,7 +1802,7 @@ may throw -14 "interpreting a compile-only word"
 may throw -22 "control structure mismatch"
 
 ### ENDCASE
-_x -- ; C: n\*orig n --_
+_x -- ; C: n*orig n --_
 close CASE
 may throw -14 "interpreting a compile-only word"
 may throw -22 "control structure mismatch"
@@ -1820,7 +1818,7 @@ _... xt -- ..._
 execute xt
 
 ### CATCH
-_i\*x xt -- j\*x 0 or i\*x xt -- i\*x n_
+_i*x xt -- j*x 0 or i*x xt -- i*x n_
 execute xt leaving nonzero exception code n or 0
 
     : CATCH
@@ -1833,7 +1831,7 @@ execute xt leaving nonzero exception code n or 0
       0 ;
 
 ### THROW
-_0 -- or k\*x n -- i\*x n_
+_0 -- or k*x n -- i*x n_
 throw exception n if nonzero
 
     : THROW
@@ -1853,7 +1851,7 @@ throw exception n if nonzero
       THEN ;
 
 ### QUIT
-_-- ; R: i\*x --_
+_-- ; R: i*x --_
 throw -56 "QUIT"
 no exception error is displayed
 unlike ABORT, the parameter stack is not cleared
@@ -1861,7 +1859,7 @@ unlike ABORT, the parameter stack is not cleared
     : QUIT -56 THROW ;
 
 ### (ABORT")
-_flag c-addr u -- ; R: i\*x --_
+_flag c-addr u -- ; R: i*x --_
 if flag then abort with string message unless an active catch is present
 runtime of the ABORT" compile-only word
 throw -2 "ABORT""
@@ -1878,7 +1876,7 @@ throw -2 "ABORT""
       2DROP ;
 
 ### ABORT"
-_flag -- ; C: "ccc\<quote>" -- ; R: ... --_
+_flag -- ; C: "ccc<quote>" -- ; R: ... --_
 if flag then abort with string message unless an active catch is present
 throw -2 "ABORT""
 clears the parameter stack unless caught with CATCH
@@ -1887,7 +1885,7 @@ may throw -14 "interpreting a compile-only word"
     : ABORT" ?COMP S" POSTPONE (ABORT") ; IMMEDIATE
 
 ### ABORT
-_-- ; R: i\*x --_
+_-- ; R: i*x --_
 throw -1 "ABORT"
 clears the parameter stack unless caught with CATCH
 
@@ -1965,7 +1963,7 @@ make CURRENT the CONTEXT vocabulary
     : DEFINITIONS CONTEXT TO CURRENT ;
 
 ### VOCABULARY
-_"\<spaces>name\<space>" --_
+_"<spaces>name<space>" --_
 define a new vocabulary
 
     : VOCABULARY CREATE , fig_kludge , DOES> TO CONTEXT ;
@@ -1978,8 +1976,6 @@ make FORTH the CONTEXT vocabulary
 
 
 ## Additional words included with the full version
-
-The following words will be included in a more complete implementation.
 
 ### FALSE
 _-- 0_
@@ -2000,22 +1996,22 @@ rotate double cells
     : 2ROT 5 ROLL 5 ROLL ;
 
 ### N>R
-_n\*x n -- ; R: -- n\*x n_
+_n*x n -- ; R: -- n*x n_
 move n cells to the return stack
 
 ### NR>
-_R: n\*x n -- ; -- n\*x n_
+_R: n*x n -- ; -- n*x n_
 move n cells from the return stack
 
 ### ROLL
 _xu x(u+1) ... x1 x0 u -- x(u+1) ... x1 x0 xu_
 roll u cells on the parameter stack
 
-### D\*
+### D*
 _d1|ud1 d2|ud2 -- d3|ud3_
-signed and unsigned double product d1\*d2
+signed and unsigned double product d1*d2
 
-    : D\* >R ROT DUP>R -ROT MD\* 2R> \* 0 SWAP D+ ;
+    : D* >R ROT DUP>R -ROT MD* 2R> * 0 SWAP D+ ;
 
 ### D=
 _d1 d2 -- flag_
@@ -2023,34 +2019,34 @@ true if d1=d2
 
     : D= D- D0= ;
 
-### D\<
+### D<
 _d1 d2 -- flag_
-true if d1\<d2
+true if d1<d2
 
-    : \<
-      DUP 3 PICK XOR 0\< IF
-        2DROP D0\<
+    : <
+      DUP 3 PICK XOR 0< IF
+        2DROP D0<
         EXIT
       THEN
-      D- D0\< ;
+      D- D0< ;
 
-### DU\<
+### DU<
 _du1 du2 -- flag_
-true if ud1\<ud2
+true if ud1<ud2
 
-    : DU\<
-      DUP 3 PICK XOR 0\< IF
-        2SWAP 2DROP D0\<
+    : DU<
+      DUP 3 PICK XOR 0< IF
+        2SWAP 2DROP D0<
         EXIT
       THEN
-      D- D0\< ;
+      D- D0< ;
 
 ### DMAX
 _d1 d2 -- d3_
 signed double max of d1 and d2
 
     : DMAX
-      2OVER 2OVER D\< IF 2SWAP THEN
+      2OVER 2OVER D< IF 2SWAP THEN
       2DROP ;
 
 ### DMIN
@@ -2058,7 +2054,7 @@ _d1 d2 -- d3_
 signed double min of d1 and d2
 
     : DMIN
-      2OVER 2OVER D\< INVERT IF 2SWAP THEN
+      2OVER 2OVER D< INVERT IF 2SWAP THEN
       2DROP ;
 
 ### CELL+
@@ -2071,7 +2067,7 @@ increment to next cell
 _n1 -- n2_
 convert to cell unit
 
-    : CELLS 2\* ;
+    : CELLS 2* ;
 
 ### CHAR+
 _n1 -- n1_
@@ -2121,13 +2117,13 @@ true if a key is pressed
     : KEY? INKEY 0= 0= ;
 
 ### WORD
-_char "\<chars>ccc\<char>" -- c-addr_
+_char "<chars>ccc<char>" -- c-addr_
 parse word as a counted string
 
     : WORD TMP DUP ROT PARSE-WORD ROT 2DUP C! 1+ SWAP CMOVE ;
 
 ### CHAR
-_"\<spaces>name\<space>" -- char_
+_"<spaces>name<space>" -- char_
 parse char
 note that the syntax 'char is preferred
 
@@ -2139,7 +2135,7 @@ search dictionary for counted string
 see FIND-WORD
 
 ### BUFFER:
-_n "\<spaces>name\<space>" -- ; -- addr_
+_n "<spaces>name<space>" -- ; -- addr_
 define buffer with n bytes
 executing name leaves address of n bytes
 
@@ -2151,7 +2147,7 @@ colon definition without name
 leaves execution token of definition
 
 ### C"
-_"ccc\<quote>" -- ; -- c-addr_
+_"ccc<quote>" -- ; -- c-addr_
 leave counted string "ccc" (compiled)
 may throw -18 "parsed string overflow"
 
@@ -2162,19 +2158,19 @@ _xt -- flag_
 true if xt is a MARKER word
 
 ### MARKER
-_"\<spaces>name\<space>" -- ; --_
+_"<spaces>name<space>" -- ; --_
 define a dictionary marker
 executing name deletes marker and all definitions made after
 beware of vocabulary definitions crossings
 
 ### ANEW
-_"\<spaces>name\<space>" -- ; --_
+_"<spaces>name<space>" -- ; --_
 define a dictionary marker
 deletes previously defined name and all following definitions
 beware of vocabulary definitions crossings
 
 ### [CHAR]
-_"\<spaces>char" -- ; -- char_
+_"<spaces>char" -- ; -- char_
 compile char as literal
 note that the syntax 'char is preferred
 may throw -14 "interpreting a compile-only word"
@@ -2182,7 +2178,7 @@ may throw -14 "interpreting a compile-only word"
     : [CHAR] ?COMP CHAR LITERAL ; IMMEDIATE
 
 ### [COMPILE]
-_"\<space>name\<space>" -- ; ... -- ..._
+_"<space>name<space>" -- ; ... -- ..._
 compile name
 note that POSTPONE is preferred
 may throw -14 "interpreting a compile-only word"
