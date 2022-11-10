@@ -60,6 +60,7 @@ The largest size is `USER75FF` which gives about 21K free dictionary space.
 
 - an additional extended "full version" with additional Forth words
 - with an improved command line editor, like Forth500
+- with single precision floating point words
 - ability to load Forth source code from the TEXT editor
 - serial IO to communicate via RS232 and load source code
 
@@ -2877,7 +2878,7 @@ Exit:
 Performance:
 max 88 cycles x 16 iterations = 1408 cycles, excluding entry/exit overhead
 
-    udiv3216:        ld a,16                 ; 16->a loop counter
+    udiv3216:       ld a,16                 ; 16->a loop counter
                     sla e                   ;
                     rl d                    ; de<<1->de
     1$:             adc hl,hl       ; 15    ; loop, hl<<1+cf->hl
