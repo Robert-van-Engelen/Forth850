@@ -2998,7 +2998,7 @@ set_base:	ld (base+3),hl		; 10->[base]
 ; DRAW		c-addr u --
 ;		draw pixel patterns on screen at xy;
 ;		writes string c-addr u of pixel patterns at xy;
-;               specify xy with AT-XY, xy not changed after DRAW
+;		specify xy with AT-XY, xy not changed after DRAW
 
 		CODE DRAW,draw
 		push de			; save TOS
@@ -3015,7 +3015,7 @@ set_base:	ld (base+3),hl		; 10->[base]
 ; VIEW		c-addr u --
 ;		view screen pixels at xy;
 ;		read string of screen pixel patterns at xy into buffer c-addr u
-;               specify xy with AT-XY, xy not changed after VIEW
+;		specify xy with AT-XY, xy not changed after VIEW
 
 		CODE VIEW,view
 		push de			; save TOS
@@ -3031,7 +3031,7 @@ set_base:	ld (base+3),hl		; 10->[base]
 
 ; REVERSE	+n --
 ;		reverse video of the +n characters displayed at xy;
-;               specify xy with AT-XY
+;		specify xy with AT-XY
 
 		CODE REVERSE,reverse
 		push de			; save TOS
@@ -3428,7 +3428,8 @@ edit_backspace:	call docol	; --
 
 ; \		"ccc<eol>" --
 ;		start a comment line;
-;		parse and skip input up to the end of line
+;		parse and skip input up to the end of line;
+;		note that the PC-G850 symbol for \ is ¥
 ;
 ;    : \ $A PARSE 2SROP ;
 

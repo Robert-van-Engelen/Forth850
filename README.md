@@ -1002,18 +1002,18 @@ input from port u1
 _c-addr u --_
 draw pixel patterns on screen at xy;
 writes string c-addr u of pixel patterns at xy;
-               specify xy with AT-XY, xy not changed after DRAW
+specify xy with AT-XY, xy not changed after DRAW
 
 ### VIEW
 _c-addr u --_
 view screen pixels at xy;
 read string of screen pixel patterns at xy into buffer c-addr u
-               specify xy with AT-XY, xy not changed after VIEW
+specify xy with AT-XY, xy not changed after VIEW
 
 ### REVERSE
 _+n --_
 reverse video of the +n characters displayed at xy;
-               specify xy with AT-XY
+specify xy with AT-XY
 
 ### INKEY
 _-- x_
@@ -1144,7 +1144,8 @@ parse and skip input up to the closing )
 ### \
 _"ccc<eol>" --_
 start a comment line;
-parse and skip input up to the end of line
+parse and skip input up to the end of line;
+note that the PC-G850 symbol for \ is ¥
 
     : \ $A PARSE 2SROP ;
 
