@@ -38,8 +38,8 @@ To return to BASIC from Forth, press the BASIC key.
 
 To turn the machine off, press the OFF key.
 
-**Important: Forth850 will not power off automatically.  To preserve batteries,
-press OFF.**
+*Important: Forth850 will not power off automatically.  To preserve batteries,
+press OFF.*
 
 ## How to increase or decrease memory allocation for Forth850
 
@@ -57,9 +57,9 @@ The specify `USER23FF` in the Monitor.  This leaves about 256 bytes free
 dictionary space minus 40 bytes for the "hold area" to run Forth850.
 The largest size is `USER75FF` which gives about 21K free dictionary space.
 
-## Work in progress
+## Nice to have (work in progress)
 
-- an extended "full version" with additional Forth words
+- an additional extended "full version" with additional Forth words
 - with an improved command line editor, like Forth500
 - ability to load Forth source code from the TEXT editor
 - serial IO to communicate via RS232 and load source code
