@@ -3103,24 +3103,24 @@ set_base:	ld (base+3),hl		; 10->[base]
 ; KEY		-- char
 ;		wait and read key
 ;		leaves ASCII char or special key code:
-;		ON	=$05
-;		BS	=$08
-;		DEL	=$09
-;		CA	=$0b
-;		CLS	=$0c
-;		ENTER	=$0d
-;		DIGIT	=$0e
-;		F-E	=$0f
-;		INS	=$12
-;		ANS	=$15
-;		CONST	=$17
-;		RCM	=$19
-;		M+	=$1a
-;		M-	=$1b
-;		right	=$1c          
-;		left	=$1d          
-;		up	=$1e
-;		down	=$1f
+;		ON      =$05
+;		BS      =$08
+;		DEL     =$09
+;		CA      =$0b
+;		CLS     =$0c
+;		ENTER   =$0d
+;		DIGIT   =$0e
+;		F-E     =$0f
+;		INS     =$12
+;		ANS     =$15
+;		CONST   =$17
+;		RCM     =$19
+;		M+      =$1a
+;		M-      =$1b
+;		right   =$1c          
+;		left    =$1d          
+;		up      =$1e
+;		down    =$1f
 ;		calc keys and BASIC keys produce BASIC tokens as key code $fe
 ;		SIN	=$fe	register B=$95 BASIC token for SIN (ignored)
 

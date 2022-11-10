@@ -1009,42 +1009,24 @@ check key, where 0x00=no key and 0x52=multiple keys
 _-- char_
 wait and read key
 leaves ASCII char or special key code:
-### ON
-_=$05_
-### BS
-_=$08_
-### DEL
-_=$09_
-### CA
-_=$0b_
-### CLS
-_=$0c_
-### ENTER
-_=$0d_
-### DIGIT
-_=$0e_
-### F-E
-_=$0f_
-### INS
-_=$12_
-### ANS
-_=$15_
-### CONST
-_=$17_
-### RCM
-_=$19_
-### M+
-_=$1a_
-### M-
-_=$1b_
-### right
-_=$1c          _
-### left
-_=$1d          _
-### up
-_=$1e_
-### down
-_=$1f_
+ON      =$05
+BS      =$08
+DEL     =$09
+CA      =$0b
+CLS     =$0c
+ENTER   =$0d
+DIGIT   =$0e
+F-E     =$0f
+INS     =$12
+ANS     =$15
+CONST   =$17
+RCM     =$19
+M+      =$1a
+M-      =$1b
+right   =$1c          
+left    =$1d          
+up      =$1e
+down    =$1f
 calc keys and BASIC keys produce BASIC tokens as key code $fe
 ### SIN
 _=$fe	register B=$95 BASIC token for SIN (ignored)_
