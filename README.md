@@ -830,6 +830,17 @@ set row x to u1 and column y to u2
 ### EMIT
 _char --_
 emit char
+supports the following control codes:
+ 8 (BS)
+ 9 (TAB)
+10 (LF)
+11 (VT scroll)
+12 (FF clear)
+13 (CR)
+28 (right)
+29 (left)
+30 (up)
+31 (down)
 
 ### TYPE
 _c-addr u --_

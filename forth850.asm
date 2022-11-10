@@ -2579,6 +2579,17 @@ y:		.db 0			; cursor row 0 to win_rows-1
 
 ; EMIT		char --
 ;		emit char
+;		supports the following control codes:
+;		 8 (BS)
+;		 9 (TAB)
+;		10 (LF)
+;		11 (VT scroll)
+;		12 (FF clear)
+;		13 (CR)
+;		28 (right)
+;		29 (left)
+;		30 (up)
+;		31 (down)
 
 		CODE EMIT,emit
 		ld hl,xy		; xy->hl
