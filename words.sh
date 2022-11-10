@@ -1,8 +1,8 @@
 #!/bin/sh
 #
-# ./words.sh < forth850.asm
+# ./words.sh
 
-awk '/^; [^ \t]+\t/,/^$/ { print }' forth850.asm \
+awk '/^; [^ ]+\t/,/^$/ { print }' forth850.asm \
       | sed -E 's/^;    /    /' \
       | sed -E 's/^;( |		)//' \
       | sed -E 's/^([^	]+)[	]+(.*)/### \1\n_\2_/' \
@@ -10,7 +10,7 @@ awk '/^; [^ \t]+\t/,/^$/ { print }' forth850.asm \
 echo
 echo '## Additional words included with the full version'
 echo
-awk '/^;\+ [^ \t]+\t/,/^$/ { print }' forth850.asm \
+awk '/^;\+ [^ ]+\t/,/^$/ { print }' forth850.asm \
       | sed -E 's/^;    /    /' \
       | sed -E 's/^;(\+ |		)//' \
       | sed -E 's/^([^	]+)[	]+(.*)/### \1\n_\2_/' \

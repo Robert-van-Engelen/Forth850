@@ -62,6 +62,7 @@ The largest size is `USER75FF` which gives about 21K free dictionary space.
 - an extended "full version" with additional Forth words
 - with an improved command line editor, like Forth500
 - ability to load Forth source code from the TEXT editor
+- serial IO to communicate via RS232 and load source code
 
 ## Forth850 manual
 
