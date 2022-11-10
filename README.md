@@ -2283,7 +2283,7 @@ Exit:
 - F: zero flag set when equal, sign flag set when less
 
 Performance:
-- 46 cycles per character comparison when characters match
+46 cycles per character comparison when characters match
 
     compare:        push ix                 ; save c-addr1
                     push hl                 ; save u1
@@ -2336,8 +2336,8 @@ Exit:
 - BC: size of the remaining characters after the match
 
 Performance:
-- 21 cycles per character to search the first or next character match
-- 46 cycles per character comparison when characters match
+21 cycles per character to search the first or next character match and 46
+cycles per character comparison when characters match
 
     search:         or a                    ; 0->cf
                     sbc ix,bc               ; u1-u2->ix
@@ -2587,7 +2587,6 @@ Exit:
 - DE with TOS: truncated string length u2
 - 2OS: string address c-addr
 
-
     chop:           ld a,e                  ; char->a
                     exx                     ; save bc with ip
                     ex af,af'               ; save a with char
@@ -2619,7 +2618,6 @@ Exit:
                     jr nc,1$        ;  7    ;   if [hl]<a then found
                     jp pe,3$        ; 10    ; until bc=0
                     jr 1$                   ; not found
-
 
     trim:           ld a,e                  ; char->a
                     exx                     ; save bc with ip
@@ -2681,9 +2679,8 @@ Exit:
 - 2OS: string address if not found or execution token when found
 
 Performance:
-- 95 cycles per dictionary entry
-- 51 or 102 cycles per character comparison when characters match
-
+95 cycles per dictionary entry
+51 or 102 cycles per character comparison when characters match
 
     findword:       ld a,d                  ;
                     or a                    ; test d=0 high order byte of u
@@ -2763,8 +2760,7 @@ Exit:
 - DE: signed product or unsigned product n3
 
 Perfomance:
-- max 51 cycles x 16 iterations = 816 cycles, excluding entry/exit overhead
-
+max 51 cycles x 16 iterations = 816 cycles, excluding entry/exit overhead
 
     mult1616:       ld hl,0                 ; 0->hl
                     ld a,c                  ; c->a low order byte of n1
@@ -2796,8 +2792,7 @@ Exit:
 - HL: high order unsigned product u3
 
 Perfomance:
-- max 64 cycles x 17 iterations = 1088 cycles, excluding entry/exit overhead
-
+max 64 cycles x 17 iterations = 1088 cycles, excluding entry/exit overhead
 
     umult1632:      xor a                   ; 0->cf
                     ld l,a                  ;
@@ -2825,8 +2820,7 @@ Exit:
 - HL: high order signed product or unsigned product d3
 
 Perfomance:
-- max 98 cycles x 32 iterations = 3136 cycles, excluding entry/exit overhead
-
+max 98 cycles x 32 iterations = 3136 cycles, excluding entry/exit overhead
 
     mult3232:       ld hl,0                 ; 0->hl high order d3, de with d2 high order
                     exx                     ; save bc with ip
@@ -2873,10 +2867,9 @@ Exit:
 - HL: remainder
 
 Performance:
-- max 88 cycles x 16 iterations = 1408 cycles, excluding entry/exit overhead
+max 88 cycles x 16 iterations = 1408 cycles, excluding entry/exit overhead
 
-
-    udiv3216:       ld a,16                 ; 16->a loop counter
+    udiv3216:        ld a,16                 ; 16->a loop counter
                     sla e                   ;
                     rl d                    ; de<<1->de
     1$:             adc hl,hl       ; 15    ; loop, hl<<1+cf->hl
