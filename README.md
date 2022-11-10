@@ -6,9 +6,8 @@ PC-G850(V)(S) pocket computer.
 
 I've implemented Forth850 as efficiently as possible in direct threaded code
 (DTC) with brand new Z80 code written from scratch.  See the
-[technical implementation sections](#Implementation)
-
-The [Forth850 source code](forth850.asm) is included and heavily documented.
+[technical implementation sections](#Implementation).  The
+[Forth850 source code](forth850.asm) is included and heavily documented.
 
 The [n-queens benchmark](https://www.hpmuseum.org/cgi-sys/cgiwrap/hpmuseum/articles.cgi?read=700)
 is solved in 0.865 seconds, the fastest Forth implementation of the benchmarks.
@@ -81,57 +80,57 @@ Forth850 rather than in Forth for speed.
 
 ### (:)
 _-- ; R: -- ip_
-call colon definition
+call colon definition;
 runtime of the : compile-only word
 
 ### (;)
 _-- ; R: ip --_
-return to caller from colon definition
+return to caller from colon definition;
 runtime of the ; compile-only word
 
 ### (EXIT)
 _-- ; R: ip --_
-return to caller from colon definition
+return to caller from colon definition;
 runtime of the EXIT compile-only word
 
 ### (;CODE)
 _-- ; R: ip --_
-set LASTXT cfa to ip and return from colon definition
+set LASTXT cfa to ip and return from colon definition;
 a runtime word compiled by the DOES> compile-only word
 
 ### (DOES)
 _addr -- addr ; R: -- ip_
-calls the DOES> definition with pfa addr
+calls the DOES> definition with pfa addr;
 a runtime word compiled by the DOES> compile-only word: call (DOES)
 
 ### (VAR)
 _-- addr_
-leave parameter field address (pfa) of variable
+leave parameter field address (pfa) of variable;
 runtime word of a VARIABLE: call (VAR)
 
 ### (VAL)
 _-- x_
-fetch value
+fetch value;
 runtime word of a VALUE: call (VAL)
 
 ### (2VAL)
 _-- dx_
-fetch double value
+fetch double value;
 runtime word of a 2VALUE: call (2VAL)
 
 ### (CON)
 _-- x_
-fetch constant
+fetch constant;
 runtime word of a CONSTANT: call (CON)
 
 ### (2CON)
 _-- x_
-fetch double constant
+fetch double constant;
 runtime word of a 2CONSTANT: call (2CON)
 
 ### (DEF)
 _--_
-execute deferred word
+execute deferred word;
 runtime word of a DEFER: call (DEF)
 
 ### (LIT)
@@ -180,8 +179,8 @@ leave address of TIB
 
 ### TMP
 _-- c-addr_
-leave address of the next temp string buffer
-switches between two string buffers
+leave address of the next temp string buffer;
+switches between two string buffers;
 used by S" to store a string when interpreting
 
 ### DROP
@@ -346,7 +345,7 @@ store in cell
 
 ### (TO)
 _x --_
-store in value
+store in value;
 runtime of the TO compile-only word
 
 ### C!
@@ -361,7 +360,7 @@ store in double cell
 
 ### (2TO)
 _dx --_
-store in double value
+store in double value;
 runtime of the TO compile-only word
 
 ### +!
@@ -370,7 +369,7 @@ increment cell
 
 ### (+TO)
 _n --_
-increment value
+increment value;
 runtime of the +TO compile-only word
 
 ### ON
@@ -446,12 +445,12 @@ signed double product d1*n
 
 ### UM/MOD
 _ud u1 -- u2 u3_
-remainder and quotient ud/u1
+remainder and quotient ud/u1;
 the result is undefined when u1=0
 
 ### SM/REM
 _d1 n1 -- n2 n3_
-symmetric signed remainder and quotient d1/n1
+symmetric signed remainder and quotient d1/n1;
 the result is undefined when n1=0
 
     : SM/REM
@@ -466,7 +465,7 @@ the result is undefined when n1=0
 
 ### FM/MOD
 _d1 n1 -- n2 n3_
-floored signed modulus and quotient d1/n1
+floored signed modulus and quotient d1/n1;
 the result is undefined when n1=0
 
     : FM/MOD
@@ -480,42 +479,42 @@ the result is undefined when n1=0
 
 ### /MOD
 _n1 n2 -- n3 n4_
-signed symmetric remainder and quotient n1/n2
+signed symmetric remainder and quotient n1/n2;
 the result is undefined when n2=0
 
     : /MOD SWAP S>D ROT SM/REM ;
 
 ### MOD
 _n1 n2 -- n3_
-signed symmetric remainder of n1/n2
+signed symmetric remainder of n1/n2;
 the result is undefined when n2=0
 
     : / /MOD DROP ;
 
 ### /
 _n1 n2 -- n3_
-signed symmetric quotient n1/n2
+signed symmetric quotient n1/n2;
 the result is undefined when n2=0
 
     : / /MOD NIP ;
 
 ### */MOD
 _n1 n2 n3 -- n4 n5_
-signed product symmetric remainder and quotient n1*n2/n3
+signed product symmetric remainder and quotient n1*n2/n3;
 the result is undefined when n3=0
 
     : */MOD -ROT M* ROT SM/REM ;
 
 ### */
 _n1 n2 n3 -- n4_
-signed product and symmetric quotient n1*n2/n3
+signed product and symmetric quotient n1*n2/n3;
 the result is undefined when n3=0
 
     : */ */MOD NIP ;
 
 ### M*/
 _d1 n1 n2 -- d2_
-signed double product and quotient d1*n1/n2
+signed double product and quotient d1*n1/n2;
 the result is undefined when n3=0
 
     : M*/ >R MD* R> SM/REM NIP ;
@@ -600,7 +599,7 @@ widen n to a double
 
 ### D>S
 _d -- n_
-narrow d to a single
+narrow d to a single;
 may throw -11 "result out of range" valid range is -32768 to 65535
 
 ### MAX
@@ -731,8 +730,8 @@ true if strings match
 
 ### SEARCH
 _c-addr1 u1 c-addr2 u2 -- c-addr3 u3 flag_
-true if the second string is in the first
-leaves matching address, remaining length and true
+true if the second string is in the first;
+leaves matching address, remaining length and true;
 or leaves the first string and false
 
 ### CMOVE
@@ -773,18 +772,18 @@ fill memory with 0x20 (bl) chars
 
 ### CHOP
 _c-addr u1 char -- c-addr u2_
-truncate string up to matching char
-leaves string if char not found
+truncate string up to matching char;
+leaves string if char not found;
 char=0x20 (bl) chops 0x00 to 0x20 (white space)
 
 ### TRIM
 _c-addr1 u1 char -- c-addr2 u2_
-trim initial chars
+trim initial chars;
 char=0x20 (bl) trims 0x00 to 0x20 (white space)
 
 ### -TRIM
 _c-addr u1 char -- c-addr u2_
-trim trailing chars
+trim trailing chars;
 char=0x20 (bl) trims 0x00 to 0x20 (white space)
 
 ### -TRAILING
@@ -830,7 +829,7 @@ set row x to u1 and column y to u2
 
 ### EMIT
 _char --_
-emit char
+emit char;
 supports the following control codes:
  8 (BS)
  9 (TAB)
@@ -1001,12 +1000,12 @@ input from port u1
 
 ### DRAW
 _c-addr u --_
-draw pixel patterns on screen at xy
+draw pixel patterns on screen at xy;
 writes string c-addr u of pixel patterns at xy
 
 ### VIEW
 _c-addr u --_
-view screen pixels at xy
+view screen pixels at xy;
 read string of screen pixel patterns at xy into buffer c-addr u
 
 ### REVERSE
@@ -1019,7 +1018,7 @@ check key, where 0x00=no key and 0x52=multiple keys
 
 ### KEY
 _-- char_
-wait and read key
+wait and read key;
 leaves ASCII char or special key code:
 ON      =$05
 BS      =$08
@@ -1038,22 +1037,22 @@ M-      =$1b
 right   =$1c          
 left    =$1d          
 up      =$1e
-down    =$1f
-calc keys and BASIC keys produce BASIC tokens as key code $fe
+down    =$1f;
+calc keys and BASIC keys produce BASIC tokens as key code $fe:
 SIN     =$fe register B=$95 BASIC token for SIN (ignored)
 
 ### EDIT
 _c-addr +n1 n2 n3 n4 -- c-addr +n5_
-edit buffer c-addr
-buffer size +n1
-string in buffer has length n2
-place cursor at n3
-non-editable left margin n4
+edit buffer c-addr;
+buffer size +n1;
+string in buffer has length n2;
+place cursor at n3;
+non-editable left margin n4;
 leaves c-addr and length +n5
 
 ### ACCEPT
 _c-addr +n1 -- +n2_
-accept user input into buffer c-addr +n1
+accept user input into buffer c-addr +n1;
 leaves length +n2
 
     : ACCEPT 0 0 0 EDIT NIP ;
@@ -1078,7 +1077,7 @@ double value with input source
 
 ### REFILL
 _-- flag_
-attempt to refill the input buffer
+attempt to refill the input buffer;
 leaves false when end of input
 
 ### SKIPS
@@ -1095,7 +1094,7 @@ parse "ccc" up to char when present
 
 ### PARSE-WORD
 _char "<chars>ccc<char>" -- c-addr u_
-parse char-delimited word
+parse char-delimited word;
 may throw -18 "parsed string overflow"
 
     : PARSE-WORD
@@ -1104,8 +1103,8 @@ may throw -18 "parsed string overflow"
 
 ### CHECK-NAME
 _c-addr u -- c-addr u_
-check if name is valid
-may throw -16 "attempt to use a zero-length string as a name"
+check if name is valid;
+may throw -16 "attempt to use a zero-length string as a name";
 may throw -19 "definition name too long"
 
     : CHECK-NAME
@@ -1114,14 +1113,14 @@ may throw -19 "definition name too long"
 
 ### PARSE-NAME
 _"<spaces>name<space>" -- c-addr u_
-parse space-delimited name
+parse space-delimited name;
 check if name length is valid
 
     : PARSE-NAME BL PARSE-WORD CHECK-NAME ;
 
 ### (
 _"ccc<paren>" --_
-start a comment block
+start a comment block;
 parse and skip input up to the closing )
 
     : (
@@ -1141,7 +1140,7 @@ parse and skip input up to the closing )
 
 ### \
 _"ccc<eol>" --_
-start a comment line
+start a comment line;
 parse and skip input up to the end of line
 
     : \ $A PARSE 2SROP ;
@@ -1154,13 +1153,13 @@ emit CR then type "ccc" up to the closing )
 
 ### >DIGIT
 _char -- n_
-convert char digit to numeric digit when within BASE
+convert char digit to numeric digit when within BASE;
 leaves -1 if char is invalid
 
 ### >NUMBER
 _ud1 c-addr1 u1 -- ud2 c-addr2 u2_
-convert string to number
-updates accumulated double ud1 to ud2
+convert string to number;
+updates accumulated double ud1 to ud2;
 leaves string with the remaining unconvertable chars or empty
 
     : >NUMBER
@@ -1185,8 +1184,8 @@ true if >DOUBLE or NUMBER produced a double
 
 ### >DOUBLE
 _c-addr u -- d true | false_
-convert string to signed double
-leaves true if string is converted
+convert string to signed double;
+leaves true if string is converted;
 leaves false if string is unconvertable
 
 ### L>NAME
@@ -1203,7 +1202,7 @@ convert name token (nfa) to execution token (cfa)
 
 ### >NAME
 _xt -- nt_
-convert execution token (cfa) to name token (lfa)
+convert execution token (cfa) to name token (lfa);
 may throw -24 "invalid numeric argument"
 
 ### >BODY
@@ -1212,13 +1211,13 @@ convert execution token to parameter field address
 
 ### FIND-WORD
 _c-addr u -- c-addr 0 | xt 1 | xt -1_
-search dictionary for matching word
-leaves execution token and 1=immediate or -1=not immediate
+search dictionary for matching word;
+leaves execution token and 1=immediate or -1=not immediate;
 leaves c-addr and 0 when not found
 
 ### '
 _"<spaces>name<space>" -- xt_
-parse name and get execution token
+parse name and get execution token;
 may throw -13 "undefined word"
 
     : ' PARSE-NAME FIND-WORD 0= IF -13 THROW THEN ;
@@ -1229,8 +1228,8 @@ display context vocabulary words
 
 ### HERE
 _-- addr_
-address of free memory after the dictionary
-new definitions are added here
+address of free memory after the dictionary;
+new definitions are added here;
 note that numeric output words use HERE for conversion
 
 ### LASTXT
@@ -1241,8 +1240,8 @@ leaves the last execution token defined
 
 ### STATE
 _-- addr_
-compilation state
-@ leaves TRUE when compiling
+compilation state;
+@ leaves TRUE when compiling;
 @ leaves FALSE when interpreting
 
     VARIABLE STATE
@@ -1279,13 +1278,13 @@ make the last definition immediate
 
 ### ?COMP
 _--_
-check if compiling
+check if compiling;
 may throw -14 "interpreting a compile-only word"
 
 ### ?SYS
 _-- ; C: x --_
-check if compiled control structure matches x
-may throw -14 "interpreting a compile-only word"
+check if compiled control structure matches x;
+may throw -14 "interpreting a compile-only word";
 may throw -22 "control structure mismatch"
 
 ### UNUSED
@@ -1296,8 +1295,8 @@ unused dictionary space
 
 ### ALLOT
 _n --_
-allocate n bytes from HERE in the dictionary
-undo the last ALLOT with negative n
+allocate n bytes from HERE in the dictionary;
+undo the last ALLOT with negative n;
 may throw -8 "dictionary overflow"
 
 ### COMPILE,
@@ -1322,7 +1321,7 @@ append double cell to dictionary
 
 ### NFA,
 _"<spaces>name<space>" --_
-parse name and append dictionary entry with name
+parse name and append dictionary entry with name;
 set LASTXT to HERE
 
     : NFA, PARSE-NAME HERE CURRENT @ , CURRENT ! DUP C, HERE SWAP DUP ALLOT CMOVE HERE TO LASTXT ;
@@ -1333,19 +1332,19 @@ append cfa call addr to dictionary
 
 ### CFA:,
 _-- addr colon_sys_
-append cfa colon definition to dictionary
-make CONTEXT the CURRENT vocabulary
+append cfa colon definition to dictionary;
+make CONTEXT the CURRENT vocabulary;
 start compiling
 
     : CFA:, ] HERE colon_sys ['] (:) CFA, CURRENT TO CONTEXT ;
 
 ### POSTPONE
 _"<spaces>name<space>" --_
-postpone compile action of name
-if name is immediate, then compile name instead of executing it
-otherwise compile name into the current colon definition
-can be used to create macros, e.g. : TRUE POSTPONE -1 ; IMMEDIATE
-may throw -13 "undefined word"
+postpone compile action of name;
+if name is immediate, then compile name instead of executing it;
+otherwise compile name into the current colon definition;
+can be used to create macros, e.g. : TRUE POSTPONE -1 ; IMMEDIATE;
+may throw -13 "undefined word";
 may throw -14 "interpreting a compile-only word"
 
 ### :
@@ -1356,8 +1355,8 @@ define name and start compiling
 
 ### ;
 _-- ; C: addr colon_sys --_
-end colon definition and stop compiling
-may throw -14 "interpreting a compile-only word"
+end colon definition and stop compiling;
+may throw -14 "interpreting a compile-only word";
 may throw -22 "control structure mismatch"
 
     : ; ?COMP colon_sys <> IF -22 THROW THEN DROP POSTPONE (;) REVEAL [ ; IMMEDIATE
@@ -1370,7 +1369,7 @@ exit colon definition
 
 ### CREATE
 _"<spaces>name<space>" -- ; -- addr_
-create name
+create name;
 executing name leaves address (HERE addr after CREATE)
 
     : NFA, ['] (VAR) CFA, ;
@@ -1383,21 +1382,21 @@ change CREATE name behavior to execute code after DOES>
 
 ### VARIABLE
 _"<spaces>name<space>" -- ; -- addr_
-define a variable
+define a variable;
 executing name leaves address of value (initialized to zero)
 
     : VARIABLE CREATE 0 , ;
 
 ### 2VARIABLE
 _"<spaces>name<space>" -- ; -- addr_
-define a double variable
+define a double variable;
 executing name leaves address of double value (initialized to zero)
 
     : 2VARIABLE CREATE 0 0 2, ;
 
 ### CONSTANT
 _x "<spaces>name<space>" -- ; -- x_
-define a constant
+define a constant;
 executing name leaves x
 
     : CONSTANT NFA, ['] (CON) CFA, , ;
@@ -1405,7 +1404,7 @@ executing name leaves x
 
 ### 2CONSTANT
 _x1 x2 "<spaces>name<space>" -- ; -- x1 x2_
-define a double constant
+define a double constant;
 executing name leaves x1 x2
 
     : 2CONSTANT NFA, ['] (2CON) CFA, 2, ;
@@ -1413,21 +1412,21 @@ executing name leaves x1 x2
 
 ### VALUE
 _x "<spaces>name<space>" -- ; -- x_
-define a value
+define a value;
 executing name leaves x
 
     : VALUE NFA, ['] (VAL) CFA, , ;
 
 ### 2VALUE
 _dx "<spaces>name<space>" -- ; -- dx_
-define a double value
+define a double value;
 executing name leaves dx
 
     : 2VALUE NFA, ['] (2VAL) CFA, 2, ;
 
 ### TO
 _"<spaces>name<space>" -- ; x --_
-assign value name
+assign value name;
 may throw -32 "invalid name argument"
 
     : TO
@@ -1456,7 +1455,7 @@ may throw -32 "invalid name argument"
 
 ### +TO
 _"<spaces>name<space>" -- ; n --_
-increment value name
+increment value name;
 may throw -32 "invalid name argument"
 
     : +TO
@@ -1499,7 +1498,7 @@ fetch execution token from deferred xt1
 
 ### IS
 _xt "<spaces>name<space>" --_
-assign execution token to deferred name
+assign execution token to deferred name;
 may throw -32 "invalid name argument"
 
     : IS
@@ -1517,7 +1516,7 @@ may throw -32 "invalid name argument"
 
 ### ACTION-OF
 _"<spaces>name<space>" -- xt_
-fetch execution token of deferred name
+fetch execution token of deferred name;
 may throw -32 "invalid name argument"
 
     : ACTION-OF
@@ -1547,7 +1546,7 @@ compile a double literal
 
 ### SLITERAL
 _c-addr u -- ; -- c-addr u_
-compile a string literal
+compile a string literal;
 max literal string length is 255
 
     : SLITERAL
@@ -1604,169 +1603,169 @@ only permit FORGET past the dictionary FENCE address
 
 ### FORGET
 _"<spaces>name<space>" --_
-delete name and all following definitions
-beware of vocabulary definitions crossings
+delete name and all following definitions;
+beware of vocabulary definitions crossings;
 may throw -15 "invalid FORGET"
 
 ### [']
 _"<spaces>name<space>" -- ; -- xt_
-compile xt of name as literal
+compile xt of name as literal;
 may throw -14 "interpreting a compile-only word"
 
     : ['] ?COMP ' LITERAL ; IMMEDIATE
 
 ### RECURSE
 _... -- ..._
-recursively call the currently defined word
+recursively call the currently defined word;
 may throw -14 "interpreting a compile-only word"
 
     : RECURSE ?COMP LASTXT COMPILE, ; IMMEDIATE
 
 ### ?STACK
 _--_
-check parameter stack bounds
-may throw -3 "stack overflow"
+check parameter stack bounds;
+may throw -3 "stack overflow";
 may throw -4 "stack underflow"
 
 ### (UNTIL)
 _x --_
-branch if x=0
+branch if x=0;
 runtime of the UNTIL compile-only word
 
 ### (IF)
 _x --_
-branch if x=0
+branch if x=0;
 runtime of the IF and WHILE compile-only words
 
 ### (AGAIN)
 _--_
-branch
+branch;
 runtime of the AGAIN and REPEAT compile-only words
 
 ### (AHEAD)
 _--_
-branch
+branch;
 runtime of the AHEAD, ELSE and ENDOF compile-only words
 
 ### (OF)
 _x1 x2 -- x1 or x1 x2 --_
-branch if x1<>x2
+branch if x1<>x2;
 runtime of the OF compile-only word
 
 ### (LOOP)
 _--_
-repeat loop unless loop counter crosses the limit
+repeat loop unless loop counter crosses the limit;
 runtime of the LOOP compile-only word
 
 ### (+LOOP)
 _--_
-increment counter and repeat loop unless counter crosses the limit
+increment counter and repeat loop unless counter crosses the limit;
 runtime of the +LOOP compile-only word
 
 ### (?DO)
 _n1|u1 n2|u2 --_
-begin loop with limit n1|u1 and initial value n2|u2
-skip loop when zero trip loop
+begin loop with limit n1|u1 and initial value n2|u2;
+skip loop when zero trip loop;
 runtime of the ?DO compile-only word
 
 ### (DO)
 _n1|u1 n2|u2 --_
-begin loop with limit n1|u1 and initial value n2|u2
-loop at least once
+begin loop with limit n1|u1 and initial value n2|u2;
+loop at least once;
 runtime of the DO compile-only word
 
 ### (UNLOOP)
 _R: ... --_
-remove loop parameters
+remove loop parameters;
 runtime of the UNLOOP compile-only word
 
 ### (LEAVE)
 _--_
-end loop by setting the loop counter to the limit
+end loop by setting the loop counter to the limit;
 runtime of the LEAVE compile-only word
 
 ### AHEAD
 _-- ; C: -- addr orig_
-branch ahead to THEN
+branch ahead to THEN;
 may throw -14 "interpreting a compile-only word"
 
 ### BEGIN
 _-- ; C: -- addr dest_
-begin WHILE REPEAT
+begin WHILE REPEAT;
 may throw -14 "interpreting a compile-only word"
 
 ### AGAIN
 _-- ; C: addr dest --_
-branch back to BEGIN
-may throw -14 "interpreting a compile-only word"
+branch back to BEGIN;
+may throw -14 "interpreting a compile-only word";
 may throw -22 "control structure mismatch"
 
 ### UNTIL
 _x -- ; C: addr dest --_
-branch back to BEGIN if x=0
-may throw -14 "interpreting a compile-only word"
+branch back to BEGIN if x=0;
+may throw -14 "interpreting a compile-only word";
 may throw -22 "control structure mismatch"
 
 ### IF
 _x -- ; C: -- addr orig_
-branch to closest ELSE or THEN if x=0
+branch to closest ELSE or THEN if x=0;
 may throw -14 "interpreting a compile-only word"
 
 ### THEN
 _-- ; C: addr orig --_
-close AHEAD, IF, ELSE
-may throw -14 "interpreting a compile-only word"
+close AHEAD, IF, ELSE;
+may throw -14 "interpreting a compile-only word";
 may throw -22 "control structure mismatch"
 
 ### ELSE
 _-- ; C: addr orig -- addr orig_
-close IF and branch to THEN
-may throw -14 "interpreting a compile-only word"
+close IF and branch to THEN;
+may throw -14 "interpreting a compile-only word";
 may throw -22 "control structure mismatch"
 
 ### WHILE
 _x -- ; C: addr sys -- addr orig addr sys_
-branch to exit REPEAT if x=0
+branch to exit REPEAT if x=0;
 may throw -14 "interpreting a compile-only word"
 
 ### REPEAT
 _-- ; C: addr orig addr dest --_
-branch back to BEGIN after WHILE
-may throw -14 "interpreting a compile-only word"
+branch back to BEGIN after WHILE;
+may throw -14 "interpreting a compile-only word";
 may throw -22 "control structure mismatch"
 
 ### DO
 _n1|u1 n2|u2 -- ; C: -- addr do_sys_
-begin loop from initial value n2|u2 to the limit n1|u1
-loop at least once
+begin loop from initial value n2|u2 to the limit n1|u1;
+loop at least once;
 may throw -14 "interpreting a compile-only word"
 
 ### ?DO
 _n1|u1 n2|u2 -- ; C: -- addr do_sys_
-begin loop from initial value n2|u2 to the limit n1|u1
-skip loop when zero trip loop
+begin loop from initial value n2|u2 to the limit n1|u1;
+skip loop when zero trip loop;
 may throw -14 "interpreting a compile-only word"
 
 ### LOOP
 _-- ; C: addr do_sys --_
-repeat loop unless loop counter crosses the limit
-may throw -14 "interpreting a compile-only word"
+repeat loop unless loop counter crosses the limit;
+may throw -14 "interpreting a compile-only word";
 may throw -22 "control structure mismatch"
 
 ### +LOOP
 _n|u -- ; C: addr do_sys --_
-increment counter and repeat loop unless counter crosses the limit
-may throw -14 "interpreting a compile-only word"
+increment counter and repeat loop unless counter crosses the limit;
+may throw -14 "interpreting a compile-only word";
 may throw -22 "control structure mismatch"
 
 ### UNLOOP
 _--_
-remove loop parameters
+remove loop parameters;
 may throw -14 "interpreting a compile-only word"
 
 ### LEAVE
 _--_
-end loop by setting the loop counter to the limit
+end loop by setting the loop counter to the limit;
 may throw -14 "interpreting a compile-only word"
 
 ### I
@@ -1779,25 +1778,25 @@ counter of outer (second) do loop
 
 ### CASE
 _x -- ; C: -- 0_
-begin CASE ENDCASE switch
+begin CASE ENDCASE switch;
 may throw -14 "interpreting a compile-only word"
 
 ### OF
 _x1 x2 -- x1 or x1 x2 -- ; C: n1 -- orig n2_
-take CASE arm if x1=x2
-otherwise branch to next OF
+take CASE arm if x1=x2;
+otherwise branch to next OF;
 may throw -14 "interpreting a compile-only word"
 
 ### ENDOF
 _-- ; C: n -- orig n_
-branch to ENDCASE
-may throw -14 "interpreting a compile-only word"
+branch to ENDCASE;
+may throw -14 "interpreting a compile-only word";
 may throw -22 "control structure mismatch"
 
 ### ENDCASE
 _x -- ; C: n*orig n --_
-close CASE
-may throw -14 "interpreting a compile-only word"
+close CASE;
+may throw -14 "interpreting a compile-only word";
 may throw -22 "control structure mismatch"
 
 ### HANDLER
@@ -1845,16 +1844,16 @@ throw exception n if nonzero
 
 ### QUIT
 _-- ; R: i*x --_
-throw -56 "QUIT"
-no exception error is displayed
+throw -56 "QUIT";
+no exception error is displayed;
 unlike ABORT, the parameter stack is not cleared
 
     : QUIT -56 THROW ;
 
 ### (ABORT")
 _flag c-addr u -- ; R: i*x --_
-if flag then abort with string message unless an active catch is present
-runtime of the ABORT" compile-only word
+if flag then abort with string message unless an active catch is present;
+runtime of the ABORT" compile-only word;
 throw -2 "ABORT""
 
     : (ABORT")
@@ -1870,30 +1869,30 @@ throw -2 "ABORT""
 
 ### ABORT"
 _flag -- ; C: "ccc<quote>" -- ; R: ... --_
-if flag then abort with string message unless an active catch is present
-throw -2 "ABORT""
-clears the parameter stack unless caught with CATCH
+if flag then abort with string message unless an active catch is present;
+throw -2 "ABORT"";
+clears the parameter stack unless caught with CATCH;
 may throw -14 "interpreting a compile-only word"
 
     : ABORT" ?COMP S" POSTPONE (ABORT") ; IMMEDIATE
 
 ### ABORT
 _-- ; R: i*x --_
-throw -1 "ABORT"
+throw -1 "ABORT";
 clears the parameter stack unless caught with CATCH
 
     : ABORT -1 THROW ;
 
 ### ERROR
 _n --_
-display exception n at the offending location in the input
-n=-1 ABORT and n=-2 ABORT" clear the stack
+display exception n at the offending location in the input;
+n=-1 ABORT and n=-2 ABORT" clear the stack;
 n=-56 QUIT stays silent
 
 ### NUMBER
 _c-addr u -- n|u|d|ud_
-convert string to number
-value DBL is set to -1 when the number is a double
+convert string to number;
+value DBL is set to -1 when the number is a double;
 may throw -13 "undefined word" when string is not numeric
 
 ### INTERPRET
@@ -2117,31 +2116,31 @@ parse word as a counted string
 
 ### CHAR
 _"<spaces>name<space>" -- char_
-parse char
+parse char;
 note that the syntax 'char is preferred
 
     : CHAR PARSE-NAME DROP C@ ;
 
 ### FIND
 _c-addr -- c-addr 0 | xt 1 | xt -1_
-search dictionary for counted string
+search dictionary for counted string;
 see FIND-WORD
 
 ### BUFFER:
 _n "<spaces>name<space>" -- ; -- addr_
-define buffer with n bytes
+define buffer with n bytes;
 executing name leaves address of n bytes
 
     : BUFFER: CREATE ALLOT ;
 
 ### :NONAME
 _-- xt_
-colon definition without name
+colon definition without name;
 leaves execution token of definition
 
 ### C"
 _"ccc<quote>" -- ; -- c-addr_
-leave counted string "ccc" (compiled)
+leave counted string "ccc" (compiled);
 may throw -18 "parsed string overflow"
 
     : C" SLITERAL POSTPONE DROP POSTPONE 1- ;
@@ -2152,28 +2151,28 @@ true if xt is a MARKER word
 
 ### MARKER
 _"<spaces>name<space>" -- ; --_
-define a dictionary marker
-executing name deletes marker and all definitions made after
+define a dictionary marker;
+executing name deletes marker and all definitions made after;
 beware of vocabulary definitions crossings
 
 ### ANEW
 _"<spaces>name<space>" -- ; --_
-define a dictionary marker
-deletes previously defined name and all following definitions
+define a dictionary marker;
+deletes previously defined name and all following definitions;
 beware of vocabulary definitions crossings
 
 ### [CHAR]
 _"<spaces>char" -- ; -- char_
-compile char as literal
-note that the syntax 'char is preferred
+compile char as literal;
+note that the syntax 'char is preferred;
 may throw -14 "interpreting a compile-only word"
 
     : [CHAR] ?COMP CHAR LITERAL ; IMMEDIATE
 
 ### [COMPILE]
 _"<space>name<space>" -- ; ... -- ..._
-compile name
-note that POSTPONE is preferred
+compile name;
+note that POSTPONE is preferred;
 may throw -14 "interpreting a compile-only word"
 
     : [COMPILE] ?COMP ' COMPILE, ; IMMEDIATE
