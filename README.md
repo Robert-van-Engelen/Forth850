@@ -2285,6 +2285,7 @@ Exit:
 Performance:
 - 46 cycles per character comparison when characters match
 
+
                     push ix                 ; save c-addr1
                     push hl                 ; save u1
                     xor a                   ; 0->a flags u1=u2, 0->cf
@@ -2338,6 +2339,7 @@ Exit:
 Performance:
 - 21 cycles per character to search the first or next character match
 - 46 cycles per character comparison when characters match
+
 
     search:         or a                    ; 0->cf
                     sbc ix,bc               ; u1-u2->ix
@@ -2587,6 +2589,7 @@ Exit:
 - DE with TOS: truncated string length u2
 - 2OS: string address c-addr
 
+
     chop:           ld a,e                  ; char->a
                     exx                     ; save bc with ip
                     ex af,af'               ; save a with char
@@ -2618,6 +2621,7 @@ Exit:
                     jr nc,1$        ;  7    ;   if [hl]<a then found
                     jp pe,3$        ; 10    ; until bc=0
                     jr 1$                   ; not found
+
 
     trim:           ld a,e                  ; char->a
                     exx                     ; save bc with ip
@@ -2681,6 +2685,7 @@ Exit:
 Performance:
 - 95 cycles per dictionary entry
 - 51 or 102 cycles per character comparison when characters match
+
 
     findword:       ld a,d                  ;
                     or a                    ; test d=0 high order byte of u
@@ -2762,6 +2767,7 @@ Exit:
 Perfomance:
 - max 51 cycles x 16 iterations = 816 cycles, excluding entry/exit overhead
 
+
                     ld hl,0                 ; 0->hl
                     ld a,c                  ; c->a low order byte of n1
                     ld c,b                  ; b->c save high order byte of n1
@@ -2794,6 +2800,7 @@ Exit:
 Perfomance:
 - max 64 cycles x 17 iterations = 1088 cycles, excluding entry/exit overhead
 
+
                     xor a                   ; 0->cf
                     ld l,a                  ;
                     ld h,a                  ; 0->hl
@@ -2821,6 +2828,7 @@ Exit:
 
 Perfomance:
 - max 98 cycles x 32 iterations = 3136 cycles, excluding entry/exit overhead
+
 
                     ld hl,0                 ; 0->hl high order d3, de with d2 high order
                     exx                     ; save bc with ip
@@ -2868,6 +2876,7 @@ Exit:
 
 Performance:
 - max 88 cycles x 16 iterations = 1408 cycles, excluding entry/exit overhead
+
 
                     ld a,16                 ; 16->a loop counter
                     sla e                   ;
