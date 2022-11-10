@@ -1039,8 +1039,7 @@ left    =$1d
 up      =$1e
 down    =$1f
 calc keys and BASIC keys produce BASIC tokens as key code $fe
-### SIN
-_=$fe	register B=$95 BASIC token for SIN (ignored)_
+SIN     =$fe register B=$95 BASIC token for SIN (ignored)
 
 ### EDIT
 _c-addr +n1 n2 n3 n4 -- c-addr +n5_

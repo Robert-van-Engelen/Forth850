@@ -3133,7 +3133,7 @@ set_base:	ld (base+3),hl		; 10->[base]
 ;		up      =$1e
 ;		down    =$1f
 ;		calc keys and BASIC keys produce BASIC tokens as key code $fe
-;		SIN	=$fe	register B=$95 BASIC token for SIN (ignored)
+;		SIN     =$fe register B=$95 BASIC token for SIN (ignored)
 
 		CODE KEY,key
 		push de			; save TOS
