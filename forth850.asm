@@ -309,7 +309,7 @@ bsp:		.dw 0			; saved BASIC stack pointer
 ;-------------------------------------------------------------------------------
 
 ; (:)		-- ; R: -- ip
-;		call colon definition
+;		call colon definition;
 ;		runtime of the : compile-only word
 
 		CODE (:),docol
@@ -339,7 +339,7 @@ break:		call INKEY		; INKEY
 		jp throw_a		; throw -28 "user interrupt"
 
 ; (;)		-- ; R: ip --
-;		return to caller from colon definition
+;		return to caller from colon definition;
 ;		runtime of the ; compile-only word
 
 		CODE ^|(;)|,doret
@@ -352,14 +352,14 @@ break:		call INKEY		; INKEY
 		NEXT			; continue
 
 ; (EXIT)	-- ; R: ip --
-;		return to caller from colon definition
+;		return to caller from colon definition;
 ;		runtime of the EXIT compile-only word
 
 		CODE (EXIT),doexit
 		jr doret		; same as (;)
 
 ; (;CODE)	-- ; R: ip --
-;		set LASTXT cfa to ip and return from colon definition
+;		set LASTXT cfa to ip and return from colon definition;
 ;		a runtime word compiled by the DOES> compile-only word
 
 		CODE ^|(;CODE)|,doscode
@@ -371,7 +371,7 @@ break:		call INKEY		; INKEY
 		jr doret		; (;) return to caller
 
 ; (DOES)	addr -- addr ; R: -- ip
-;		calls the DOES> definition with pfa addr
+;		calls the DOES> definition with pfa addr;
 ;		a runtime word compiled by the DOES> compile-only word: call (DOES)
 
 		CODE (DOES),dodoes
@@ -388,7 +388,7 @@ break:		call INKEY		; INKEY
 		NEXT			; continue
 
 ; (VAR)		-- addr
-;		leave parameter field address (pfa) of variable
+;		leave parameter field address (pfa) of variable;
 ;		runtime word of a VARIABLE: call (VAR)
 
 		CODE (VAR),dovar
@@ -398,7 +398,7 @@ break:		call INKEY		; INKEY
 		NEXT			; continue
 
 ; (VAL)		-- x
-;		fetch value
+;		fetch value;
 ;		runtime word of a VALUE: call (VAL)
 
 		CODE (VAL),doval
@@ -410,7 +410,7 @@ fetch_de:	ld e,(hl)	;  7	;
 		NEXT			; continue
 
 ; (2VAL)	-- dx
-;		fetch double value
+;		fetch double value;
 ;		runtime word of a 2VALUE: call (2VAL)
 
 		CODE (2VAL),dotwoval
@@ -427,21 +427,21 @@ twofetch_de:	inc hl		;  6	;
 		jr push_fetch	; 31(102; set [hl]->de as new TOS and continue
 
 ; (CON)		-- x
-;		fetch constant
+;		fetch constant;
 ;		runtime word of a CONSTANT: call (CON)
 
 		CODE (CON),docon
 		jr doval		; same as (VAL)
 
 ; (2CON)	-- x
-;		fetch double constant
+;		fetch double constant;
 ;		runtime word of a 2CONSTANT: call (2CON)
 
 		CODE (2CON),dotwocon
 		jr dotwoval		; same as (2VAL)
 
 ; (DEF)		--
-;		execute deferred word
+;		execute deferred word;
 ;		runtime word of a DEFER: call (DEF)
 
 		CODE (DEF),dodef
@@ -591,8 +591,8 @@ true_next	.equ mone_next		; alias
 		JP_NEXT			; continue
 
 ; TMP		-- c-addr
-;		leave address of the next temp string buffer
-;		switches between two string buffers
+;		leave address of the next temp string buffer;
+;		switches between two string buffers;
 ;		used by S" to store a string when interpreting
 
 		CODE TMP,tmp
@@ -1076,7 +1076,7 @@ store_hl:	ld (hl),e	;  7	;
 		NEXT			; continue
 
 ; (TO)		x --
-;		store in value
+;		store in value;
 ;		runtime of the TO compile-only word
 
 		CODE (TO),doto
@@ -1114,7 +1114,7 @@ twostore_hl:	ld (hl),e		;
 		jr store_hl		; de->[hl] with x1 pop new TOS and continue
 
 ; (2TO)		dx --
-;		store in double value
+;		store in double value;
 ;		runtime of the TO compile-only word
 
 		CODE (2TO),dotwoto
@@ -1143,7 +1143,7 @@ plusstore_hl:	ld a,(hl)		;
 		NEXT			; continue
 
 ; (+TO)		n --
-;		increment value
+;		increment value;
 ;		runtime of the +TO compile-only word
 
 		CODE (+TO),doplusto
@@ -1352,7 +1352,7 @@ store_a_hl:	ld (hl),a		;
 1$:		.dw doret
 
 ; UM/MOD	ud u1 -- u2 u3
-;		remainder and quotient ud/u1
+;		remainder and quotient ud/u1;
 ;		the result is undefined when u1=0
 
 		CODE UM/MOD,umslashmod
@@ -1384,7 +1384,7 @@ store_a_hl:	ld (hl),a		;
 		jp invert		; complement TOS, faster than ccf in loop
 
 ; SM/REM	d1 n1 -- n2 n3
-;		symmetric signed remainder and quotient d1/n1
+;		symmetric signed remainder and quotient d1/n1;
 ;		the result is undefined when n1=0
 ;
 ;    : SM/REM
@@ -1411,7 +1411,7 @@ store_a_hl:	ld (hl),a		;
 2$:		.dw doret
 
 ; FM/MOD	d1 n1 -- n2 n3
-;		floored signed modulus and quotient d1/n1
+;		floored signed modulus and quotient d1/n1;
 ;		the result is undefined when n1=0
 ;
 ;    : FM/MOD
@@ -1433,7 +1433,7 @@ store_a_hl:	ld (hl),a		;
 2$:		.dw doret
 
 ; /MOD		n1 n2 -- n3 n4
-;		signed symmetric remainder and quotient n1/n2
+;		signed symmetric remainder and quotient n1/n2;
 ;		the result is undefined when n2=0
 ;
 ;    : /MOD SWAP S>D ROT SM/REM ;
@@ -1444,7 +1444,7 @@ store_a_hl:	ld (hl),a		;
 		.dw doret	
 
 ; MOD		n1 n2 -- n3
-;		signed symmetric remainder of n1/n2
+;		signed symmetric remainder of n1/n2;
 ;		the result is undefined when n2=0
 ;
 ;    : / /MOD DROP ;
@@ -1454,7 +1454,7 @@ store_a_hl:	ld (hl),a		;
 		.dw doret
 
 ; /		n1 n2 -- n3
-;		signed symmetric quotient n1/n2
+;		signed symmetric quotient n1/n2;
 ;		the result is undefined when n2=0
 ;
 ;    : / /MOD NIP ;
@@ -1464,7 +1464,7 @@ store_a_hl:	ld (hl),a		;
 		.dw doret
 
 ; */MOD		n1 n2 n3 -- n4 n5
-;		signed product symmetric remainder and quotient n1*n2/n3
+;		signed product symmetric remainder and quotient n1*n2/n3;
 ;		the result is undefined when n3=0
 ;
 ;    : */MOD -ROT M* ROT SM/REM ;
@@ -1475,7 +1475,7 @@ store_a_hl:	ld (hl),a		;
 		.dw doret
 
 ; */		n1 n2 n3 -- n4
-;		signed product and symmetric quotient n1*n2/n3
+;		signed product and symmetric quotient n1*n2/n3;
 ;		the result is undefined when n3=0
 ;
 ;    : */ */MOD NIP ;
@@ -1485,7 +1485,7 @@ store_a_hl:	ld (hl),a		;
 		.dw doret
 
 ; M*/		d1 n1 n2 -- d2
-;		signed double product and quotient d1*n1/n2
+;		signed double product and quotient d1*n1/n2;
 ;		the result is undefined when n3=0
 ;
 ;    : M*/ >R MD* R> SM/REM NIP ;
@@ -1562,14 +1562,14 @@ store_a_hl:	ld (hl),a		;
 .if 0		; TODO not implemented (yet)
 
 ;- D/MOD	d1 d2 -- d3 d4
-;		signed double remainder and quotient d1/d2
+;		signed double remainder and quotient d1/d2;
 ;		the result is undefined when d2=0
 
 		CODE D/MOD,dslashmod
 		.dw abort
 
 ;- D/		d1 d2 -- d3
-;		signed double quotient d1/d2
+;		signed double quotient d1/d2;
 ;		the result is undefined when d2=0
 ;
 ;    : D/ D/MOD NIP ;
@@ -1579,7 +1579,7 @@ store_a_hl:	ld (hl),a		;
 		.dw doret
 
 ;- DMOD		d1 d2 -- d3
-;		signed double remainder d1%d2
+;		signed double remainder d1%d2;
 ;		the result is undefined when d2=0
 ;
 ;    : DMOD D/MOD DROP ;
@@ -1771,7 +1771,7 @@ true_if_c_next:	sbc a			; -cf->a
 		jr true_if_c_next	; set new TOS to -1 if cf=1 else 0
 
 ; D>S		d -- n
-;		narrow d to a single
+;		narrow d to a single;
 ;		may throw -11 "result out of range" valid range is -32768 to 65535
 
 		CODE D>S,dtos
@@ -2207,8 +2207,8 @@ cells		.equ twostar		; alias
 		.dw doret
 
 ; SEARCH	c-addr1 u1 c-addr2 u2 -- c-addr3 u3 flag
-;		true if the second string is in the first
-;		leaves matching address, remaining length and true
+;		true if the second string is in the first;
+;		leaves matching address, remaining length and true;
 ;		or leaves the first string and false
 
 		CODE SEARCH,search
@@ -2376,8 +2376,8 @@ cells		.equ twostar		; alias
 		.dw doret
 
 ; CHOP		c-addr u1 char -- c-addr u2
-;		truncate string up to matching char
-;		leaves string if char not found
+;		truncate string up to matching char;
+;		leaves string if char not found;
 ;		char=0x20 (bl) chops 0x00 to 0x20 (white space)
 
 		CODE CHOP,chop
@@ -2414,7 +2414,7 @@ cells		.equ twostar		; alias
 		jr 1$			; not found
 
 ; TRIM		c-addr1 u1 char -- c-addr2 u2
-;		trim initial chars
+;		trim initial chars;
 ;		char=0x20 (bl) trims 0x00 to 0x20 (white space)
 
 		CODE TRIM,trim
@@ -2446,7 +2446,7 @@ cells		.equ twostar		; alias
 		jr 2$			; finalize trimming
 
 ; -TRIM		c-addr u1 char -- c-addr u2
-;		trim trailing chars
+;		trim trailing chars;
 ;		char=0x20 (bl) trims 0x00 to 0x20 (white space)
 
 		CODE -TRIM,mtrim
@@ -2578,7 +2578,7 @@ y:		.db 0			; cursor row 0 to win_rows-1
 		.dw doret
 
 ; EMIT		char --
-;		emit char
+;		emit char;
 ;		supports the following control codes:
 ;		 8 (BS)
 ;		 9 (TAB)
@@ -2996,7 +2996,7 @@ set_base:	ld (base+3),hl		; 10->[base]
 ;-------------------------------------------------------------------------------
 
 ; DRAW		c-addr u --
-;		draw pixel patterns on screen at xy
+;		draw pixel patterns on screen at xy;
 ;		writes string c-addr u of pixel patterns at xy
 
 		CODE DRAW,draw
@@ -3012,7 +3012,7 @@ set_base:	ld (base+3),hl		; 10->[base]
 		JP_NEXT			; continue
 
 ; VIEW		c-addr u --
-;		view screen pixels at xy
+;		view screen pixels at xy;
 ;		read string of screen pixel patterns at xy into buffer c-addr u
 
 		CODE VIEW,view
@@ -3112,7 +3112,7 @@ set_base:	ld (base+3),hl		; 10->[base]
 .endif
 
 ; KEY		-- char
-;		wait and read key
+;		wait and read key;
 ;		leaves ASCII char or special key code:
 ;		ON      =$05
 ;		BS      =$08
@@ -3131,8 +3131,8 @@ set_base:	ld (base+3),hl		; 10->[base]
 ;		right   =$1c          
 ;		left    =$1d          
 ;		up      =$1e
-;		down    =$1f
-;		calc keys and BASIC keys produce BASIC tokens as key code $fe
+;		down    =$1f;
+;		calc keys and BASIC keys produce BASIC tokens as key code $fe:
 ;		SIN     =$fe register B=$95 BASIC token for SIN (ignored)
 
 		CODE KEY,key
@@ -3193,11 +3193,11 @@ edit_backspace:	call docol	; --
 1$:		.dw doret
 
 ; EDIT		c-addr +n1 n2 n3 n4 -- c-addr +n5
-;		edit buffer c-addr
-;		buffer size +n1
-;		string in buffer has length n2
-;		place cursor at n3
-;		non-editable left margin n4
+;		edit buffer c-addr;
+;		buffer size +n1;
+;		string in buffer has length n2;
+;		place cursor at n3;
+;		non-editable left margin n4;
 ;		leaves c-addr and length +n5
 
 		COLON EDIT,edit
@@ -3231,7 +3231,7 @@ edit_backspace:	call docol	; --
 		.dw doret
 
 ; ACCEPT	c-addr +n1 -- +n2
-;		accept user input into buffer c-addr +n1
+;		accept user input into buffer c-addr +n1;
 ;		leaves length +n2
 ;
 ;    : ACCEPT 0 0 0 EDIT NIP ;
@@ -3296,7 +3296,7 @@ edit_backspace:	call docol	; --
 .endif
 
 ; REFILL	-- flag
-;		attempt to refill the input buffer
+;		attempt to refill the input buffer;
 ;		leaves false when end of input
 
 		COLON REFILL,refill
@@ -3334,7 +3334,7 @@ edit_backspace:	call docol	; --
 		.dw doret
 
 ; PARSE-WORD	char "<chars>ccc<char>" -- c-addr u
-;		parse char-delimited word
+;		parse char-delimited word;
 ;		may throw -18 "parsed string overflow"
 ;
 ;    : PARSE-WORD
@@ -3348,8 +3348,8 @@ edit_backspace:	call docol	; --
 1$:		.dw doret
 
 ; CHECK-NAME	c-addr u -- c-addr u
-;		check if name is valid
-;		may throw -16 "attempt to use a zero-length string as a name"
+;		check if name is valid;
+;		may throw -16 "attempt to use a zero-length string as a name";
 ;		may throw -19 "definition name too long"
 ;
 ;    : CHECK-NAME
@@ -3364,7 +3364,7 @@ edit_backspace:	call docol	; --
 2$:		.dw doret
 
 ; PARSE-NAME	"<spaces>name<space>" -- c-addr u
-;		parse space-delimited name
+;		parse space-delimited name;
 ;		check if name length is valid
 ;
 ;    : PARSE-NAME BL PARSE-WORD CHECK-NAME ;
@@ -3391,7 +3391,7 @@ edit_backspace:	call docol	; --
 .endif
 
 ; (		"ccc<paren>" --
-;		start a comment block
+;		start a comment block;
 ;		parse and skip input up to the closing )
 ;
 ;    : (
@@ -3424,7 +3424,7 @@ edit_backspace:	call docol	; --
 		.dw doret
 
 ; \		"ccc<eol>" --
-;		start a comment line
+;		start a comment line;
 ;		parse and skip input up to the end of line
 ;
 ;    : \ $A PARSE 2SROP ;
@@ -3455,7 +3455,7 @@ edit_backspace:	call docol	; --
 		.dw doret
 
 ; >DIGIT	char -- n
-;		convert char digit to numeric digit when within BASE
+;		convert char digit to numeric digit when within BASE;
 ;		leaves -1 if char is invalid
 
 		CODE >DIGIT,todigit
@@ -3481,8 +3481,8 @@ edit_backspace:	call docol	; --
 		JP_NEXT			; continue
 
 ; >NUMBER	ud1 c-addr1 u1 -- ud2 c-addr2 u2
-;		convert string to number
-;		updates accumulated double ud1 to ud2
+;		convert string to number;
+;		updates accumulated double ud1 to ud2;
 ;		leaves string with the remaining unconvertable chars or empty
 ;
 ;    : >NUMBER
@@ -3523,8 +3523,8 @@ edit_backspace:	call docol	; --
 		.dw 0
 
 ; >DOUBLE	c-addr u -- d true | false
-;		convert string to signed double
-;		leaves true if string is converted
+;		convert string to signed double;
+;		leaves true if string is converted;
 ;		leaves false if string is unconvertable
 
 		COLON >DOUBLE,todouble
@@ -3579,7 +3579,7 @@ edit_backspace:	call docol	; --
 .if FULL
 
 ;+ CHAR		"<spaces>name<space>" -- char
-;		parse char
+;		parse char;
 ;		note that the syntax 'char is preferred
 ;
 ;    : CHAR PARSE-NAME DROP C@ ;
@@ -3617,7 +3617,7 @@ edit_backspace:	call docol	; --
 		.dw doret
 
 ; >NAME		xt -- nt
-;		convert execution token (cfa) to name token (lfa)
+;		convert execution token (cfa) to name token (lfa);
 ;		may throw -24 "invalid numeric argument"
 
 		CODE >NAME,toname
@@ -3662,8 +3662,8 @@ edit_backspace:	call docol	; --
 		jp twoplus		; set de+3->de new TOS and continue
 
 ; FIND-WORD	c-addr u -- c-addr 0 | xt 1 | xt -1
-;		search dictionary for matching word
-;		leaves execution token and 1=immediate or -1=not immediate
+;		search dictionary for matching word;
+;		leaves execution token and 1=immediate or -1=not immediate;
 ;		leaves c-addr and 0 when not found
 
 		CODE FIND-WORD,findword
@@ -3730,7 +3730,7 @@ edit_backspace:	call docol	; --
 		jp zero_next		; set new TOS to 0
 
 ; '		"<spaces>name<space>" -- xt
-;		parse name and get execution token
+;		parse name and get execution token;
 ;		may throw -13 "undefined word"
 ;
 ;    : ' PARSE-NAME FIND-WORD 0= IF -13 THROW THEN ;
@@ -3744,7 +3744,7 @@ edit_backspace:	call docol	; --
 .if FULL
 
 ;+ FIND		c-addr -- c-addr 0 | xt 1 | xt -1
-;		search dictionary for counted string
+;		search dictionary for counted string;
 ;		see FIND-WORD
 
 		COLON FIND,find
@@ -3787,8 +3787,8 @@ edit_backspace:	call docol	; --
 ;-------------------------------------------------------------------------------
 
 ; HERE		-- addr
-;		address of free memory after the dictionary
-;		new definitions are added here
+;		address of free memory after the dictionary;
+;		new definitions are added here;
 ;		note that numeric output words use HERE for conversion
 
 		CONSTANT HERE,here
@@ -3803,8 +3803,8 @@ edit_backspace:	call docol	; --
 		.dw forth
 
 ; STATE		-- addr
-;		compilation state
-;		@ leaves TRUE when compiling
+;		compilation state;
+;		@ leaves TRUE when compiling;
 ;		@ leaves FALSE when interpreting
 ;
 ;    VARIABLE STATE
@@ -3868,7 +3868,7 @@ store_state:	ld (state+3),hl		; hl->STATE
 		.dw doret
 
 ; ?COMP		--
-;		check if compiling
+;		check if compiling;
 ;		may throw -14 "interpreting a compile-only word"
 
 		CODE ?COMP,qcomp
@@ -3882,8 +3882,8 @@ throw_a:	push de			; Save TOS
 		jp throw		; THROW
 
 ; ?SYS		-- ; C: x --
-;		check if compiled control structure matches x
-;		may throw -14 "interpreting a compile-only word"
+;		check if compiled control structure matches x;
+;		may throw -14 "interpreting a compile-only word";
 ;		may throw -22 "control structure mismatch"
 
 		COLON ?SYS,qsys
@@ -3907,8 +3907,8 @@ throw_a:	push de			; Save TOS
 		JP_NEXT			; continue
 
 ; ALLOT		n --
-;		allocate n bytes from HERE in the dictionary
-;		undo the last ALLOT with negative n
+;		allocate n bytes from HERE in the dictionary;
+;		undo the last ALLOT with negative n;
 ;		may throw -8 "dictionary overflow"
 
 		CODE ALLOT,allot
@@ -3962,7 +3962,7 @@ comma_de:	ld (hl),e		;
 		.dw doret
 
 ; NFA,		"<spaces>name<space>" --
-;		parse name and append dictionary entry with name
+;		parse name and append dictionary entry with name;
 ;		set LASTXT to HERE
 ;
 ;    : NFA, PARSE-NAME HERE CURRENT @ , CURRENT ! DUP C, HERE SWAP DUP ALLOT CMOVE HERE TO LASTXT ;
@@ -3987,8 +3987,8 @@ comma_de:	ld (hl),e		;
 		jr comma_de		; append addr, check and set hl->HERE
 
 ; CFA:,		-- addr colon_sys
-;		append cfa colon definition to dictionary
-;		make CONTEXT the CURRENT vocabulary
+;		append cfa colon definition to dictionary;
+;		make CONTEXT the CURRENT vocabulary;
 ;		start compiling
 ;
 ;    : CFA:, ] HERE colon_sys ['] (:) CFA, CURRENT TO CONTEXT ;
@@ -4002,11 +4002,11 @@ comma_de:	ld (hl),e		;
 		.dw doret
 
 ; POSTPONE	"<spaces>name<space>" --
-;		postpone compile action of name
-;		if name is immediate, then compile name instead of executing it
-;		otherwise compile name into the current colon definition
-;		can be used to create macros, e.g. : TRUE POSTPONE -1 ; IMMEDIATE
-;		may throw -13 "undefined word"
+;		postpone compile action of name;
+;		if name is immediate, then compile name instead of executing it;
+;		otherwise compile name into the current colon definition;
+;		can be used to create macros, e.g. : TRUE POSTPONE -1 ; IMMEDIATE;
+;		may throw -13 "undefined word";
 ;		may throw -14 "interpreting a compile-only word"
 
 		COLON_IMM POSTPONE,postpone
@@ -4022,7 +4022,7 @@ comma_de:	ld (hl),e		;
 .if FULL
 
 ;+ BUFFER:	n "<spaces>name<space>" -- ; -- addr
-;		define buffer with n bytes
+;		define buffer with n bytes;
 ;		executing name leaves address of n bytes
 ;
 ;    : BUFFER: CREATE ALLOT ;
@@ -4033,7 +4033,7 @@ comma_de:	ld (hl),e		;
 		.dw doret
 
 ;+ :NONAME	-- xt
-;		colon definition without name
+;		colon definition without name;
 ;		leaves execution token of definition
 
 		COLON ^|:NONAME|,noname
@@ -4055,8 +4055,8 @@ comma_de:	ld (hl),e		;
 		.dw doret
 
 ; ;		-- ; C: addr colon_sys --
-;		end colon definition and stop compiling
-;		may throw -14 "interpreting a compile-only word"
+;		end colon definition and stop compiling;
+;		may throw -14 "interpreting a compile-only word";
 ;		may throw -22 "control structure mismatch"
 ;
 ;    : ; ?COMP colon_sys <> IF -22 THROW THEN DROP POSTPONE (;) REVEAL [ ; IMMEDIATE
@@ -4080,7 +4080,7 @@ comma_de:	ld (hl),e		;
 		.dw doret
 
 ; CREATE	"<spaces>name<space>" -- ; -- addr
-;		create name
+;		create name;
 ;		executing name leaves address (HERE addr after CREATE)
 ;
 ;    : NFA, ['] (VAR) CFA, ;
@@ -4102,7 +4102,7 @@ comma_de:	ld (hl),e		;
 		.dw doret
 
 ; VARIABLE	"<spaces>name<space>" -- ; -- addr
-;		define a variable
+;		define a variable;
 ;		executing name leaves address of value (initialized to zero)
 ;
 ;    : VARIABLE CREATE 0 , ;
@@ -4113,7 +4113,7 @@ comma_de:	ld (hl),e		;
 		.dw doret
 
 ; 2VARIABLE	"<spaces>name<space>" -- ; -- addr
-;		define a double variable
+;		define a double variable;
 ;		executing name leaves address of double value (initialized to zero)
 ;
 ;    : 2VARIABLE CREATE 0 0 2, ;
@@ -4124,7 +4124,7 @@ comma_de:	ld (hl),e		;
 		.dw doret
 
 ; CONSTANT	x "<spaces>name<space>" -- ; -- x
-;		define a constant
+;		define a constant;
 ;		executing name leaves x
 ;
 ;    : CONSTANT NFA, ['] (CON) CFA, , ;
@@ -4137,7 +4137,7 @@ comma_de:	ld (hl),e		;
 		.dw doret
 
 ; 2CONSTANT	x1 x2 "<spaces>name<space>" -- ; -- x1 x2
-;		define a double constant
+;		define a double constant;
 ;		executing name leaves x1 x2
 ;
 ;    : 2CONSTANT NFA, ['] (2CON) CFA, 2, ;
@@ -4150,7 +4150,7 @@ comma_de:	ld (hl),e		;
 		.dw doret
 
 ; VALUE		x "<spaces>name<space>" -- ; -- x
-;		define a value
+;		define a value;
 ;		executing name leaves x
 ;
 ;    : VALUE NFA, ['] (VAL) CFA, , ;
@@ -4162,7 +4162,7 @@ comma_de:	ld (hl),e		;
 		.dw doret
 
 ; 2VALUE	dx "<spaces>name<space>" -- ; -- dx
-;		define a double value
+;		define a double value;
 ;		executing name leaves dx
 ;
 ;    : 2VALUE NFA, ['] (2VAL) CFA, 2, ;
@@ -4174,7 +4174,7 @@ comma_de:	ld (hl),e		;
 		.dw doret
 
 ; TO		"<spaces>name<space>" -- ; x --
-;		assign value name
+;		assign value name;
 ;		may throw -32 "invalid name argument"
 ;
 ;    : TO
@@ -4223,7 +4223,7 @@ comma_de:	ld (hl),e		;
 		.dw doret
 
 ; +TO		"<spaces>name<space>" -- ; n --
-;		increment value name
+;		increment value name;
 ;		may throw -32 "invalid name argument"
 ;
 ;    : +TO
@@ -4297,7 +4297,7 @@ comma_de:	ld (hl),e		;
 		jp fetch		; @
 
 ; IS		xt "<spaces>name<space>" --
-;		assign execution token to deferred name
+;		assign execution token to deferred name;
 ;		may throw -32 "invalid name argument"
 ;
 ;    : IS
@@ -4326,7 +4326,7 @@ comma_de:	ld (hl),e		;
 		.dw doret
 
 ; ACTION-OF	"<spaces>name<space>" -- xt
-;		fetch execution token of deferred name
+;		fetch execution token of deferred name;
 ;		may throw -32 "invalid name argument"
 ;
 ;    : ACTION-OF
@@ -4377,7 +4377,7 @@ comma_de:	ld (hl),e		;
 		.dw doret
 
 ; SLITERAL	c-addr u -- ; -- c-addr u
-;		compile a string literal
+;		compile a string literal;
 ;		max literal string length is 255
 ;
 ;    : SLITERAL
@@ -4435,7 +4435,7 @@ comma_de:	ld (hl),e		;
 .if FULL
 
 ;+ C"		"ccc<quote>" -- ; -- c-addr
-;		leave counted string "ccc" (compiled)
+;		leave counted string "ccc" (compiled);
 ;		may throw -18 "parsed string overflow"
 ;
 ;    : C" SLITERAL POSTPONE DROP POSTPONE 1- ;
@@ -4503,8 +4503,8 @@ xt_is_hl:	ex de,hl		; hl->de, xt->hl
 		jr xt_is_hl		; set new TOS to TRUE if xt is a marker
 
 ;+ MARKER	"<spaces>name<space>" -- ; --
-;		define a dictionary marker
-;		executing name deletes marker and all definitions made after
+;		define a dictionary marker;
+;		executing name deletes marker and all definitions made after;
 ;		beware of vocabulary definitions crossings
 
 		COLON MARKER,marker
@@ -4524,8 +4524,8 @@ marker_does:	call dodoes
 		.dw doret
 
 ;+ ANEW		"<spaces>name<space>" -- ; --
-;		define a dictionary marker
-;		deletes previously defined name and all following definitions
+;		define a dictionary marker;
+;		deletes previously defined name and all following definitions;
 ;		beware of vocabulary definitions crossings
 
 		COLON ANEW,anew
@@ -4557,8 +4557,8 @@ marker_does:	call dodoes
 		.dw end
 
 ; FORGET	"<spaces>name<space>" --
-;		delete name and all following definitions
-;		beware of vocabulary definitions crossings
+;		delete name and all following definitions;
+;		beware of vocabulary definitions crossings;
 ;		may throw -15 "invalid FORGET"
 
 		COLON FORGET,forget
@@ -4582,7 +4582,7 @@ marker_does:	call dodoes
 ;-------------------------------------------------------------------------------
 
 ; [']		"<spaces>name<space>" -- ; -- xt
-;		compile xt of name as literal
+;		compile xt of name as literal;
 ;		may throw -14 "interpreting a compile-only word"
 ;
 ;    : ['] ?COMP ' LITERAL ; IMMEDIATE
@@ -4595,8 +4595,8 @@ marker_does:	call dodoes
 .if FULL
 
 ;+ [CHAR]	"<spaces>char" -- ; -- char
-;		compile char as literal
-;		note that the syntax 'char is preferred
+;		compile char as literal;
+;		note that the syntax 'char is preferred;
 ;		may throw -14 "interpreting a compile-only word"
 ;
 ;    : [CHAR] ?COMP CHAR LITERAL ; IMMEDIATE
@@ -4607,8 +4607,8 @@ marker_does:	call dodoes
 		.dw doret
 
 ;+ [COMPILE]	"<space>name<space>" -- ; ... -- ...
-;		compile name
-;		note that POSTPONE is preferred
+;		compile name;
+;		note that POSTPONE is preferred;
 ;		may throw -14 "interpreting a compile-only word"
 ;
 ;    : [COMPILE] ?COMP ' COMPILE, ; IMMEDIATE
@@ -4627,7 +4627,7 @@ marker_does:	call dodoes
 ;-------------------------------------------------------------------------------
 
 ; RECURSE	... -- ...
-;		recursively call the currently defined word
+;		recursively call the currently defined word;
 ;		may throw -14 "interpreting a compile-only word"
 ;
 ;    : RECURSE ?COMP LASTXT COMPILE, ; IMMEDIATE
@@ -4638,8 +4638,8 @@ marker_does:	call dodoes
 		.dw doret
 
 ; ?STACK	--
-;		check parameter stack bounds
-;		may throw -3 "stack overflow"
+;		check parameter stack bounds;
+;		may throw -3 "stack overflow";
 ;		may throw -4 "stack underflow"
 
 		CODE ?STACK,qstack
@@ -4656,7 +4656,7 @@ marker_does:	call dodoes
 		jp throw_a
 
 ; (UNTIL)	x --
-;		branch if x=0
+;		branch if x=0;
 ;		runtime of the UNTIL compile-only word
 
 		CODE (UNTIL),dountil
@@ -4669,7 +4669,7 @@ marker_does:	call dodoes
 		jr qstack		; check stack and continue
 
 ; (IF)		x --
-;		branch if x=0
+;		branch if x=0;
 ;		runtime of the IF and WHILE compile-only words
 
 		CODE (IF),doif
@@ -4682,7 +4682,7 @@ skip_jp_next:	inc bc		;    7	;
 		NEXT			; continue
 
 ; (AGAIN)	--
-;		branch
+;		branch;
 ;		runtime of the AGAIN and REPEAT compile-only words
 
 		CODE (AGAIN),doagain
@@ -4694,7 +4694,7 @@ skip_jp_next:	inc bc		;    7	;
 		jr qstack		; check stack and continue
 
 ; (AHEAD)	--
-;		branch
+;		branch;
 ;		runtime of the AHEAD, ELSE and ENDOF compile-only words
 
 		CODE (AHEAD),doahead
@@ -4706,7 +4706,7 @@ skip_jp_next:	inc bc		;    7	;
 		NEXT			; continue
 
 ; (OF)		x1 x2 -- x1 or x1 x2 --
-;		branch if x1<>x2
+;		branch if x1<>x2;
 ;		runtime of the OF compile-only word
 
 		CODE (OF),doof
@@ -4721,7 +4721,7 @@ skip_jp_next:	inc bc		;    7	;
 		NEXT			; continue
 
 ; (LOOP)	--
-;		repeat loop unless loop counter crosses the limit
+;		repeat loop unless loop counter crosses the limit;
 ;		runtime of the LOOP compile-only word
 
 		CODE (LOOP),doloop
@@ -4750,7 +4750,7 @@ loop_bc_step:	ld hl,(rp)		; [rp]->hl
 		JP_NEXT			; continue
 		
 ; (+LOOP)	--
-;		increment counter and repeat loop unless counter crosses the limit
+;		increment counter and repeat loop unless counter crosses the limit;
 ;		runtime of the +LOOP compile-only word
 
 		CODE (+LOOP),doplusloop
@@ -4762,8 +4762,8 @@ loop_bc_step:	ld hl,(rp)		; [rp]->hl
 		jr loop_bc_step		; (LOOP) with step
 
 ; (?DO)		n1|u1 n2|u2 --
-;		begin loop with limit n1|u1 and initial value n2|u2
-;		skip loop when zero trip loop
+;		begin loop with limit n1|u1 and initial value n2|u2;
+;		skip loop when zero trip loop;
 ;		runtime of the ?DO compile-only word
 
 		CODE (?DO),doqdo
@@ -4777,8 +4777,8 @@ loop_bc_step:	ld hl,(rp)		; [rp]->hl
 		jr doahead		; AHEAD
 
 ; (DO)		n1|u1 n2|u2 --
-;		begin loop with limit n1|u1 and initial value n2|u2
-;		loop at least once
+;		begin loop with limit n1|u1 and initial value n2|u2;
+;		loop at least once;
 ;		runtime of the DO compile-only word
 
 		CODE (DO),dodo
@@ -4814,7 +4814,7 @@ loop_bc_step:	ld hl,(rp)		; [rp]->hl
 		JP_NEXT			; continue
 
 ; (UNLOOP)	R: ... --
-;		remove loop parameters
+;		remove loop parameters;
 ;		runtime of the UNLOOP compile-only word
 
 		CODE (UNLOOP),dounloop
@@ -4827,7 +4827,7 @@ loop_bc_step:	ld hl,(rp)		; [rp]->hl
 		JP_NEXT			; continue
 
 ; (LEAVE)	--
-;		end loop by setting the loop counter to the limit
+;		end loop by setting the loop counter to the limit;
 ;		runtime of the LEAVE compile-only word
 
 		CODE (LEAVE),doleave
@@ -4844,7 +4844,7 @@ loop_bc_step:	ld hl,(rp)		; [rp]->hl
 		JP_NEXT			; continue
 
 ; AHEAD		-- ; C: -- addr orig
-;		branch ahead to THEN
+;		branch ahead to THEN;
 ;		may throw -14 "interpreting a compile-only word"
 
 		COLON_IMM AHEAD,ahead
@@ -4855,7 +4855,7 @@ loop_bc_step:	ld hl,(rp)		; [rp]->hl
 		.dw doret
 
 ; BEGIN		-- ; C: -- addr dest
-;		begin WHILE REPEAT
+;		begin WHILE REPEAT;
 ;		may throw -14 "interpreting a compile-only word"
 
 		COLON_IMM BEGIN,begin
@@ -4864,8 +4864,8 @@ loop_bc_step:	ld hl,(rp)		; [rp]->hl
 		.dw doret
 
 ; AGAIN		-- ; C: addr dest --
-;		branch back to BEGIN
-;		may throw -14 "interpreting a compile-only word"
+;		branch back to BEGIN;
+;		may throw -14 "interpreting a compile-only word";
 ;		may throw -22 "control structure mismatch"
 
 		COLON_IMM AGAIN,again
@@ -4875,8 +4875,8 @@ loop_bc_step:	ld hl,(rp)		; [rp]->hl
 		.dw doret
 
 ; UNTIL		x -- ; C: addr dest --
-;		branch back to BEGIN if x=0
-;		may throw -14 "interpreting a compile-only word"
+;		branch back to BEGIN if x=0;
+;		may throw -14 "interpreting a compile-only word";
 ;		may throw -22 "control structure mismatch"
 
 		COLON_IMM UNTIL,until
@@ -4886,7 +4886,7 @@ loop_bc_step:	ld hl,(rp)		; [rp]->hl
 		.dw doret
 
 ; IF		x -- ; C: -- addr orig
-;		branch to closest ELSE or THEN if x=0
+;		branch to closest ELSE or THEN if x=0;
 ;		may throw -14 "interpreting a compile-only word"
 
 		COLON_IMM IF,if
@@ -4897,8 +4897,8 @@ loop_bc_step:	ld hl,(rp)		; [rp]->hl
 		.dw doret
 
 ; THEN		-- ; C: addr orig --
-;		close AHEAD, IF, ELSE
-;		may throw -14 "interpreting a compile-only word"
+;		close AHEAD, IF, ELSE;
+;		may throw -14 "interpreting a compile-only word";
 ;		may throw -22 "control structure mismatch"
 
 		COLON_IMM THEN,then
@@ -4907,8 +4907,8 @@ loop_bc_step:	ld hl,(rp)		; [rp]->hl
 		.dw doret
 
 ; ELSE		-- ; C: addr orig -- addr orig
-;		close IF and branch to THEN
-;		may throw -14 "interpreting a compile-only word"
+;		close IF and branch to THEN;
+;		may throw -14 "interpreting a compile-only word";
 ;		may throw -22 "control structure mismatch"
 
 		COLON_IMM ELSE,else
@@ -4918,7 +4918,7 @@ loop_bc_step:	ld hl,(rp)		; [rp]->hl
 		.dw doret
 
 ; WHILE		x -- ; C: addr sys -- addr orig addr sys
-;		branch to exit REPEAT if x=0
+;		branch to exit REPEAT if x=0;
 ;		may throw -14 "interpreting a compile-only word"
 
 		COLON_IMM WHILE,while
@@ -4927,8 +4927,8 @@ loop_bc_step:	ld hl,(rp)		; [rp]->hl
 		.dw doret
 
 ; REPEAT	-- ; C: addr orig addr dest --
-;		branch back to BEGIN after WHILE
-;		may throw -14 "interpreting a compile-only word"
+;		branch back to BEGIN after WHILE;
+;		may throw -14 "interpreting a compile-only word";
 ;		may throw -22 "control structure mismatch"
 
 		COLON_IMM REPEAT,repeat
@@ -4937,8 +4937,8 @@ loop_bc_step:	ld hl,(rp)		; [rp]->hl
 		.dw doret
 
 ; DO		n1|u1 n2|u2 -- ; C: -- addr do_sys
-;		begin loop from initial value n2|u2 to the limit n1|u1
-;		loop at least once
+;		begin loop from initial value n2|u2 to the limit n1|u1;
+;		loop at least once;
 ;		may throw -14 "interpreting a compile-only word"
 
 		COLON_IMM DO,do
@@ -4950,8 +4950,8 @@ loop_bc_step:	ld hl,(rp)		; [rp]->hl
 		.dw doret
 
 ; ?DO		n1|u1 n2|u2 -- ; C: -- addr do_sys
-;		begin loop from initial value n2|u2 to the limit n1|u1
-;		skip loop when zero trip loop
+;		begin loop from initial value n2|u2 to the limit n1|u1;
+;		skip loop when zero trip loop;
 ;		may throw -14 "interpreting a compile-only word"
 
 		COLON_IMM ?DO,qdo
@@ -4962,8 +4962,8 @@ loop_bc_step:	ld hl,(rp)		; [rp]->hl
 		.dw doret
 
 ; LOOP		-- ; C: addr do_sys --
-;		repeat loop unless loop counter crosses the limit
-;		may throw -14 "interpreting a compile-only word"
+;		repeat loop unless loop counter crosses the limit;
+;		may throw -14 "interpreting a compile-only word";
 ;		may throw -22 "control structure mismatch"
 
 		COLON_IMM LOOP,loop
@@ -4974,8 +4974,8 @@ loop_bc_step:	ld hl,(rp)		; [rp]->hl
 		.dw doret
 
 ; +LOOP		n|u -- ; C: addr do_sys --
-;		increment counter and repeat loop unless counter crosses the limit
-;		may throw -14 "interpreting a compile-only word"
+;		increment counter and repeat loop unless counter crosses the limit;
+;		may throw -14 "interpreting a compile-only word";
 ;		may throw -22 "control structure mismatch"
 
 		COLON_IMM +LOOP,plusloop
@@ -4986,7 +4986,7 @@ loop_bc_step:	ld hl,(rp)		; [rp]->hl
 		.dw doret
 
 ; UNLOOP	--
-;		remove loop parameters
+;		remove loop parameters;
 ;		may throw -14 "interpreting a compile-only word"
 
 		COLON_IMM UNLOOP,unloop
@@ -4995,7 +4995,7 @@ loop_bc_step:	ld hl,(rp)		; [rp]->hl
 		.dw doret
 
 ; LEAVE		--
-;		end loop by setting the loop counter to the limit
+;		end loop by setting the loop counter to the limit;
 ;		may throw -14 "interpreting a compile-only word"
 
 		COLON_IMM LEAVE,leave
@@ -5048,7 +5048,7 @@ loop_counter:	ld e,(hl)		;
 .endif
 
 ; CASE		x -- ; C: -- 0
-;		begin CASE ENDCASE switch
+;		begin CASE ENDCASE switch;
 ;		may throw -14 "interpreting a compile-only word"
 
 		COLON_IMM CASE,case
@@ -5057,8 +5057,8 @@ loop_counter:	ld e,(hl)		;
 		.dw doret
 
 ; OF		x1 x2 -- x1 or x1 x2 -- ; C: n1 -- orig n2
-;		take CASE arm if x1=x2
-;		otherwise branch to next OF
+;		take CASE arm if x1=x2;
+;		otherwise branch to next OF;
 ;		may throw -14 "interpreting a compile-only word"
 
 		COLON_IMM OF,of
@@ -5071,8 +5071,8 @@ loop_counter:	ld e,(hl)		;
 		.dw doret
 
 ; ENDOF		-- ; C: n -- orig n
-;		branch to ENDCASE
-;		may throw -14 "interpreting a compile-only word"
+;		branch to ENDCASE;
+;		may throw -14 "interpreting a compile-only word";
 ;		may throw -22 "control structure mismatch"
 
 		COLON_IMM ENDOF,endof
@@ -5083,8 +5083,8 @@ loop_counter:	ld e,(hl)		;
 		.dw doret
 
 ; ENDCASE	x -- ; C: n*orig n --
-;		close CASE
-;		may throw -14 "interpreting a compile-only word"
+;		close CASE;
+;		may throw -14 "interpreting a compile-only word";
 ;		may throw -22 "control structure mismatch"
 
 		COLON_IMM ENDCASE,endcase
@@ -5175,8 +5175,8 @@ loop_counter:	ld e,(hl)		;
 2$:		.dw doret
 
 ; QUIT		-- ; R: i*x --
-;		throw -56 "QUIT"
-;		no exception error is displayed
+;		throw -56 "QUIT";
+;		no exception error is displayed;
 ;		unlike ABORT, the parameter stack is not cleared
 ;
 ;    : QUIT -56 THROW ;
@@ -5186,8 +5186,8 @@ loop_counter:	ld e,(hl)		;
 		jp throw_a		; throw -56 "QUIT"
 
 ; (ABORT")	flag c-addr u -- ; R: i*x --
-;		if flag then abort with string message unless an active catch is present
-;		runtime of the ABORT" compile-only word
+;		if flag then abort with string message unless an active catch is present;
+;		runtime of the ABORT" compile-only word;
 ;		throw -2 "ABORT""
 ;
 ;    : (ABORT")
@@ -5212,9 +5212,9 @@ loop_counter:	ld e,(hl)		;
 		.dw doret
 
 ; ABORT"	flag -- ; C: "ccc<quote>" -- ; R: ... --
-;		if flag then abort with string message unless an active catch is present
-;		throw -2 "ABORT""
-;		clears the parameter stack unless caught with CATCH
+;		if flag then abort with string message unless an active catch is present;
+;		throw -2 "ABORT"";
+;		clears the parameter stack unless caught with CATCH;
 ;		may throw -14 "interpreting a compile-only word"
 ;
 ;    : ABORT" ?COMP S" POSTPONE (ABORT") ; IMMEDIATE
@@ -5226,7 +5226,7 @@ loop_counter:	ld e,(hl)		;
 		.dw doret
 
 ; ABORT		-- ; R: i*x --
-;		throw -1 "ABORT"
+;		throw -1 "ABORT";
 ;		clears the parameter stack unless caught with CATCH
 ;
 ;    : ABORT -1 THROW ;
@@ -5242,8 +5242,8 @@ loop_counter:	ld e,(hl)		;
 ;-------------------------------------------------------------------------------
 
 ; ERROR		n --
-;		display exception n at the offending location in the input
-;		n=-1 ABORT and n=-2 ABORT" clear the stack
+;		display exception n at the offending location in the input;
+;		n=-1 ABORT and n=-2 ABORT" clear the stack;
 ;		n=-56 QUIT stays silent
 
 		COLON ERROR,error
@@ -5271,8 +5271,8 @@ loop_counter:	ld e,(hl)		;
 		.dw doret
 
 ; NUMBER	c-addr u -- n|u|d|ud
-;		convert string to number
-;		value DBL is set to -1 when the number is a double
+;		convert string to number;
+;		value DBL is set to -1 when the number is a double;
 ;		may throw -13 "undefined word" when string is not numeric
 
 		COLON NUMBER,number
