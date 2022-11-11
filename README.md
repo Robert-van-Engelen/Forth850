@@ -12,7 +12,8 @@ heavily documented.
 
 The [n-queens benchmark](https://www.hpmuseum.org/cgi-sys/cgiwrap/hpmuseum/articles.cgi?read=700)
 is solved in 0.865 seconds, the fastest Forth implementation of the benchmarks.
-The PC-G850(V)(S) Z80 CPU runs at 8MHz.
+Forth850 n-queens runs 5 times faster than the C n-queens benchmark on the
+PC-G850VS.
 
 Forth850 includes stack under/overflow checks, dictionary overflow checks and
 can be interrupted by pressing BREAK.
