@@ -773,7 +773,7 @@ true_next	.equ mone_next		; alias
 ; DEPTH		-- u
 ;		parameter stack depth
 ;
-;    : DEPTH SP0 @ SP@ - 2- 2/ ;
+;    : DEPTH sp0 @ SP@ - 2- 2/ ;
 
 		CODE DEPTH,depth
 		push de			; save TOS
@@ -787,7 +787,7 @@ true_next	.equ mone_next		; alias
 ; CLEAR		... --
 ;		purge parameter stack
 ;
-;    : CLEAR SP0 @ SP! ;
+;    : CLEAR sp0 @ SP! ;
 
 		CODE CLEAR,clear
 		ld sp,(sp0)		; [sp0]->sp
@@ -796,7 +796,7 @@ true_next	.equ mone_next		; alias
 ; .S		--
 ;		display parameter stack
 ;
-;    : .S DEPTH 0 ?DO SP0 @ I 2+ CELLS - ? LOOP ;
+;    : .S DEPTH 0 ?DO sp0 @ I 2+ CELLS - ? LOOP ;
 
 		COLON .S,dots
 		.dw depth,zero,doqdo,2$
@@ -949,7 +949,7 @@ true_next	.equ mone_next		; alias
 		pop de			; restore TOS
 		jr tor			; >R
 
-; 2R>		R: x1 x2 -- ; -- x1 x2 
+; 2R>		R: x1 x2 -- ; -- x1 x2
 ;		move double cell from the return stack
 
 		CODE 2R>,tworfrom
@@ -1373,7 +1373,7 @@ store_a_hl:	ld (hl),a		;
 2$:		sbc hl,bc	; 15	;     hl-bc->hl
 		jr nc,3$	; 12/ 7 ;     if cf=1 then
 		add hl,bc	;    11	;       hl+bc->hl to undo sbc, sets cf
-3$:		rl e		;  8	; 
+3$:		rl e		;  8	;
 		rl d		;  8	;   de<<1+cf->de with inverse cf we'll need
 		dec a		;  4	;
 		jp nz,1$	; 10(88); until --a=0
@@ -1727,7 +1727,7 @@ true_if_c_next:	sbc a			; -cf->a
 
 		CODE 0=,zeroequal
 		ld a,e			;
-		or d			; 
+		or d			;
 		sub 1			; cf=1 if x=0
 		jr true_if_c_next	; set new TOS to TRUE if x=0 else FALSE
 
@@ -2398,7 +2398,7 @@ cells		.equ twostar		; alias
 		or a			; 0->cf not found
 ;		find char in string
 		cpir		; 21/16	; repeat until a=[hl++] or --bc=0
-		jr nz,2$		; if match then 
+		jr nz,2$		; if match then
 1$:		ccf			;   complement to correct cpi bc--
 2$:		ex de,hl		; u1->hl
 		sbc hl,bc		; u1-bc-cf->hl
@@ -2798,7 +2798,7 @@ set_base:	ld (base+3),hl		; 10->[base]
 		VALUE HP,hp
 		.dw 0
 
-; <#		-- 
+; <#		--
 ;		begin pictured numeric output
 ;
 ;    : <# HERE h_size + TO HP ;
@@ -3131,8 +3131,8 @@ set_base:	ld (base+3),hl		; 10->[base]
 ;		RCM     =$19
 ;		M+      =$1a
 ;		M-      =$1b
-;		right   =$1c          
-;		left    =$1d          
+;		right   =$1c
+;		left    =$1d
 ;		up      =$1e
 ;		down    =$1f;
 ;		calc keys and BASIC keys produce BASIC tokens as key code $fe:
@@ -3987,7 +3987,7 @@ comma_de:	ld (hl),e		;
 		CODE ^|CFA,|,cfacomma
 		ld hl,(here+3)		; HERE->hl
 		ld (hl),0xcd		; Z80 'call nn' opcode
-		inc hl			; 0xcd->[hl++] 
+		inc hl			; 0xcd->[hl++]
 		jr comma_de		; append addr, check and set hl->HERE
 
 ; CFA:,		-- addr colon_sys
@@ -5013,7 +5013,7 @@ loop_bc_step:	ld hl,(rp)		; [rp]->hl
 		CODE I,i
 		push de			; save TOS
 		ld hl,(rp)		; [rp]->hl
-loop_counter:	ld e,(hl)		; 
+loop_counter:	ld e,(hl)		;
 		inc hl			;
 		ld d,(hl)		;
 		inc hl			; [rp]->de with loop counter

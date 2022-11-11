@@ -6,8 +6,9 @@ PC-G850(V)(S) pocket computer.
 
 I've implemented Forth850 as efficiently as possible in direct threaded code
 (DTC) with brand new Z80 code written from scratch.  See the
-[technical implementation sections](#Implementation).  The
-[Forth850 source code](forth850.asm) is included and heavily documented.
+[technical implementation sections](#Implementation) why Forth850 is fast for a
+DTC implementation.  The [Forth850 source code](forth850.asm) is included and
+heavily documented.
 
 The [n-queens benchmark](https://www.hpmuseum.org/cgi-sys/cgiwrap/hpmuseum/articles.cgi?read=700)
 is solved in 0.865 seconds, the fastest Forth implementation of the benchmarks.
@@ -76,8 +77,8 @@ words with an explanation is given below.
 ## Forth850 words
 
 List of Forth850 built-in words.  Reference implementations in Forth are
-included when applicable, although many words are implemented in code in
-Forth850 rather than in Forth for speed.
+included when applicable, although many words are implemented in Z80 code for
+speed rather than in Forth.
 
 ### (:)
 _-- ; R: -- ip_
@@ -258,19 +259,19 @@ copy double 2OS over double TOS
 _-- u_
 parameter stack depth
 
-    : DEPTH SP0 @ SP@ - 2- 2/ ;
+    : DEPTH sp0 @ SP@ - 2- 2/ ;
 
 ### CLEAR
 _... --_
 purge parameter stack
 
-    : CLEAR SP0 @ SP! ;
+    : CLEAR sp0 @ SP! ;
 
 ### .S
 _--_
 display parameter stack
 
-    : .S DEPTH 0 ?DO SP0 @ I 2+ CELLS - ? LOOP ;
+    : .S DEPTH 0 ?DO sp0 @ I 2+ CELLS - ? LOOP ;
 
 ### SP@
 _-- addr_
@@ -305,7 +306,7 @@ _x1 x2 -- ; R: -- x1 x2_
 move double TOS to the return stack
 
 ### 2R>
-_R: x1 x2 -- ; -- x1 x2 _
+_R: x1 x2 -- ; -- x1 x2_
 move double cell from the return stack
 
 ### 2R@
