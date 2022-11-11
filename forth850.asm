@@ -3808,8 +3808,8 @@ edit_backspace:	call docol	; --
 
 ; STATE		-- addr
 ;		compilation state;
-;		@ leaves TRUE when compiling;
-;		@ leaves FALSE when interpreting
+;		STATE @ leaves TRUE when compiling;
+;		STATE @ leaves FALSE when interpreting
 ;
 ;    VARIABLE STATE
 
@@ -3911,7 +3911,7 @@ throw_a:	push de			; Save TOS
 		JP_NEXT			; continue
 
 ; ALLOT		n --
-;		allocate n bytes from HERE in the dictionary;
+;		allocate n bytes starting from HERE in the dictionary;
 ;		undo the last ALLOT with negative n;
 ;		may throw -8 "dictionary overflow"
 
@@ -3929,7 +3929,8 @@ allot_check:	ld de,(top)		; [top]->de
 		JP_NEXT			; continue
 
 ; COMPILE,	xt --
-;		append execution token to dictionary
+;		append execution token to dictionary;
+;		may throw -8 "dictionary overflow"
 ;
 ;    : COMPILE, , ;
 
@@ -3937,7 +3938,8 @@ allot_check:	ld de,(top)		; [top]->de
 		jr comma		; same as ,
 
 ; ,		x --
-;		append cell to dictionary
+;		append cell to dictionary;
+;		may throw -8 "dictionary overflow"
 
 		CODE ^|,|,comma
 		ld hl,(here+3)		; HERE->hl
@@ -3948,7 +3950,8 @@ comma_de:	ld (hl),e		;
 		jr allot_check		; check and set hl->HERE
 
 ; C,		char --
-;		append char to dictionary
+;		append char to dictionary;
+;		may throw -8 "dictionary overflow"
 
 		CODE ^|C,|,ccomma
 		ld hl,(here+3)		; HERE->hl
@@ -3957,7 +3960,8 @@ comma_de:	ld (hl),e		;
 		jr allot_check		; check and set hl->HERE
 
 ; 2,		x1 x2 --
-;		append double cell to dictionary
+;		append double cell to dictionary;
+;		may throw -8 "dictionary overflow"
 ;
 ;    : 2, , , ;
 
@@ -3967,7 +3971,8 @@ comma_de:	ld (hl),e		;
 
 ; NFA,		"<spaces>name<space>" --
 ;		parse name and append dictionary entry with name;
-;		set LASTXT to HERE
+;		set LASTXT to HERE;
+;		may throw -8 "dictionary overflow"
 ;
 ;    : NFA, PARSE-NAME HERE CURRENT @ , CURRENT ! DUP C, HERE SWAP DUP ALLOT CMOVE HERE TO LASTXT ;
 
@@ -3982,7 +3987,8 @@ comma_de:	ld (hl),e		;
 		.dw doret
 
 ; CFA,		addr --
-;		append cfa call addr to dictionary
+;		append cfa call addr to dictionary;
+;		may throw -8 "dictionary overflow"
 
 		CODE ^|CFA,|,cfacomma
 		ld hl,(here+3)		; HERE->hl
@@ -3993,7 +3999,8 @@ comma_de:	ld (hl),e		;
 ; CFA:,		-- addr colon_sys
 ;		append cfa colon definition to dictionary;
 ;		make CONTEXT the CURRENT vocabulary;
-;		start compiling
+;		start compiling;
+;		may throw -8 "dictionary overflow"
 ;
 ;    : CFA:, ] HERE colon_sys ['] (:) CFA, CURRENT TO CONTEXT ;
 
@@ -5221,7 +5228,7 @@ loop_counter:	ld e,(hl)		;
 ;		clears the parameter stack unless caught with CATCH;
 ;		may throw -14 "interpreting a compile-only word"
 ;
-;    : ABORT" ?COMP S" POSTPONE (ABORT") ; IMMEDIATE
+;    : ABORT" ?COMP POSTPONE S" POSTPONE (ABORT") ; IMMEDIATE
 
 		COLON_IMM ^|ABORT"|,abortquote
 		.dw qcomp

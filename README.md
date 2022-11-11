@@ -1883,7 +1883,7 @@ throw -2 "ABORT"";
 clears the parameter stack unless caught with CATCH;
 may throw -14 "interpreting a compile-only word"
 
-    : ABORT" ?COMP S" POSTPONE (ABORT") ; IMMEDIATE
+    : ABORT" ?COMP POSTPONE S" POSTPONE (ABORT") ; IMMEDIATE
 
 ### ABORT
 _-- ; R: i*x --_
