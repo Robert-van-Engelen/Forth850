@@ -14,6 +14,9 @@ The [n-queens benchmark](https://www.hpmuseum.org/cgi-sys/cgiwrap/hpmuseum/artic
 is solved in 0.865 seconds, the fastest Forth implementation of the benchmarks.
 The PC-G850(V)(S) Z80 CPU runs at 8MHz.
 
+Forth850 includes stack under/overflow checks, dictionary overflow checks and
+can be interrupted by pressing BREAK.
+
 ## Installation
 
 In RUN MODE enter `MON` to enter the Monitor, then enter `USER3FFF` to reserve
@@ -908,7 +911,7 @@ hold pointer
     0 VALUE HP
 
 ### <#
-_-- _
+_--_
 begin pictured numeric output
 
     : <# HERE h_size + TO HP ;
@@ -1039,8 +1042,8 @@ CONST   =$17
 RCM     =$19
 M+      =$1a
 M-      =$1b
-right   =$1c          
-left    =$1d          
+right   =$1c
+left    =$1d
 up      =$1e
 down    =$1f;
 calc keys and BASIC keys produce BASIC tokens as key code $fe:
@@ -1893,7 +1896,30 @@ clears the parameter stack unless caught with CATCH
 _n --_
 display exception n at the offending location in the input;
 n=-1 ABORT and n=-2 ABORT" clear the stack;
-n=-56 QUIT stays silent
+n=-56 QUIT stays silent;
+List of Forth850 errors:
+
+code | error
+---- | ---------------------------------------------------------
+-1   | ABORT
+-2   | ABORT"
+-3   | stack overflow
+-4   | stack underflow
+-8   | dictionary overflow
+-10  | division by zero
+-11  | result out of range
+-13  | undefined word
+-14  | interpreting a compile-only word
+-15  | invalid FORGET
+-16  | attempt to use zero-length string as a name
+-18  | parsed string overflow
+-19  | definition name too long
+-22  | control structure mismatch
+-24  | invalid numeric argument
+-28  | user interrupt (BREAK was pressed)
+-32  | invalid name argument (invalid TO name)
+-56  | QUIT
+-256 | execution of an uninitialized deferred word
 
 ### NUMBER
 _c-addr u -- n|u|d|ud_
