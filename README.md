@@ -71,6 +71,7 @@ space.
 - with single precision floating point words
 - ability to load Forth source code from the TEXT editor
 - serial IO to communicate via RS232 and load source code
+- sound with BEEP
 
 ## Forth850 manual
 
@@ -144,15 +145,18 @@ runtime word of a DEFER coded as call dodef
 
 ### (LIT)
 _-- x_
-fetch literal
+fetch literal;
+runtime word compiled by EVALUATE, INTERPRET and NUMBER
 
 ### (2LIT)
 _-- x1 x2_
-fetch double literal
+fetch double literal;
+runtime word compiled by EVALUATE, INTERPRET and NUMBER
 
 ### (SLIT)
 _-- c-addr u_
-fetch literal string
+fetch literal string;
+runtime word compiled by S" and ."
 
 ### 0
 _-- 0_
