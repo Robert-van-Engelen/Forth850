@@ -57,9 +57,10 @@ Forth850, you must make sure that `addr` is large enough by calculating the
     HERE #711 + HEX . DECIMAL
     23FF
 
-The specify `USER23FF` in the Monitor.  This leaves about 256 bytes free
-dictionary space minus 40 bytes for the "hold area" to run Forth850.
-The largest size is `USER75FF` which gives about 21K free dictionary space.
+In the Monitor specify `USERaddr` with the address displayed.  This leaves
+about 200 bytes free dictionary space minus 40 bytes for the "hold area" to run
+Forth850.  The largest size is `USER75FF` which gives about 21K free dictionary
+space.
 
 ## Nice to have (work in progress)
 
