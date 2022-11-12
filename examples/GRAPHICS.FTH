@@ -1,0 +1,26 @@
+\ 8x6 graphic characters
+
+DECIMAL
+
+: GREMIT
+  CREATE
+  DOES>
+    6 DRAW
+    28 EMIT \ cursor right
+;
+
+GREMIT alpha
+  %00111000 C,
+  %01000100 C,
+  %01000100 C,
+  %00111000 C,
+  %01000100 C,
+  %00000000 C,
+
+GREMIT beta
+  %11111110 C,
+  %00100001 C,
+  %01001001 C,
+  %01001001 C,
+  %00110110 C,
+  %00000000 C,
