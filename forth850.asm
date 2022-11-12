@@ -415,7 +415,7 @@ fetch_de:	ld e,(hl)	;  7	;
 
 		CODE (2VAL),dotwoval
 		pop hl		; 10	; pop hl with pfa addr saved by call dotwocon
-push_twofetch:	push de		; 11
+push_twofetch:	push de		; 11	;
 twofetch_de:	inc hl		;  6	;
 		inc hl		;  6	;
 		ld e,(hl)	;  7	;
@@ -424,7 +424,7 @@ twofetch_de:	inc hl		;  6	;
 		dec hl		;  6	;
 		dec hl		;  6	;
 		dec hl		;  6	;
-		jr push_fetch	; 31(102; set [hl]->de as new TOS and continue
+		jr push_fetch	; 31(102; save de as 2OS, set [hl]->de as new TOS and continue
 
 ; (CON)		-- x
 ;		fetch constant;
@@ -823,9 +823,9 @@ true_next	.equ mone_next		; alias
 		pop de			;
 		JP_NEXT			; continue
 
-.if FULL
+.if 0
 
-;+ N>R		n*x n -- ; R: -- n*x n
+;- N>R		n*x n -- ; R: -- n*x n
 ;		move n cells to the return stack
 
 		CODE N>R,ntor
@@ -852,7 +852,7 @@ true_next	.equ mone_next		; alias
 		pop de			; pop new TOS
 		JP_NEXT			; continue
 
-;+ NR>		R: n*x n -- ; -- n*x n
+;- NR>		R: n*x n -- ; -- n*x n
 ;		move n cells from the return stack
 
 		CODE NR>,nrfrom
@@ -1050,7 +1050,7 @@ rp:		.dw 0
 
 		CODE C@,cfetch
 		ld a,(de)		; [de]->a
-		ld e,a			;
+a_next:		ld e,a			;
 		ld d,0			; a->de
 		NEXT			; continue
 
@@ -3082,9 +3082,7 @@ set_base:	ld (base+3),hl		; 10->[base]
 		push bc			; save bc with ip
 		call INKEY		; INKEY key code, changes bc and bc'
 		pop bc			; restore bc with ip
-		ld e,a			;
-		ld d,0			; a->de with key code
-		JP_NEXT			; continue
+		jp a_next		; set a->de new TOS and continue
 
 .if FULL
 
@@ -3114,7 +3112,7 @@ set_base:	ld (base+3),hl		; 10->[base]
 
 .endif
 
-; KEY		-- char
+; GETKEY	-- char
 ;		wait and read key;
 ;		leaves ASCII char or special key code:
 ;		ON      =$05
@@ -3138,14 +3136,22 @@ set_base:	ld (base+3),hl		; 10->[base]
 ;		calc keys and BASIC keys produce BASIC tokens as key code $fe:
 ;		SIN     =$fe register B=$95 BASIC token for SIN (ignored)
 
-		CODE KEY,key
+		CODE GETKEY,getkey
 		push de			; save TOS
 		push bc			; save bc with ip
 		call GETCHR		; GETCHR ASCII key code, changes bc and bc'
 		pop bc			; restore bc with ip
-		ld e,a			;
-		ld d,0			; a->de with key code
-		JP_NEXT			; continue
+		jp a_next		; set a->de new TOS and continue
+      
+; KEY   	-- char
+;		display cursor and wait to read key;
+;		same as GETKEY, leaves ASCII char or special key code
+
+		COLON KEY,key
+		.dw one,reverse
+		.dw getkey
+		.dw one,reverse
+		.dw doret
 
 ;-------------------------------------------------------------------------------
 ;
@@ -3180,21 +3186,6 @@ edit_toxy:	call docol		; n -- x y	cursor pos n to xy
 		.dw get_edit_aty,plus
 		.dw doret
 
-edit_append:	call docol		; char -- char
-		.dw get_edit_len,get_edit_max,uless,doif,1$
-		.dw   dup,get_edit_len,edit_toxy,atxy,emit
-		.dw   dup,get_edit_buf,get_edit_len,plus,cstore
-		.dw   get_edit_len,oneplus,dup,set_edit_len,set_edit_cur
-1$:		.dw doret
-
-edit_backspace:	call docol	; --
-		.dw get_edit_len,get_edit_min,ugreater,doif,1$
-		.dw   get_edit_len,oneminus
-		.dw   dup,set_edit_len
-		.dw   dup,set_edit_cur
-		.dw   edit_toxy,atxy,space
-1$:		.dw doret
-
 ; EDIT		c-addr +n1 n2 n3 n4 -- c-addr +n5
 ;		edit buffer c-addr;
 ;		buffer size +n1;
@@ -3219,17 +3210,28 @@ edit_backspace:	call docol	; --
 		.dw   get_edit_len,edit_toxy,nip
 		.dw   dolit,win_rows-1,minus,zero,max,minus
 		.dw   set_edit_aty
-		.dw   get_edit_len,edit_toxy
-		.dw   atxy,one,reverse,key,one,reverse
+		.dw   get_edit_len,edit_toxy,atxy,key
+		; case
 		.dw   dolit,0x0d,doof,2$
+		; of ENTER
 		.dw     get_edit_buf,get_edit_len
 		.dw     doexit
 2$:		.dw   dolit,0x08,doof,3$
-		.dw     edit_backspace
+		; of BS backspace
+		.dw     get_edit_len,get_edit_min,ugreater,doif,5$
+		.dw       get_edit_len,oneminus
+		.dw       dup,set_edit_len
+		.dw       dup,set_edit_cur
+		.dw       edit_toxy,atxy,space
 		.dw     doahead,5$
+		; otherwise, append char if within $20 to $7e
 3$:		.dw   dup,bl,dolit,0x7f,within,doif,4$
-		.dw     edit_append
+		.dw     get_edit_len,get_edit_max,uless,doif,4$
+		.dw       dup,get_edit_len,edit_toxy,atxy,emit
+		.dw       dup,get_edit_buf,get_edit_len,plus,cstore
+		.dw       get_edit_len,oneplus,dup,set_edit_len,set_edit_cur
 4$:		.dw   drop
+		; endcase
 5$:		.dw doagain,1$
 		.dw doret
 
@@ -3319,7 +3321,6 @@ edit_backspace:	call docol	; --
 		.dw source
 		.dw toin,fetch,slashstring
 		.dw rot,trim,drop
-		.dw drop
 		.dw source,drop,minus,toin,store
 		.dw doret
 
@@ -3769,17 +3770,17 @@ edit_backspace:	call docol	; --
 		.dw   dup,cfetch,dolit,smudge_bits,and,doif,2$
 		.dw     drop
 		.dw   doahead,4$
-2$:		.dw	rot,swap		; -- l n nfa
+2$:		.dw     rot,swap		; -- l n nfa
 		.dw     nametostring		; -- l n c-addr u
 		.dw     rot,over,plus,oneplus	; -- l c-addr u n+u+1
 		.dw     dup,dolit,142,ugreater,doif,3$
 		.dw       drop
 		.dw       dup			; -- l c-addr u u
-		.dw       key,drop
+		.dw       getkey,drop
 		.dw       cr
 3$:		.dw     mrot			; -- l u|n+u+1 c-addr u
 		.dw     type,space
-		.dw	swap			; -- u|n+u+1 l
+		.dw     swap			; -- u|n+u+1 l
 4$:		.dw doagain,1$
 5$:		.dw drop
 		.dw doret

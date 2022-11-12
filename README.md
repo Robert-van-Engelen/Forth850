@@ -1025,7 +1025,7 @@ specify xy with AT-XY
 _-- x_
 check key, where 0x00=no key and 0x52=multiple keys
 
-### KEY
+### GETKEY
 _-- char_
 wait and read key;
 leaves ASCII char or special key code:
@@ -1251,8 +1251,8 @@ leaves the last execution token defined
 ### STATE
 _-- addr_
 compilation state;
-@ leaves TRUE when compiling;
-@ leaves FALSE when interpreting
+STATE @ leaves TRUE when compiling;
+STATE @ leaves FALSE when interpreting
 
     VARIABLE STATE
 
@@ -1305,46 +1305,53 @@ unused dictionary space
 
 ### ALLOT
 _n --_
-allocate n bytes from HERE in the dictionary;
+allocate n bytes starting from HERE in the dictionary;
 undo the last ALLOT with negative n;
 may throw -8 "dictionary overflow"
 
 ### COMPILE,
 _xt --_
-append execution token to dictionary
+append execution token to dictionary;
+may throw -8 "dictionary overflow"
 
     : COMPILE, , ;
 
 ### ,
 _x --_
-append cell to dictionary
+append cell to dictionary;
+may throw -8 "dictionary overflow"
 
 ### C,
 _char --_
-append char to dictionary
+append char to dictionary;
+may throw -8 "dictionary overflow"
 
 ### 2,
 _x1 x2 --_
-append double cell to dictionary
+append double cell to dictionary;
+may throw -8 "dictionary overflow"
 
     : 2, , , ;
 
 ### NFA,
 _"<spaces>name<space>" --_
 parse name and append dictionary entry with name;
-set LASTXT to HERE
+set LASTXT to HERE;
+may throw -8 "dictionary overflow"
 
     : NFA, PARSE-NAME HERE CURRENT @ , CURRENT ! DUP C, HERE SWAP DUP ALLOT CMOVE HERE TO LASTXT ;
 
 ### CFA,
 _addr --_
-append cfa call addr to dictionary
+append cfa call addr to dictionary;
+may throw -8 "dictionary overflow"
 
 ### CFA:,
 _-- addr colon_sys_
 append cfa colon definition to dictionary;
 make CONTEXT the CURRENT vocabulary;
-start compiling
+start compiling;
+may throw -8 "dictionary overflow"
 
     : CFA:, ] HERE colon_sys ['] (:) CFA, CURRENT TO CONTEXT ;
 
@@ -2019,14 +2026,6 @@ _xd1 xd2 xd3 -- xd2 xd3 xd1_
 rotate double cells
 
     : 2ROT 5 ROLL 5 ROLL ;
-
-### N>R
-_n*x n -- ; R: -- n*x n_
-move n cells to the return stack
-
-### NR>
-_R: n*x n -- ; -- n*x n_
-move n cells from the return stack
 
 ### ROLL
 _xu x(u+1) ... x1 x0 u -- x(u+1) ... x1 x0 xu_
