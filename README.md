@@ -18,7 +18,7 @@ PC-G850VS.
 Forth850 includes stack under/overflow checks, dictionary overflow checks and
 can be interrupted by pressing BREAK.
 
-Discuss: [HP Forum](https://www.hpmuseum.org/forum/thread-19085.html)
+Discuss: [HP Forum](https://www.hpmuseum.org/forum/thread-19085.html) and [reddit](https://www.reddit.com/r/Forth/comments/ytat79/a_fast_forth_for_vintage_sharp_pcg850_pocket)
 
 ## Installation
 
