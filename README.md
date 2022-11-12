@@ -18,6 +18,8 @@ PC-G850VS.
 Forth850 includes stack under/overflow checks, dictionary overflow checks and
 can be interrupted by pressing BREAK.
 
+Discuss: [HP Forum](https://www.hpmuseum.org/forum/thread-19085.html)
+
 ## Installation
 
 In RUN MODE enter `MON` to enter the Monitor, then enter `USER3FFF` to reserve
@@ -108,37 +110,37 @@ a runtime word compiled by the DOES> compile-only word
 ### (DOES)
 _addr -- addr ; R: -- ip_
 calls the DOES> definition with pfa addr;
-a runtime word compiled by the DOES> compile-only word: call (DOES)
+a runtime word compiled by the DOES> compile-only word coded as call dodoes
 
 ### (VAR)
 _-- addr_
 leave parameter field address (pfa) of variable;
-runtime word of a VARIABLE: call (VAR)
+runtime word of a VARIABLE coded as call dovar
 
 ### (VAL)
 _-- x_
 fetch value;
-runtime word of a VALUE: call (VAL)
+runtime word of a VALUE coded as call doval
 
 ### (2VAL)
 _-- dx_
 fetch double value;
-runtime word of a 2VALUE: call (2VAL)
+runtime word of a 2VALUE coded as call dotwoval
 
 ### (CON)
 _-- x_
 fetch constant;
-runtime word of a CONSTANT: call (CON)
+runtime word of a CONSTANT coded as call docon
 
 ### (2CON)
 _-- x_
 fetch double constant;
-runtime word of a 2CONSTANT: call (2CON)
+runtime word of a 2CONSTANT coded as call dotwocon
 
 ### (DEF)
 _--_
 execute deferred word;
-runtime word of a DEFER: call (DEF)
+runtime word of a DEFER coded as call dodef
 
 ### (LIT)
 _-- x_
