@@ -54,7 +54,7 @@ upper address `addr` larger than `23ff` (9K bytes).  If words are added to
 Forth850, you must make sure that `addr` is large enough by calculating the
 `addr` as follows:
 
-    HERE #778 + HEX . DECIMAL
+    HERE #711 + HEX . DECIMAL
     23FF
 
 The specify `USER23FF` in the Monitor.  This leaves about 256 bytes free
