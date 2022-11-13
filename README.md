@@ -4,6 +4,11 @@
 A modern Forth 2012 standard compliant system for the vintage SHARP
 PC-G850(V)(S) pocket computer.
 
+You can extend Forth850 as you wish, including assembly code written on the
+machine itself in the TEXT editor and assembled with the built-in Z80
+Assembler.  See [ASMDEMO1.FTH](examples/ASMDEMO1.FTH) for an example with an
+explanation how this works.
+
 I've implemented Forth850 as efficiently as possible in direct threaded code
 (DTC) with brand new Z80 code written from scratch.  See the
 [technical implementation sections](#Implementation) why Forth850 is fast for a
@@ -2254,7 +2259,7 @@ The Forth850 dictionary is organized as follows:
          |---------|
          | my-word |     "my-word" word characters (7 bytes)
          |---------|
-         | code    |<--- LAST-XT Forth code and/or data
+         | code    |<--- LASTXT points to code (last xt)
          |=========|<--- HERE pointer
          | hold    |     hold area for numerical output (40 bytes)
          |---------|
