@@ -1,7 +1,7 @@
 \ A machine language example to beep the speaker at about 2KHz
 
 \ A way to specify code is in hex, like in the example further below
-\ Use NFA to create words with Z80 machine code compiled with C, (and also ,)
+\ Use NFA, to create words with Z80 machine code compiled with C, (and also ,)
 \ NFA, adds a named dictionary entry without a code field
 \ The code field is where the code goes
 \ Machine code should terminate with a jump to the "next routine" with jp (iy)
@@ -28,6 +28,7 @@
 \ - register IY holds the address of "next" and should not be modified
 \ - register DE holds the TOS and can be used and set
 \ - the stack can be used to push/pop Forth parameters
+\ - return from the code with JP (iy), never use RET
 
 NFA, BEEP       ( -- )
   HEX
@@ -42,5 +43,8 @@ NFA, BEEP       ( -- )
   25 C,         \       dec h           ;
   20 C, F7 C,   \       jr nz,loop      ; until --h=0
   FB C,         \       ei              ; enable interrupts
-  FD C, E9 C,   \       jp (iy)         ; next
+  FD C, E9 C,   \       jp (iy)         ; nextxxxxxxxxxxxxxxxxxxxxxx
   DECIMAL       \ 18 bytes
+
+
+

@@ -6,7 +6,7 @@
 \ A machine language example
 
 \ A way to specify code is in hex, like in the example further below
-\ Use NFA to create words with Z80 machine code compiled with C, (and ,)
+\ Use NFA, to create words with Z80 machine code compiled with C, (and ,)
 \ NFA, adds a named dictionary entry without a code field
 \ The code field is where the code goes
 \ Machine code should terminate with a jump to the "next routine" with jp (iy)
@@ -33,6 +33,7 @@
 \ - register IY holds the address of "next" and should not be modified
 \ - register DE holds the TOS and can be used and set
 \ - the stack can be used to push/pop Forth parameters
+\ - return from the code with JP (iy), never use RET
 
 NFA, POINT      ( x y -- )
   HEX
