@@ -372,7 +372,7 @@ break:		call INKEY		; INKEY
 
 ; (DOES)	addr -- addr ; R: -- ip
 ;		calls the DOES> definition with pfa addr;
-;		a runtime word compiled by the DOES> compile-only word: call (DOES)
+;		a runtime word compiled by the DOES> compile-only word coded as call dodoes
 
 		CODE (DOES),dodoes
 		ld hl,(rp)	; 16	; [rp]->hl
@@ -389,7 +389,7 @@ break:		call INKEY		; INKEY
 
 ; (VAR)		-- addr
 ;		leave parameter field address (pfa) of variable;
-;		runtime word of a VARIABLE: call (VAR)
+;		runtime word of a VARIABLE coded as call dovar
 
 		CODE (VAR),dovar
 		pop hl		; 10	; pop hl with pfa addr saved by call dovar
@@ -399,7 +399,7 @@ break:		call INKEY		; INKEY
 
 ; (VAL)		-- x
 ;		fetch value;
-;		runtime word of a VALUE: call (VAL)
+;		runtime word of a VALUE coded as call doval
 
 		CODE (VAL),doval
 		pop hl		; 10	; pop hl with pfa addr saved by call doval
@@ -411,7 +411,7 @@ fetch_de:	ld e,(hl)	;  7	;
 
 ; (2VAL)	-- dx
 ;		fetch double value;
-;		runtime word of a 2VALUE: call (2VAL)
+;		runtime word of a 2VALUE coded as call dotwoval
 
 		CODE (2VAL),dotwoval
 		pop hl		; 10	; pop hl with pfa addr saved by call dotwocon
@@ -428,21 +428,21 @@ twofetch_de:	inc hl		;  6	;
 
 ; (CON)		-- x
 ;		fetch constant;
-;		runtime word of a CONSTANT: call (CON)
+;		runtime word of a CONSTANT coded as call docon
 
 		CODE (CON),docon
 		jr doval		; same as (VAL)
 
 ; (2CON)	-- x
 ;		fetch double constant;
-;		runtime word of a 2CONSTANT: call (2CON)
+;		runtime word of a 2CONSTANT coded as call dotwocon
 
 		CODE (2CON),dotwocon
 		jr dotwoval		; same as (2VAL)
 
 ; (DEF)		--
 ;		execute deferred word;
-;		runtime word of a DEFER: call (DEF)
+;		runtime word of a DEFER coded as call dodef
 
 		CODE (DEF),dodef
 		pop hl		; 10	; pop hl with pfa addr saved by call dodef
@@ -453,7 +453,8 @@ twofetch_de:	inc hl		;  6	;
 		jp (hl)		;  4(38); execute the execution token
 
 ; (LIT)		-- x
-;		fetch literal
+;		fetch literal;
+;		runtime word compiled by EVALUATE, INTERPRET and NUMBER
 
 		CODE (LIT),dolit
 		push de			; save TOS
@@ -466,7 +467,8 @@ twofetch_de:	inc hl		;  6	;
 		NEXT			; continue
 
 ; (2LIT)	-- x1 x2
-;		fetch double literal
+;		fetch double literal;
+;		runtime word compiled by EVALUATE, INTERPRET and NUMBER
 
 		CODE (2LIT),dotwolit
 		push de			; save TOS
@@ -486,7 +488,8 @@ twofetch_de:	inc hl		;  6	;
 		JP_NEXT			; continue
 
 ; (SLIT)	-- c-addr u
-;		fetch literal string
+;		fetch literal string;
+;		runtime word compiled by S" and ."
 
 		CODE (SLIT),doslit
 		push de			; save TOS
