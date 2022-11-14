@@ -77,9 +77,9 @@ space.
 - an additional extended "full version" with additional Forth words
 - with an improved command line editor, like Forth500
 - with single precision floating point words
-- ability to load Forth source code from the TEXT editor
 - serial IO to communicate via RS232 and load source code
-- sound with BEEP
+- DONE: ability to [load Forth source code from the TEXT editor](examples/TEXT.FTH)
+- DONE: sound with [BEEP](examples/ASMDEMO1.FTH)
 
 ## Forth850 manual
 
