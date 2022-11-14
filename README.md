@@ -9,6 +9,9 @@ machine itself in the TEXT editor and assembled with the built-in Z80
 Assembler.  See [ASMDEMO1.FTH](examples/ASMDEMO1.FTH) for an example with an
 explanation how this works.
 
+You can write Forth source code in the built-in TEXT editor and read it back
+into Forth850 with the [TEXT](examples/TEXT.FTH) word.
+
 I've implemented Forth850 as efficiently as possible in direct threaded code
 (DTC) with brand new Z80 code written from scratch.  See the
 [technical implementation sections](#Implementation) why Forth850 is fast for a
