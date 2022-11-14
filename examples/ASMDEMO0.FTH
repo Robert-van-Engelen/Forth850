@@ -1,4 +1,4 @@
-\ A machine language example to beep the speaker at about 2KHz
+\ A machine language example to swap high and low bytes
 
 \ A way to specify code is in hex, like in the example further below
 \ Use NFA, to create words with Z80 machine code compiled with C, (and also ,)
@@ -30,18 +30,10 @@
 \ - the stack can be used to push/pop Forth parameters
 \ - return from the code with JP (iy), never use RET
 
-NFA, BEEP       ( -- )
+NFA, FLIP       ( -- )
   HEX
-  F3 C,         \       di              ;
-  F3 C,         \       di              ; disable interrupts
-  21 C, 0 ,     \       ld hl,0000h     ;
-  AF C,         \       xor a           ;
-  D3 C, 18 C,   \ loop: out (18h),a     ; loop, out audio port
-  D2 C,         \ wait: dec l           ;   loop
-  20 C, FD C,   \       jr nz,wait      ;   until --l=0
-  2F C,         \       cpl             ; switch on/off
-  25 C,         \       dec h           ;
-  20 C, F7 C,   \       jr nz,loop      ; until --h=0
-  FB C,         \       ei              ; enable interrupts
+  7B C,         \       ld a,e          ; get old TOS low byte half
+  5A C,         \       ld e,d          ; set new TOS new low byte half
+  57 C,         \       ld d,a          ; set new TOS high byte half
   FD C, E9 C,   \       jp (iy)         ; next
-  DECIMAL       \ 18 bytes
+  DECIMAL       \ 5 bytes
