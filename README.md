@@ -2447,12 +2447,17 @@ I've decided to use a different Z80 register mapping that is more efficient:
 
 By contrast to the article, having the TOS in DE makes it quicker to perform
 address arithmetic with the TOS, because we can exchange DE with HL with `ex
-de,hl` in just 4 CPU cycles.
+de,hl` in just 4 CPU cycles.  Moving BC to HL takes 8 CPU cycles.
 
 I've placed the return stack pointer (RP) in RAM.  There is no advantage to use
 register IX for RP as the article suggests.  In fact, the colon call and return
 have the same cycle counts, but almost all of the return stack operations, such
 as `>R`, require more cycles with the RP in IX compared to the RP in RAM.
+
+A jump to the "next routine" is with `jp (iy)` takes 8 CPU cycles, compared to
+a `jp next` that takes 10 cycles.  Inlining the "next routine" eliminates
+this overhead, but increases the code size.  Inlining should only be applied to
+performance-critical words that are frequently used.  See the section below.
 
 ### Next fetch and execute
 
