@@ -69,7 +69,7 @@ Forth850, you must make sure that `addr` is large enough by calculating the
 In the Monitor specify `USERaddr` with the address displayed.  This leaves
 about 200 bytes free dictionary space minus 40 bytes for the "hold area" to run
 Forth850.  The largest size is `USER75FF` which gives about 21K free dictionary
-space.
+space (but there won't be space left on the machine for files, BASIC or TEXT.)
 
 ## Nice to have (work in progress)
 
@@ -529,15 +529,15 @@ the result is undefined when n3=0
 
 ### */
 _n1 n2 n3 -- n4_
-signed product and symmetric quotient n1*n2/n3;
+signed product symmetric quotient n1*n2/n3;
 the result is undefined when n3=0
 
     : */ */MOD NIP ;
 
 ### M*/
 _d1 n1 n2 -- d2_
-signed double product and symmetric quotient d1*n1/n2;
-the result is undefined when n3=0
+signed double product symmetric quotient d1*n1/n2;
+the result is undefined when n2=0
 
     : M*/ >R MD* R> SM/REM NIP ;
 
@@ -1028,10 +1028,6 @@ output byte u1 to port u2
 ### INP
 _u1 -- u2_
 input from port u1
-
-### BEEP
-_--_
-sound the speaker for a short ~2KHz beep
 
 ### DRAW
 _c-addr u --_
@@ -1972,22 +1968,6 @@ interpret input while input is available
 _... c-addr u -- ..._
 evaluate string
 
-### TEXT
-_--_
-read and evaluate TEXT editor area with Forth source code;
-caveat: .( and ( in TEXT cannot span more than one line, they end at EOL
-
-    : TEXT
-      $7973 @ 1+ >R
-      BEGIN
-        R>                  \ -- addr
-      DUP C@ $FF <> WHILE
-        2+ DUP C@ SWAP 1+   \ -- len addr
-        2DUP + >R
-        SWAP 1- EVALUATE
-      REPEAT
-      DROP ;
-
 ### REPL
 _--_
 read-evaluate-print loop
@@ -2173,6 +2153,10 @@ hold string for pictured numeric output
       REPEAT
       2DROP ;
 
+### BEEP
+_--_
+sound the speaker for a short ~2KHz beep
+
 ### KEY-CLEAR
 _--_
 wait until no keys pressed
@@ -2257,6 +2241,22 @@ may throw -14 "interpreting a compile-only word"
 ### K
 _-- n_
 counter of outer (third) do loop
+
+### TEXT
+_--_
+read and evaluate TEXT editor area with Forth source code;
+caveat: .( and ( in TEXT cannot span more than one line, they end at EOL
+
+    : TEXT
+      $7973 @ 1+ >R
+      BEGIN
+        R>                  \ -- addr
+      DUP C@ $FF <> WHILE
+        2+ DUP C@ SWAP 1+   \ -- len addr
+        2DUP + >R
+        SWAP 1- EVALUATE
+      REPEAT
+      DROP ;
 
 ## Dictionary structure
 

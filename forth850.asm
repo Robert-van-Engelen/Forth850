@@ -1480,7 +1480,7 @@ store_a_hl:	ld (hl),a		;
 		.dw doret
 
 ; */		n1 n2 n3 -- n4
-;		signed product and symmetric quotient n1*n2/n3;
+;		signed product symmetric quotient n1*n2/n3;
 ;		the result is undefined when n3=0
 ;
 ;    : */ */MOD NIP ;
@@ -1490,8 +1490,8 @@ store_a_hl:	ld (hl),a		;
 		.dw doret
 
 ; M*/		d1 n1 n2 -- d2
-;		signed double product and symmetric quotient d1*n1/n2;
-;		the result is undefined when n3=0
+;		signed double product symmetric quotient d1*n1/n2;
+;		the result is undefined when n2=0
 ;
 ;    : M*/ >R MD* R> SM/REM NIP ;
 
@@ -2982,7 +2982,7 @@ set_base:	ld (base+3),hl		; 10->[base]
 
 .if FULL
 
-; BEEP		--
+;+ BEEP		--
 ;		sound the speaker for a short ~2KHz beep
 
 		CODE BEEP,beep
@@ -5392,7 +5392,7 @@ loop_counter:	ld e,(hl)		;
 
 .if FULL
 
-; TEXT		--
+;+ TEXT		--
 ;		read and evaluate TEXT editor area with Forth source code;
 ;		caveat: .( and ( in TEXT cannot span more than one line, they end at EOL
 ;
