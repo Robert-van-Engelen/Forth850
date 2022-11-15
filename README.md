@@ -306,7 +306,7 @@ move TOS to the return stack
 
 ### DUP>R
 _x -- x ; R: -- x_
-duplicate TOS to the return stack
+duplicate TOS to the return stack, a single word for DUP >R
 
 ### R>
 _R: x -- ; -- x_
@@ -314,7 +314,7 @@ move cell from the return stack
 
 ### RDROP
 _R: x -- ; --_
-drop cell from the return stack
+drop cell from the return stack, a single word for R> DROP
 
 ### R@
 _R: x -- x ; -- x_
@@ -322,11 +322,11 @@ fetch cell from the return stack
 
 ### 2>R
 _x1 x2 -- ; R: -- x1 x2_
-move double TOS to the return stack
+move double TOS to the return stack, a single word for SWAP >R >R
 
 ### 2R>
 _R: x1 x2 -- ; -- x1 x2_
-move double cell from the return stack
+move double cell from the return stack, a single word for R> R> SWAP
 
 ### 2R@
 _R: x1 x2 -- x1 x2 ; -- x1 x2_
@@ -759,6 +759,15 @@ or leaves the first string and false
 _c-addr1 c-addr2 u --_
 move u bytes from c-addr1 to c-addr2 (from begin)
 
+    : CMOVE
+      SWAP >R
+      BEGIN DUP WHILE
+        NEXT-CHAR R@ C!
+        R> 1+ >R
+      REPEAT
+      RDROP
+      2DROP ;
+
 ### CMOVE>
 _c-addr1 c-addr2 u --_
 move u bytes from c-addr1 to c-addr2 up (from end)
@@ -1018,6 +1027,10 @@ output byte u1 to port u2
 ### INP
 _u1 -- u2_
 input from port u1
+
+### BEEP
+_--_
+sound the speaker for a short ~2KHz beep
 
 ### DRAW
 _c-addr u --_
@@ -1957,6 +1970,22 @@ interpret input while input is available
 ### EVALUATE
 _... c-addr u -- ..._
 evaluate string
+
+### TEXT
+_--_
+read and evaluate TEXT editor area with Forth source code;
+caveat: .( and ( in TEXT cannot span more than one line, they end at EOL
+
+    : TEXT
+      $7973 @ 1+ >R
+      BEGIN
+        R>                  \ -- addr
+      DUP C@ $FF <> WHILE
+        2+ DUP C@ SWAP 1+   \ -- len addr
+        2DUP + >R
+        SWAP 1- EVALUATE
+      REPEAT
+      DROP ;
 
 ### REPL
 _--_

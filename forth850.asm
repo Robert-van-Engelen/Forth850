@@ -900,7 +900,7 @@ true_next	.equ mone_next		; alias
 		NEXT			; continue
 
 ; DUP>R		x -- x ; R: -- x
-;		duplicate TOS to the return stack
+;		duplicate TOS to the return stack, a single word for DUP >R
 
 		CODE DUP>R,duptor
 		push de		; 11	; save TOS
@@ -920,7 +920,7 @@ true_next	.equ mone_next		; alias
 		NEXT			; continue
 
 ; RDROP		R: x -- ; --
-;		drop cell from the return stack
+;		drop cell from the return stack, a single word for R> DROP
 
 		CODE RDROP,rdrop
 		ld hl,(rp)		; [rp]->hl
@@ -937,7 +937,7 @@ true_next	.equ mone_next		; alias
 		jp push_fetch		; set [hl]->de as new TOS and continue
 
 ; 2>R		x1 x2 -- ; R: -- x1 x2
-;		move double TOS to the return stack
+;		move double TOS to the return stack, a single word for SWAP >R >R
 
 		CODE 2>R,twotor
 		pop hl			; pop hl with 2OS
@@ -953,7 +953,7 @@ true_next	.equ mone_next		; alias
 		jr tor			; >R
 
 ; 2R>		R: x1 x2 -- ; -- x1 x2
-;		move double cell from the return stack
+;		move double cell from the return stack, a single word for R> R> SWAP
 
 		CODE 2R>,tworfrom
 		push de			; save TOS
@@ -2282,6 +2282,15 @@ cells		.equ twostar		; alias
 
 ; CMOVE		c-addr1 c-addr2 u --
 ;		move u bytes from c-addr1 to c-addr2 (from begin)
+;
+;    : CMOVE
+;      SWAP >R
+;      BEGIN DUP WHILE
+;        NEXT-CHAR R@ C!
+;        R> 1+ >R
+;      REPEAT
+;      RDROP
+;      2DROP ;
 
 		CODE CMOVE,cmove
 		push de			; save TOS
@@ -2992,6 +3001,28 @@ set_base:	ld (base+3),hl		; 10->[base]
 		pop bc			; restore bc with ip
 		JP_NEXT			; continue
 
+.if FULL
+
+; BEEP		--
+;		sound the speaker for a short ~2KHz beep
+
+		CODE BEEP,beep
+		di			;
+		di			; disable interrupts
+		xor a			; zero pattern
+		ld l,a			;
+		ld h,a			; reset counters
+1$:		out (0x18),a		; loop, out to speaker port
+2$:		dec l			;   loop
+		jr nz,2$		;   until --l=0
+		cpl			;   switch pattern on/off
+		dec h			;
+		jr nz,1$		; until --h=0
+		ei			; enable interrupts
+		JP_NEXT			; continue
+
+.endif
+
 ;-------------------------------------------------------------------------------
 ;
 ;		PIXELS
@@ -3026,7 +3057,7 @@ set_base:	ld (base+3),hl		; 10->[base]
 		pop bc			; pop u->bc
 		ld b,c			; u->b
 		pop hl			; pop c-addr->hl
-		ld de,(xy)		; xy->dr
+		ld de,(xy)		; xy->de
 		call RDPSTR		; read pixel string
 		exx			; restore bc with ip
 		pop de			; set new TOS
@@ -5356,8 +5387,7 @@ loop_counter:	ld e,(hl)		;
 		.dw toin,off
 		.dw mone,doto,sourceid+3
 		.dw dolit,interpret,catch,dup,doif,1$
-		.dw   dup
-		.dw   error
+		.dw   dup,error
 1$:		.dw nrfrom,restoreinput,drop
 		.dw throw
 		.dw doret
@@ -5372,12 +5402,41 @@ loop_counter:	ld e,(hl)		;
 		.dw toin,off
 		.dw mone,doto,sourceid+3
 		.dw dolit,interpret,catch,dup,doif,1$
-		.dw   dup
-		.dw   error
+		.dw   dup,error
 1$:		.dw rfrom,toin,store
 		.dw tworfrom,dotwoto,source+3
 		.dw rfrom,doto,sourceid+3
 		.dw throw
+		.dw doret
+
+.endif
+
+.if FULL
+
+; TEXT		--
+;		read and evaluate TEXT editor area with Forth source code;
+;		caveat: .( and ( in TEXT cannot span more than one line, they end at EOL
+;
+;    : TEXT
+;      $7973 @ 1+ >R
+;      BEGIN
+;        R>                  \ -- addr
+;      DUP C@ $FF <> WHILE
+;        2+ DUP C@ SWAP 1+   \ -- len addr
+;        2DUP + >R
+;        SWAP 1- EVALUATE
+;      REPEAT
+;      DROP ;
+
+		COLON TEXT,text
+		.dw dolit,0x7973,fetch,oneplus,tor
+1$:		.dw rfrom
+		.dw dup,cfetch,dolit,0xff,notequal,doif,2$
+		.dw   twoplus,dup,cfetch,swap,oneplus
+		.dw   twodup,plus,tor
+		.dw   swap,oneminus,evaluate
+		.dw doagain,1$
+2$:		.dw drop
 		.dw doret
 
 .endif
