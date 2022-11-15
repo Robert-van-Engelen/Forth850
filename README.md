@@ -1078,7 +1078,7 @@ SIN     =$fe register B=$95 BASIC token for SIN (ignored)
 ### KEY
 _-- char_
 display cursor and wait to read key;
-same as GETKEY, leaves ASCII char or special key code
+same as GETKEY leaves ASCII char or special key code
 
 ### EDIT
 _c-addr +n1 n2 n3 n4 -- c-addr +n5_
@@ -1854,11 +1854,13 @@ variable with saved return stack pointer
 
 ### EXECUTE
 _... xt -- ..._
-execute xt
+execute execution token xt
 
 ### CATCH
-_i*x xt -- j*x 0 or i*x xt -- i*x n_
-execute xt leaving nonzero exception code n or 0
+_... xt -- ... 0 or xt -- n_
+execute xt leaving nonzero exception code n or 0 when no exception occurred;
+when an exception was caught, the parameter and return stacks are restored
+to their state before execution of xt
 
     : CATCH
       SP@ >R
@@ -1870,7 +1872,7 @@ execute xt leaving nonzero exception code n or 0
       0 ;
 
 ### THROW
-_0 -- or k*x n -- i*x n_
+_0 -- or ... n -- ... n_
 throw exception n if nonzero
 
     : THROW
@@ -1890,7 +1892,7 @@ throw exception n if nonzero
       THEN ;
 
 ### QUIT
-_-- ; R: i*x --_
+_... -- ; R: ... --_
 throw -56 "QUIT";
 no exception error is displayed;
 unlike ABORT, the parameter stack is not cleared
@@ -1898,7 +1900,7 @@ unlike ABORT, the parameter stack is not cleared
     : QUIT -56 THROW ;
 
 ### (ABORT")
-_flag c-addr u -- ; R: i*x --_
+_... flag c-addr u -- ; R: ... --_
 if flag then abort with string message unless an active catch is present;
 runtime of the ABORT" compile-only word;
 throw -2 "ABORT""
@@ -1915,7 +1917,7 @@ throw -2 "ABORT""
       2DROP ;
 
 ### ABORT"
-_flag -- ; C: "ccc<quote>" -- ; R: ... --_
+_... flag -- ; C: "ccc<quote>" -- ; R: ... --_
 if flag then abort with string message unless an active catch is present;
 throw -2 "ABORT"";
 clears the parameter stack unless caught with CATCH;
@@ -1924,7 +1926,7 @@ may throw -14 "interpreting a compile-only word"
     : ABORT" ?COMP POSTPONE S" POSTPONE (ABORT") ; IMMEDIATE
 
 ### ABORT
-_-- ; R: i*x --_
+_... -- ; R: ... --_
 throw -1 "ABORT";
 clears the parameter stack unless caught with CATCH
 

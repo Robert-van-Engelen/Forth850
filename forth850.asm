@@ -3158,7 +3158,7 @@ set_base:	ld (base+3),hl		; 10->[base]
 
 ; KEY		-- char
 ;		display cursor and wait to read key;
-;		same as GETKEY, leaves ASCII char or special key code
+;		same as GETKEY leaves ASCII char or special key code
 
 		COLON KEY,key
 		.dw one,reverse
@@ -5136,15 +5136,17 @@ loop_counter:	ld e,(hl)		;
 		.dw 0
 
 ; EXECUTE	... xt -- ...
-;		execute xt
+;		execute execution token xt
 
 		CODE EXECUTE,execute
 		ex de,hl		; xt->hl
 		pop de			; set new TOS
 		jp (hl)			; execute xt
 
-; CATCH		i*x xt -- j*x 0 or i*x xt -- i*x n
-;		execute xt leaving nonzero exception code n or 0
+; CATCH		... xt -- ... 0 or xt -- n
+;		execute xt leaving nonzero exception code n or 0 when no exception occurred;
+;		when an exception was caught, the parameter and return stacks are restored
+;		to their state before execution of xt
 ;
 ;    : CATCH
 ;      SP@ >R
@@ -5165,7 +5167,7 @@ loop_counter:	ld e,(hl)		;
 		.dw zero
 		.dw doret
 
-; THROW		0 -- or k*x n -- i*x n
+; THROW		0 -- or ... n -- ... n
 ;		throw exception n if nonzero
 ;
 ;    : THROW
@@ -5199,7 +5201,7 @@ loop_counter:	ld e,(hl)		;
 		.dw   repl
 2$:		.dw doret
 
-; QUIT		-- ; R: i*x --
+; QUIT		... -- ; R: ... --
 ;		throw -56 "QUIT";
 ;		no exception error is displayed;
 ;		unlike ABORT, the parameter stack is not cleared
@@ -5210,7 +5212,7 @@ loop_counter:	ld e,(hl)		;
 		ld a,-56		;
 		jp throw_a		; throw -56 "QUIT"
 
-; (ABORT")	flag c-addr u -- ; R: i*x --
+; (ABORT")	... flag c-addr u -- ; R: ... --
 ;		if flag then abort with string message unless an active catch is present;
 ;		runtime of the ABORT" compile-only word;
 ;		throw -2 "ABORT""
@@ -5236,7 +5238,7 @@ loop_counter:	ld e,(hl)		;
 3$:		.dw twodrop
 		.dw doret
 
-; ABORT"	flag -- ; C: "ccc<quote>" -- ; R: ... --
+; ABORT"	... flag -- ; C: "ccc<quote>" -- ; R: ... --
 ;		if flag then abort with string message unless an active catch is present;
 ;		throw -2 "ABORT"";
 ;		clears the parameter stack unless caught with CATCH;
@@ -5250,7 +5252,7 @@ loop_counter:	ld e,(hl)		;
 		.dw dolit,doabortquote,compilecomma
 		.dw doret
 
-; ABORT		-- ; R: i*x --
+; ABORT		... -- ; R: ... --
 ;		throw -1 "ABORT";
 ;		clears the parameter stack unless caught with CATCH
 ;
