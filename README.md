@@ -1075,6 +1075,11 @@ down    =$1f;
 calc keys and BASIC keys produce BASIC tokens as key code $fe:
 SIN     =$fe register B=$95 BASIC token for SIN (ignored)
 
+### KEY
+_-- char_
+display cursor and wait to read key;
+same as GETKEY, leaves ASCII char or special key code
+
 ### EDIT
 _c-addr +n1 n2 n3 n4 -- c-addr +n5_
 edit buffer c-addr;

@@ -3156,7 +3156,7 @@ set_base:	ld (base+3),hl		; 10->[base]
 		pop bc			; restore bc with ip
 		jp a_next		; set a->de new TOS and continue
 
-; KEY   	-- char
+; KEY		-- char
 ;		display cursor and wait to read key;
 ;		same as GETKEY, leaves ASCII char or special key code
 
