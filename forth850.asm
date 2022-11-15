@@ -2434,28 +2434,28 @@ cells		.equ twostar		; alias
 		exx			; save bc with ip
 		pop bc			; u1->bc
 		pop hl			; c-addr1->hl
-		ex af,af'		; save a
+1$:		ex af,af'		; save a
 		ld a,c			;
 		or b			;
-		jr z,2$			; if bc<>0 then
+		jr z,3$			; if bc<>0 then
 		ex af,af'		;   restore a
-1$:		cpi		; 16	;   loop
-		jr nz,3$	;  7	;     while a=[hl++],--bc
-		jp pe,1$	; 10	;   until b=0
-2$:		push hl			; save hl as 2OS
+2$:		cpi		; 16	;   loop
+		jr nz,4$	;  7	;     while a=[hl++],--bc
+		jp pe,2$	; 10	;   until b=0
+3$:		push hl			; save hl as 2OS
 		push bc			; save bc as TOS
 		exx			; restore bc with ip
 		pop de			; pop new TOS
 		JP_NEXT			; continue
-3$:		cp 0x20			;
-		jr nz,4$		; if char=0x20 then
+4$:		cp 0x20			;
+		jr nz,5$		; if char=0x20 then
 		dec hl			;
 		cp (hl)			;
 		inc hl			;
 		jr nc,1$		;   if [hl-1]<=0x20 then keep trimming
-4$:		inc bc			; correct bc++ for cpi match
+5$:		inc bc			; correct bc++ for cpi match
 		dec hl			; correct hl-- for cpi match
-		jr 2$			; finalize trimming
+		jr 3$			; finalize trimming
 
 ; -TRIM		c-addr u1 char -- c-addr u2
 ;		trim trailing chars;
@@ -2464,31 +2464,31 @@ cells		.equ twostar		; alias
 		CODE -TRIM,mtrim
 		ld a,e			; char->a
 		exx			; save bc with ip
-		ex af,af'		; save a with char
 		pop bc			; u1->bc
 		pop hl			; c-addr1->hl
 		push hl			; keep c-addr1
+		add hl,bc		;
+		dec hl			; (c-addr)+u1-1->hl trim from end
+1$:		ex af,af'		; save a with char
 		ld a,c			;
 		or b			;
-		jr z,2$			; if bc<>0 then
-		add hl,bc		;
-		dec hl			;
+		jr z,3$			; if bc<>0 then
 		ex af,af'		;   restore a with char
-1$:		cpd		; 16	;   loop
-		jr nz,3$	;  7	;     while a=[hl--],--bc
-		jp pe,1$	; 10	;   until b=0
-2$:		push bc			; save bc as TOS
+2$:		cpd		; 16	;   loop
+		jr nz,4$	;  7	;     while a=[hl--],--bc
+		jp pe,2$	; 10	;   until b=0
+3$:		push bc			; save bc as TOS
 		exx			; restore bc with ip
 		pop de			; pop new TOS
 		JP_NEXT			; continue
-3$:		cp 0x20			;
-		jr nz,4$		; if char=0x20 then
+4$:		cp 0x20			;
+		jr nz,5$		; if char=0x20 then
 		inc hl			;
 		cp (hl)			;
 		dec hl			;
 		jr nc,1$		;   if [hl+1]<=0x20 then keep trimming
-4$:		inc bc			; correct bc++ for cpd bc-- match
-		jr 2$			; finalize trimming
+5$:		inc bc			; correct bc++ for cpd bc-- match
+		jr 3$			; finalize trimming
 
 ; -TRAILING	c-addr u1 -- c-addr u2
 ;		trim trailing white space

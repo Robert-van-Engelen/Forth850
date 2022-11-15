@@ -48,12 +48,11 @@ in this README sometime later.
 
 To return to Forth, enter `CALL256` in RUN MODE.
 
-To return to BASIC from Forth, press the BASIC key.
+To return to BASIC from Forth, press the BASIC key.  The TEXT key takes you to
+the TEXT editor.
 
-To turn the machine off, press the OFF key.
-
-*Important: Forth850 will not power off automatically.  To preserve batteries,
-press OFF.*
+To turn the machine off, press the OFF key.  The machine will also power off
+automatically after about 10 minutes waiting for user input at the prompt.
 
 ## How to increase or decrease memory allocation for Forth850
 
@@ -2708,28 +2707,28 @@ to chop white space char, 33 cycles to trim non-BL char
                     exx                     ; save bc with ip
                     pop bc                  ; u1->bc
                     pop hl                  ; c-addr1->hl
-                    ex af,af'               ; save a
+    1$:             ex af,af'               ; save a
                     ld a,c                  ;
                     or b                    ;
-                    jr z,2$                 ; if bc<>0 then
+                    jr z,3$                 ; if bc<>0 then
                     ex af,af'               ;   restore a
-    1$:             cpi             ; 16    ;   loop
-                    jr nz,3$        ;  7    ;     while a=[hl++],--bc
-                    jp pe,1$        ; 10    ;   until b=0
-    2$:             push hl                 ; save hl as 2OS
+    2$:             cpi             ; 16    ;   loop
+                    jr nz,4$        ;  7    ;     while a=[hl++],--bc
+                    jp pe,2$        ; 10    ;   until b=0
+    3$:             push hl                 ; save hl as 2OS
                     push bc                 ; save bc as TOS
                     exx                     ; restore bc with ip
                     pop de                  ; pop new TOS
                     JP_NEXT                 ; continue
-    3$:             cp 0x20                 ;
-                    jr nz,4$                ; if char=0x20 then
+    4$:             cp 0x20                 ;
+                    jr nz,5$                ; if char=0x20 then
                     dec hl                  ;
                     cp (hl)                 ;
                     inc hl                  ;
                     jr nc,1$                ;   if [hl-1]<=0x20 then keep trimming
-    4$:             inc bc                  ; correct bc++ for cpi match
+    5$:             inc bc                  ; correct bc++ for cpi match
                     dec hl                  ; correct hl-- for cpi match
-                    jr 2$                   ; finalize trimming
+                    jr 3$                   ; finalize trimming
 
 To parse a white-space-delimited word is efficiently performed with `BL PARSE`
 where the `PARSE` word is defined as:
