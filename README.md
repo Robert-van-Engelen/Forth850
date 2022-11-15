@@ -191,16 +191,18 @@ leave constant 32 (space)
 
 ### PAD
 _-- c-addr_
-leave address of PAD
+leave address of the PAD;
+the PAD is a free buffer space of 256 bytes not used by Forth850 
 
 ### TIB
 _-- c-addr_
-leave address of TIB
+leave address of TIB;
+the terminal input buffer used by Forth850
 
 ### TMP
 _-- c-addr_
 leave address of the next temp string buffer;
-switches between two string buffers;
+switches between two string buffers of 256 free bytes each;
 used by S" to store a string when interpreting
 
 ### DROP
@@ -534,7 +536,7 @@ the result is undefined when n3=0
 
 ### M*/
 _d1 n1 n2 -- d2_
-signed double product and quotient d1*n1/n2;
+signed double product and symmetric quotient d1*n1/n2;
 the result is undefined when n3=0
 
     : M*/ >R MD* R> SM/REM NIP ;
@@ -803,21 +805,21 @@ fill memory with 0x20 (bl) chars
 _c-addr u1 char -- c-addr u2_
 truncate string up to matching char;
 leaves string if char not found;
-char=0x20 (bl) chops 0x00 to 0x20 (white space)
+char=0x20 (bl) chops 0x00 to 0x20 (white space and control)
 
 ### TRIM
 _c-addr1 u1 char -- c-addr2 u2_
 trim initial chars;
-char=0x20 (bl) trims 0x00 to 0x20 (white space)
+char=0x20 (bl) trims 0x00 to 0x20 (white space and control)
 
 ### -TRIM
 _c-addr u1 char -- c-addr u2_
 trim trailing chars;
-char=0x20 (bl) trims 0x00 to 0x20 (white space)
+char=0x20 (bl) trims 0x00 to 0x20 (white space and control)
 
 ### -TRAILING
 _c-addr u1 -- c-addr u2_
-trim trailing white space
+trim trailing white space and control characters
 
     : -TRAILING BL -TRIM ;
 
@@ -2192,7 +2194,7 @@ parse word as a counted string
 ### CHAR
 _"<spaces>name<space>" -- char_
 parse char;
-note that the syntax 'char is preferred
+note that the syntax 'char is preferred instead of this legacy word
 
     : CHAR PARSE-NAME DROP C@ ;
 
@@ -2211,7 +2213,7 @@ executing name leaves address of n bytes
 ### :NONAME
 _-- xt_
 colon definition without name;
-leaves execution token of definition
+leaves execution token of definition to be used or saved
 
 ### C"
 _"ccc<quote>" -- ; -- c-addr_
@@ -2239,7 +2241,7 @@ beware of vocabulary definitions crossings
 ### [CHAR]
 _"<spaces>char" -- ; -- char_
 compile char as literal;
-note that the syntax 'char is preferred;
+note that the syntax 'char is preferred instead of this legacy word;
 may throw -14 "interpreting a compile-only word"
 
     : [CHAR] ?COMP CHAR LITERAL ; IMMEDIATE
@@ -2247,7 +2249,7 @@ may throw -14 "interpreting a compile-only word"
 ### [COMPILE]
 _"<space>name<space>" -- ; ... -- ..._
 compile name;
-note that POSTPONE is preferred;
+note that POSTPONE is preferred instead of this legacy word;
 may throw -14 "interpreting a compile-only word"
 
     : [COMPILE] ?COMP ' COMPILE, ; IMMEDIATE

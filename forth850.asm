@@ -578,7 +578,8 @@ true_next	.equ mone_next		; alias
 		JP_NEXT			; continue
 
 ; PAD		-- c-addr
-;		leave address of PAD
+;		leave address of the PAD;
+;		the PAD is a free buffer space of 256 bytes not used by Forth850 
 
 		CODE PAD,pad
 		push de			; save TOS
@@ -586,7 +587,8 @@ true_next	.equ mone_next		; alias
 		JP_NEXT			; continue
 
 ; TIB		-- c-addr
-;		leave address of TIB
+;		leave address of TIB;
+;		the terminal input buffer used by Forth850
 
 		CODE TIB,tib
 		push de			; save TOS
@@ -595,7 +597,7 @@ true_next	.equ mone_next		; alias
 
 ; TMP		-- c-addr
 ;		leave address of the next temp string buffer;
-;		switches between two string buffers;
+;		switches between two string buffers of 256 free bytes each;
 ;		used by S" to store a string when interpreting
 
 		CODE TMP,tmp
@@ -826,7 +828,7 @@ true_next	.equ mone_next		; alias
 		pop de			;
 		JP_NEXT			; continue
 
-.if 0
+.if 0 ; unused, but perhaps useful later
 
 ;- N>R		n*x n -- ; R: -- n*x n
 ;		move n cells to the return stack
@@ -1488,7 +1490,7 @@ store_a_hl:	ld (hl),a		;
 		.dw doret
 
 ; M*/		d1 n1 n2 -- d2
-;		signed double product and quotient d1*n1/n2;
+;		signed double product and symmetric quotient d1*n1/n2;
 ;		the result is undefined when n3=0
 ;
 ;    : M*/ >R MD* R> SM/REM NIP ;
@@ -1558,37 +1560,6 @@ store_a_hl:	ld (hl),a		;
 		.dw mdstar
 		.dw tworfrom,star
 		.dw zero,swap,dplus
-		.dw doret
-
-.endif
-
-.if 0		; TODO not implemented (yet)
-
-;- D/MOD	d1 d2 -- d3 d4
-;		signed double remainder and quotient d1/d2;
-;		the result is undefined when d2=0
-
-		CODE D/MOD,dslashmod
-		.dw abort
-
-;- D/		d1 d2 -- d3
-;		signed double quotient d1/d2;
-;		the result is undefined when d2=0
-;
-;    : D/ D/MOD NIP ;
-
-		COLON D/,dslash
-		.dw dslashmod,nip
-		.dw doret
-
-;- DMOD		d1 d2 -- d3
-;		signed double remainder d1%d2;
-;		the result is undefined when d2=0
-;
-;    : DMOD D/MOD DROP ;
-
-		COLON DMOD,dmod
-		.dw dslashmod,drop
 		.dw doret
 
 .endif
@@ -2390,7 +2361,7 @@ cells		.equ twostar		; alias
 ; CHOP		c-addr u1 char -- c-addr u2
 ;		truncate string up to matching char;
 ;		leaves string if char not found;
-;		char=0x20 (bl) chops 0x00 to 0x20 (white space)
+;		char=0x20 (bl) chops 0x00 to 0x20 (white space and control)
 
 		CODE CHOP,chop
 		ld a,e			; char->a
@@ -2407,18 +2378,18 @@ cells		.equ twostar		; alias
 		ex af,af'		; restore a with char
 		cp 0x20			;
 		jr z,3$			; if a=0x20 then find white space
-		or a			; 0->cf not found
+		or a			; 0->cf for when cpir ends with nz
 ;		find char in string
 		cpir		; 21/16	; repeat until a=[hl++] or --bc=0
 		jr nz,2$		; if match then
-1$:		ccf			;   complement to correct cpi bc--
+1$:		ccf			;   complement cf to correct cpi bc--
 2$:		ex de,hl		; u1->hl
 		sbc hl,bc		; u1-bc-cf->hl
 		push hl			; save hl as TOS
 		exx			; restore bc with ip
 		pop de			; pop new TOS
 		JP_NEXT			; continue
-;		find white space in string
+;		find white space or control char in string
 3$:		cp (hl)		;  7	; loop to compare a to [hl]
 		cpi		; 16	;   hl++,bc--
 		jr nc,1$	;  7	;   if [hl]<a then found
@@ -2427,7 +2398,7 @@ cells		.equ twostar		; alias
 
 ; TRIM		c-addr1 u1 char -- c-addr2 u2
 ;		trim initial chars;
-;		char=0x20 (bl) trims 0x00 to 0x20 (white space)
+;		char=0x20 (bl) trims 0x00 to 0x20 (white space and control)
 
 		CODE TRIM,trim
 		ld a,e			; char->a
@@ -2439,9 +2410,11 @@ cells		.equ twostar		; alias
 		or b			;
 		jr z,3$			; if bc<>0 then
 		ex af,af'		;   restore a
+;		trim char from front of the string
 2$:		cpi		; 16	;   loop
 		jr nz,4$	;  7	;     while a=[hl++],--bc
 		jp pe,2$	; 10	;   until b=0
+;		done trimming
 3$:		push hl			; save hl as 2OS
 		push bc			; save bc as TOS
 		exx			; restore bc with ip
@@ -2449,17 +2422,19 @@ cells		.equ twostar		; alias
 		JP_NEXT			; continue
 4$:		cp 0x20			;
 		jr nz,5$		; if char=0x20 then
+;		trim white space and control char
 		dec hl			;
 		cp (hl)			;
 		inc hl			;
 		jr nc,1$		;   if [hl-1]<=0x20 then keep trimming
-5$:		inc bc			; correct bc++ for cpi match
-		dec hl			; correct hl-- for cpi match
+;		stop trimming at mismatch
+5$:		inc bc			; correct bc++ for mismatch
+		dec hl			; correct hl-- for mismatch
 		jr 3$			; finalize trimming
 
 ; -TRIM		c-addr u1 char -- c-addr u2
 ;		trim trailing chars;
-;		char=0x20 (bl) trims 0x00 to 0x20 (white space)
+;		char=0x20 (bl) trims 0x00 to 0x20 (white space and control)
 
 		CODE -TRIM,mtrim
 		ld a,e			; char->a
@@ -2474,24 +2449,28 @@ cells		.equ twostar		; alias
 		or b			;
 		jr z,3$			; if bc<>0 then
 		ex af,af'		;   restore a with char
+;		trim char from back of the string
 2$:		cpd		; 16	;   loop
 		jr nz,4$	;  7	;     while a=[hl--],--bc
 		jp pe,2$	; 10	;   until b=0
+;		done trimming
 3$:		push bc			; save bc as TOS
 		exx			; restore bc with ip
 		pop de			; pop new TOS
 		JP_NEXT			; continue
 4$:		cp 0x20			;
 		jr nz,5$		; if char=0x20 then
+;		trim white space and control char
 		inc hl			;
 		cp (hl)			;
 		dec hl			;
 		jr nc,1$		;   if [hl+1]<=0x20 then keep trimming
-5$:		inc bc			; correct bc++ for cpd bc-- match
+;		stop trimming at mismatch
+5$:		inc bc			; correct bc++ for cpd bc-- mismatch
 		jr 3$			; finalize trimming
 
 ; -TRAILING	c-addr u1 -- c-addr u2
-;		trim trailing white space
+;		trim trailing white space and control characters
 ;
 ;    : -TRAILING BL -TRIM ;
 
@@ -3176,7 +3155,7 @@ set_base:	ld (base+3),hl		; 10->[base]
 		call GETCHR		; GETCHR ASCII key code, changes bc and bc'
 		pop bc			; restore bc with ip
 		jp a_next		; set a->de new TOS and continue
-      
+
 ; KEY   	-- char
 ;		display cursor and wait to read key;
 ;		same as GETKEY, leaves ASCII char or special key code
@@ -3310,7 +3289,7 @@ edit_toxy:	call docol		; n -- x y	cursor pos n to xy
 		.dw 0			; input length u
 		.dw TIB0		; input buffer c-addr
 
-.if 0		; unused SAVE-INPUT and RESTORE-INPUT
+.if 0 ; unused, but perhaps useful later
 
 ;- RESTORE-INPUT	x x x x 4 -- flag
 ;		restore input parameters from the stack
@@ -3619,7 +3598,7 @@ edit_toxy:	call docol		; n -- x y	cursor pos n to xy
 
 ;+ CHAR		"<spaces>name<space>" -- char
 ;		parse char;
-;		note that the syntax 'char is preferred
+;		note that the syntax 'char is preferred instead of this legacy word
 ;
 ;    : CHAR PARSE-NAME DROP C@ ;
 
@@ -4080,7 +4059,7 @@ comma_de:	ld (hl),e		;
 
 ;+ :NONAME	-- xt
 ;		colon definition without name;
-;		leaves execution token of definition
+;		leaves execution token of definition to be used or saved
 
 		COLON ^|:NONAME|,noname
 		.dw here,dup,doto,lastxt+3
@@ -4642,7 +4621,7 @@ marker_does:	call dodoes
 
 ;+ [CHAR]	"<spaces>char" -- ; -- char
 ;		compile char as literal;
-;		note that the syntax 'char is preferred;
+;		note that the syntax 'char is preferred instead of this legacy word;
 ;		may throw -14 "interpreting a compile-only word"
 ;
 ;    : [CHAR] ?COMP CHAR LITERAL ; IMMEDIATE
@@ -4654,7 +4633,7 @@ marker_does:	call dodoes
 
 ;+ [COMPILE]	"<space>name<space>" -- ; ... -- ...
 ;		compile name;
-;		note that POSTPONE is preferred;
+;		note that POSTPONE is preferred instead of this legacy word;
 ;		may throw -14 "interpreting a compile-only word"
 ;
 ;    : [COMPILE] ?COMP ' COMPILE, ; IMMEDIATE
@@ -5379,7 +5358,7 @@ loop_counter:	ld e,(hl)		;
 ; EVALUATE	... c-addr u -- ...
 ;		evaluate string
 
-.if 0		; version with SAVE-INPUT and RESTORE-INPUT
+.if 0 ; version with SAVE-INPUT and RESTORE-INPUT
 
 		COLON EVALUATE,evaluate
 		.dw saveinput,ntor
