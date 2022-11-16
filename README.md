@@ -44,6 +44,10 @@ interface CE-126P or a CE-124:
 Loading via serial is in principle possible.  Instructions will be included
 in this README sometime later.
 
+Load the forth850-full.wav "full version" to include many
+[additional words](#additional-words-included-with-the-full-version).
+The full version will continue to evolve and grow with new features.
+
 ## How to switch between Forth and BASIC
 
 To return to Forth, enter `CALL256` in RUN MODE.
@@ -2084,7 +2088,7 @@ true if d1=d2
 _d1 d2 -- flag_
 true if d1<d2
 
-    : <
+    : D<
       DUP 3 PICK XOR 0< IF
         2DROP D0<
         EXIT
@@ -2149,10 +2153,10 @@ dump memory in hex
     : DUMP
       BASE @ >R
       HEX
-      0 ?DO
-        DUP ? 1+
-      LOOP
-      DROP
+      BEGIN DUP WHILE
+        NEXT-CHAR .
+      REPEAT
+      2DROP
       R> BASE ! ;
 
 ### HOLDS
@@ -2197,7 +2201,7 @@ note that the syntax 'char is preferred instead of this legacy word
 ### FIND
 _c-addr -- c-addr 0 | xt 1 | xt -1_
 search dictionary for counted string;
-see FIND-WORD
+see WORD, COUNT and FIND-WORD
 
 ### BUFFER:
 _n "<spaces>name<space>" -- ; -- addr_
@@ -2216,7 +2220,7 @@ _"ccc<quote>" -- ; -- c-addr_
 leave counted string "ccc" (compiled);
 may throw -18 "parsed string overflow"
 
-    : C" SLITERAL POSTPONE DROP POSTPONE 1- ;
+    : C" ?COMP POSTPONE S" POSTPONE DROP POSTPONE 1- ;
 
 ### MARKER?
 _xt -- flag_
@@ -2228,11 +2232,36 @@ define a dictionary marker;
 executing name deletes marker and all definitions made after;
 beware of vocabulary definitions crossings
 
+    : MARKER
+      CURRENT
+      DUP @
+      HERE
+      CREATE
+        , 2,
+      DOES>
+        DUP CELL+ 2@
+        SWAP TO CONTEXT
+        DUP CONTEXT !
+        DEFINITIONS
+        L>NAME NAME> TO LASTXT
+        @ HERE - ALLOT ;
+
 ### ANEW
 _"<spaces>name<space>" -- ; --_
 define a dictionary marker;
 deletes previously defined name and all following definitions;
 beware of vocabulary definitions crossings
+
+    : ANEW
+      >IN @ >R
+      PARSE-NAME FIND-WORD
+      OVER MARKER?
+      AND IF
+        EXECUTE
+      ELSE
+        DROP
+      R> >IN !
+      MARKER ;
 
 ### [CHAR]
 _"<spaces>char" -- ; -- char_

@@ -1792,7 +1792,7 @@ true_if_c_next:	sbc a			; -cf->a
 ;+ D<		d1 d2 -- flag
 ;		true if d1<d2
 ;
-;    : <
+;    : D<
 ;      DUP 3 PICK XOR 0< IF
 ;        2DROP D0<
 ;        EXIT
@@ -2741,20 +2741,19 @@ emit_check_dn:	cp 0x1f			;
 ;    : DUMP
 ;      BASE @ >R
 ;      HEX
-;      0 ?DO
-;        DUP ? 1+
-;      LOOP
-;      DROP
+;      BEGIN DUP WHILE
+;        NEXT-CHAR .
+;      REPEAT
+;      2DROP
 ;      R> BASE ! ;
 
 		COLON DUMP,dump
 		.dw base,fetch,tor
 		.dw hex
-		.dw zero,doqdo,2$
-1$:		.dw   dup,question
-		.dw   oneplus
-		.dw doloop,1$
-2$:		.dw drop
+1$:		.dw   dup,doif,2$
+		.dw   nextchar,dot
+		.dw doagain,1$
+2$:		.dw twodrop
 		.dw rfrom,base,store
 		.dw doret
 
@@ -3412,7 +3411,7 @@ edit_toxy:	call docol		; n -- x y	cursor pos n to xy
 		COLON WORD,word
 		.dw tmp,dup,rot		; -- tmp tmp char
 		.dw parseword,rot	; -- tmp c-addr u tmp
-		.dw twodup,cstore	;
+		.dw twodup,cstore	; -- tmp c-addr u tmp
 		.dw oneplus,swap	; -- tmp c-addr tmp+1 u
 		.dw cmove
 		.dw doret
@@ -3775,7 +3774,7 @@ edit_toxy:	call docol		; n -- x y	cursor pos n to xy
 
 ;+ FIND		c-addr -- c-addr 0 | xt 1 | xt -1
 ;		search dictionary for counted string;
-;		see FIND-WORD
+;		see WORD, COUNT and FIND-WORD
 
 		COLON FIND,find
 		.dw count,findword
@@ -4475,10 +4474,11 @@ comma_de:	ld (hl),e		;
 ;		leave counted string "ccc" (compiled);
 ;		may throw -18 "parsed string overflow"
 ;
-;    : C" SLITERAL POSTPONE DROP POSTPONE 1- ;
+;    : C" ?COMP POSTPONE S" POSTPONE DROP POSTPONE 1- ;
 
 		COLON_IMM ^|C"|,cquote
-		.dw sliteral
+		.dw qcomp
+		.dw squote
 		.dw dolit,drop,compilecomma
 		.dw dolit,oneminus,compilecomma
 		.dw doret
@@ -4543,18 +4543,32 @@ xt_is_hl:	ex de,hl		; hl->de, xt->hl
 ;		define a dictionary marker;
 ;		executing name deletes marker and all definitions made after;
 ;		beware of vocabulary definitions crossings
+;
+;    : MARKER
+;      CURRENT
+;      DUP @
+;      HERE
+;      CREATE
+;        , 2,
+;      DOES>
+;        DUP CELL+ 2@
+;        SWAP TO CONTEXT
+;        DUP CONTEXT !
+;        DEFINITIONS
+;        L>NAME NAME> TO LASTXT
+;        @ HERE - ALLOT ;
 
 		COLON MARKER,marker
-		.dw current,dup,fetch
+		.dw current
+		.dw dup,fetch
 		.dw here
 		.dw create
-		.dw comma
-		.dw twocomma
+		.dw comma,twocomma
 		.dw doscode
 marker_does:	call dodoes
 		.dw dup,cellplus,twofetch
 		.dw swap,doto,context+3
-		.dw store
+		.dw dup,context,store
 		.dw definitions
 		.dw ltoname,namefrom,doto,lastxt+3
 		.dw fetch,here,minus,allot
@@ -4564,6 +4578,17 @@ marker_does:	call dodoes
 ;		define a dictionary marker;
 ;		deletes previously defined name and all following definitions;
 ;		beware of vocabulary definitions crossings
+;
+;    : ANEW
+;      >IN @ >R
+;      PARSE-NAME FIND-WORD
+;      OVER MARKER?
+;      AND IF
+;        EXECUTE
+;      ELSE
+;        DROP
+;      R> >IN !
+;      MARKER ;
 
 		COLON ANEW,anew
 		.dw toin,fetch,tor
