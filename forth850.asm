@@ -57,9 +57,9 @@
 ;	A	unassigned, available as temp
 ;	BC	instruction pointer (IP)
 ;	DE	top of stack (TOS)
-;	HL	unassigned, avaialble as temp
+;	HL	unassigned, available as temp
 ;	SP	parameter stack pointer
-;	IX	unassigned, avaialble as temp
+;	IX	unassigned, available as temp
 ;	IY	address of the next routine used with jp (iy)
 ;	[rp]	return stack pointer in RAM
 ;
@@ -87,18 +87,24 @@ win_cols	.equ 24
 
 ;-------------------------------------------------------------------------------
 ;
-;		SYSCALLS
+;		PC-G850V(S) SYSCALLS
 ;
 ;-------------------------------------------------------------------------------
 
 CLRLN		.equ 0x84f7		; clear bottom line
 GETCHR		.equ 0xbcc4		; returns A with ascii key code
+SERIN		.equ 0xbcdf		; SIO read char without waiting (?)
+SERWIN		.equ 0xbce2		; SIO read char, wait indefinitely (?)
+SERAIN		.equ 0xbce5		; SIO active read, wait indefinitely (?)
+SEROPN		.equ 0xbce8		; SIO open 11pin (?)
+SERCLO		.equ 0xbceb		; SIO close 11pin (?)
 GETKEY		.equ 0xbcfd		; returns A with key code
 RDPSTR		.equ 0xbd00		; read pixel string HL size B at DE=xy
 REGOUT		.equ 0xbd03		; display CPU registers, wait for key
 PUTCHR		.equ 0xbe62		; put A=char at DE=xy, DE=xy unchanged
 INSLN		.equ 0xbe65		; insert line at DE=xy
 INKEY		.equ 0xbe53		; returns A with key code cf=1 or 0 cf=0
+SEROUT		.equ 0xbfb2		; SIO write 0-terminated string HL (?)
 WRPSTR		.equ 0xbfd0		; draw pixel string HL size B at DE=xy
 SCROLL		.equ 0xbfeb		; scroll screen up
 REPCHR		.equ 0xbfee		; put A=char at DE=xy B times
@@ -120,7 +126,7 @@ h_size		.equ 40			; hold space size (adjustable)
 
 ;-------------------------------------------------------------------------------
 ;
-;		MEMORY LAYOUT
+;		PC-G850V(S) SYSTEM POINTERS AND BUFFERS USED IN FORTH
 ;
 ;-------------------------------------------------------------------------------
 
@@ -272,7 +278,7 @@ label:
 
 boot::		ld (bsp),sp		; save BASIC sp to [bsp]
 		ld hl,(rp0)		;
-		ld (rp),hl		; set [rp0]->rp FORTH RP
+		ld (rp),hl		; set [rp0]->[rp] FORTH RP
 		ld de,-r_size		;
 		add hl,de		; [rp0]-r_size->hl
 		ld (sp0),hl		; set hl->[sp0]
@@ -296,7 +302,7 @@ boot::		ld (bsp),sp		; save BASIC sp to [bsp]
 		.dw type
 		.dw repl
 
-rp0		.equ USER
+rp0		.equ USER               ; rp0=USER is top of (above) free memory
 sp0:		.dw 0			; sp0
 sp1:		.dw 0			; sp1=-1-sp0
 top:		.dw 0			; dictionary top
@@ -318,7 +324,7 @@ bsp:		.dw 0			; saved BASIC stack pointer
 		ld (hl),b	;  7	;
 		dec hl		;  6	;
 		ld (hl),c	;  7	; save bc->[--rp] with caller ip on the return stack
-		ld (rp),hl	; 16	; ip-2->rp
+		ld (rp),hl	; 16	; ip-2->[rp]
 		pop bc		; 10(68); pop ip saved by call docol
 ;		continue with ON/BREAK key check
 cont:		in a,(0x1f)	; 11	; port 0x1f bit 7 is set if ON/BREAK is depressed
@@ -579,7 +585,7 @@ true_next	.equ mone_next		; alias
 
 ; PAD		-- c-addr
 ;		leave address of the PAD;
-;		the PAD is a free buffer space of 256 bytes not used by Forth850 
+;		the PAD is a free buffer space of 256 bytes not used by Forth850
 
 		CODE PAD,pad
 		push de			; save TOS
@@ -845,11 +851,12 @@ true_next	.equ mone_next		; alias
 		ld c,l			;
 		ld b,h			; 2*(bc+1)->bc
 		ld hl,(rp)		; [rp]->hl
-		or a			; hl-bc->hl
-		sbc hl,bc		;
-		ld (rp),hl		; rp-bc->rp
-		ex de,hl		; rp-bc->de
-		ld hl,0			;
+		xor a			;
+		sbc hl,bc		; hl-bc->hl
+		ld (rp),hl		; [rp]-bc->rp
+		ex de,hl		; [rp]-bc->de
+		ld l,a                  ;
+		ld h,a                  ; 0->hl asserted a=0
 		add hl,sp		; sp->hl
 		ldir			; [hl++]->[de++] until --bc=0
 		ld sp,hl		; hl->sp
@@ -999,7 +1006,9 @@ rp:		.dw 0
 		jr store_hl		; set de->[hl] pop new TOS and continue
 
 ; PICK		xu ... x0 u -- xu ... x0 xu
-;		pick u'th cell from the parameter stack
+;		pick u'th cell from the parameter stack;
+;		0 PICK is the same as DUP;
+;		1 PICK is the same as OVER
 ;
 ;    : PICK 1+ CELLS SP@ + @ ;
 
@@ -1013,7 +1022,10 @@ rp:		.dw 0
 .if FULL
 
 ;+ ROLL		xu x(u+1) ... x1 x0 u -- x(u+1) ... x1 x0 xu
-;		roll u cells on the parameter stack
+;		roll u cells on the parameter stack;
+;		0 ROLL does nothing;
+;		1 ROLL is the same as SWAP;
+;		2 ROLL is the same as ROT
 
 		CODE ROLL,roll
 		pop hl			; pop hl with 2OS
@@ -1235,7 +1247,7 @@ store_a_hl:	ld (hl),a		;
 ;
 ;    : D- DNEGATE D+ ;
 
-		CODE D-,dminus
+		COLON D-,dminus
 		.dw dnegate,dplus
 		.dw doret
 
@@ -4759,7 +4771,7 @@ loop_bc_step:	ld hl,(rp)		; [rp]->hl
 		ex de,hl		; save [rp]->de, sliced loop counter in hl
 		or a			; 0->cf
 		adc hl,bc		; counter+step->hl set flags
-		ex de,hl		; restore de->rp, counter+step->de
+		ex de,hl		; restore de->[rp], counter+step->de
 		jp pe,1$		; if overflow then exit loop
 		ld (hl),d		;
 		dec hl			; [rp]->hl

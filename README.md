@@ -63,7 +63,7 @@ upper address `addr` larger than `23ff` (9K bytes).  If words are added to
 Forth850, you must make sure that `addr` is large enough by calculating the
 `addr` as follows:
 
-    HERE #711 + HEX . DECIMAL
+    HERE #708 + HEX . DECIMAL
     23FF
 
 In the Monitor specify `USERaddr` with the address displayed.  This leaves
@@ -192,7 +192,7 @@ leave constant 32 (space)
 ### PAD
 _-- c-addr_
 leave address of the PAD;
-the PAD is a free buffer space of 256 bytes not used by Forth850 
+the PAD is a free buffer space of 256 bytes not used by Forth850
 
 ### TIB
 _-- c-addr_
@@ -343,7 +343,9 @@ store return stack pointer
 
 ### PICK
 _xu ... x0 u -- xu ... x0 xu_
-pick u'th cell from the parameter stack
+pick u'th cell from the parameter stack;
+0 PICK is the same as DUP;
+1 PICK is the same as OVER
 
     : PICK 1+ CELLS SP@ + @ ;
 
@@ -2061,7 +2063,10 @@ rotate double cells
 
 ### ROLL
 _xu x(u+1) ... x1 x0 u -- x(u+1) ... x1 x0 xu_
-roll u cells on the parameter stack
+roll u cells on the parameter stack;
+0 ROLL does nothing;
+1 ROLL is the same as SWAP;
+2 ROLL is the same as ROT
 
 ### D*
 _d1|ud1 d2|ud2 -- d3|ud3_
@@ -3013,5 +3018,11 @@ below:
 - Zilog Z80 CPU User Manual: <https://www.zilog.com/docs/z80/um0080.pdf>
 - Z80 Instruction Set: <https://wikiti.brandonw.net/index.php?title=Z80_Instruction_Set>
 - Z80 Instruction Set: <https://www.smspower.org/Development/InstructionSet>
-- Z80 Math Routines: <https://wikiti.brandonw.net/index.php?title=Category:Z80_Routines:Math>
-- Z80 Advanced Math: <http://z80-heaven.wikidot.com/advanced-math>
+
+## Z80 maths
+
+- Z80 the 8-bit number cruncher: <http://www.andreadrian.de/oldcpu/Z80_number_cruncher.html#mozTocId269826>
+- Z80 integer math routines: <https://wikiti.brandonw.net/index.php?title=Category:Z80_Routines:Math>
+- Z80 advanced math: <http://z80-heaven.wikidot.com/advanced-math>
+- Z80 classic maths libraries: <https://github.com/z88dk/z88dk/wiki/Classic--Maths-Libraries>
+- Z80 IEEE754 floating point library: <https://github.com/Zeda/z80float>
