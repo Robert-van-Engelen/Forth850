@@ -3,6 +3,9 @@
 \ Note that LCD scroll offset may not be zero, which makes the screen scroll
 \ up or down when plotting points when text is also output
 
+\ For info on the display hardware, control and modes, visit (Japanese):
+\ http://www.charatsoft.com/develop/toaru2/index.php?did=11
+
 \ A machine language example
 
 \ A way to specify code is in hex, like in the example further below
