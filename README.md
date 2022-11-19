@@ -13,7 +13,8 @@ You can write Forth source code in the built-in TEXT editor and read it back
 into Forth850 with the [TEXT](examples/TEXT.FTH) word.
 
 I've implemented Forth850 as efficiently as possible in direct threaded code
-(DTC) with brand new Z80 code written from scratch.  See the
+(DTC) with new Z80 code written from scratch, including faster Z80 math
+routines when compared to other Z80 Forth implementations.  See the
 [technical implementation sections](#Implementation) why Forth850 is fast for a
 DTC implementation.  The [Forth850 source code](forth850.asm) is included and
 heavily documented.
