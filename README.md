@@ -63,7 +63,7 @@ automatically after about 10 minutes waiting for user input at the prompt.
 Memory allocation can be adjusted without affecting the Forth dictionary.
 
 In RUN MODE enter `MON` to enter the Monitor, then enter `USERaddr` with an
-upper address `addr` larger than `23ff` (9K bytes).  If words are added to
+upper address `addr` larger than `23ff` (9K bytes.)  If words are added to
 Forth850, you must make sure that `addr` is large enough by calculating the
 `addr` as follows:
 
@@ -2365,7 +2365,7 @@ location where the machine code of the last word starts.
 Forth850 is a Direct Threaded Code Forth implementation.  Code is either
 machine code or starts with a jump or call machine code instruction of 3 bytes,
 followed by Forth code (a sequence of execution tokens in a colon definition)
-or data (constants, variables, values and other words created with `CREATE`).
+or data (constants, variables, values and other words created with `CREATE`.)
 
 Immediate words are marked with the length byte high bit 7 set ($80).  Hidden
 words have the "smudge" bit 6 ($40) set.  A word is hidden until successfully
@@ -2549,8 +2549,8 @@ routine":
 The "next routine" cycles contribute to the overhead of DTC, which cannot be
 further reduced to speed up execution.  To improve speed by 10% on average, the
 fetch and execute routine is inlined with the `NEXT` macro for
-performance-critical words that critical.  When performance is not critical, a
-`JP_NEXT` macro is used, which expands into `jp (iy)` with the IY register
+performance-critical words.  When performance is not critical, a `JP_NEXT`
+macro is used, which simply expands into `jp (iy)` with the IY register
 pointing to the "next routine":
 
     .macro          JP_NEXT
@@ -2598,9 +2598,9 @@ next instruction.
                     ld (rp),hl      ; 16(58); restore [rp++]->bc with ip of the caller
                     NEXT            ; 38    ; continue
 
-A colon call takes 145 cycles (17 + 68 + 22 + 38 cycles) and colon return takes
-96 cycles, including the overhead of the "next routine" to fetch and execute
-the next token.
+A colon call takes 145 cycles (17 + 68 + 22 + 38 cycles) and a colon return
+takes 96 cycles (58 + 38 cycles.)  This includes the 38 cycle overhead of the
+"next routine" to fetch and execute the next token.
 
 ### Variables
 
@@ -2613,7 +2613,8 @@ TOS:
                     ex de,hl        ;  4(25); set new TOS to hl with pfa addr
                     NEXT            ; 38    ; continue
 
-Executing a word defined as a variable takes 80 cycles (17 + 25 + 38 cycles).
+Executing a word defined as a variable takes 80 cycles (17 + 25 + 38 cycles),
+which includes the "next routine" overhead.
 
 ### Constants and values
 
@@ -2629,7 +2630,7 @@ constant/value is then fetched:
                     NEXT            ; 38    ; continue
 
 Executing a word defined as a constant or value takes 96 cycles (17 + 41 + 38
-cycles).
+cycles), which includes the "next routine" overhead.
 
 ### Fetch and store
 
@@ -2693,7 +2694,7 @@ then `CONSTANT` and `X` are compiled as:
     X:              call CONSTANT_does
                     .dw 123
 
-Executing `X` takes 192 cycles (17 + 17 + 24 + 38 + 96 cycles).  When 
+Executing `X` takes 192 cycles (17 + 17 + 24 + 38 + 96 cycles.)  When 
 more optimally defined as a `CONSTANT` in code, this takes 96 cycles.
 
 ### Parsing
