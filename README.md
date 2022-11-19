@@ -3030,7 +3030,7 @@ otherwise the carry should be inverted or the resulting quotient must be
 inverted.
 
 By comparison, the CamelForth Z80 code is also fast, but slower than my
-implemenation with 90 cycles x 16 iterations = 1408 cycles, excluding
+implemenation with 90 cycles x 16 iterations = 1440 cycles, excluding
 entry/exit overhead:
 
     udiv3216:       ld a,16                 ; 16 -> a loop counter
