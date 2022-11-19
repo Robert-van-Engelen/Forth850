@@ -73,7 +73,7 @@
 .org		0x0100
 
 FAST = 1	; fast (1) or compact (0)
-FULL = 0	; include additional standard definitions
+FULL = 0	; include additional words
 TEST = 0	; include tests.asm
 
 ;-------------------------------------------------------------------------------
@@ -254,7 +254,7 @@ label:
 		inc bc		;  6	;
 		ld a,(bc)	;  7	;
 		ld h,a		;  4	;
-		inc bc		;  6	; [ip++]->hl with xt
+		inc bc		;  6	; [ip++] -> hl with xt
 		jp (hl)		;  4(38); jump to hl
 .else
 		JP_NEXT		;  8(46); jump to next routine
@@ -278,19 +278,19 @@ label:
 
 boot::		ld (bsp),sp		; save BASIC sp to [bsp]
 		ld hl,(rp0)		;
-		ld (rp),hl		; set [rp0]->[rp] FORTH RP
+		ld (rp),hl		; set [rp0] -> [rp] FORTH RP
 		ld de,-r_size		;
-		add hl,de		; [rp0]-r_size->hl
-		ld (sp0),hl		; set hl->[sp0]
-		ld sp,hl		; set [sp0]->sp FORTH parameter sp
+		add hl,de		; [rp0] - r_size -> hl
+		ld (sp0),hl		; set hl -> [sp0]
+		ld sp,hl		; set [sp0] -> sp FORTH parameter sp
 		ex de,hl		;
 		ld hl,-1		;
 		sbc hl,sp		;
-		ld (sp1),hl		; -1-[sp0]->[sp1] sp for overflow check
+		ld (sp1),hl		; -1 - [sp0] -> [sp1] sp for overflow check
 		ex de,hl		;
 		ld de,-s_size-h_size	;
-		add hl,de		; [sp0]-s_size-h_size->hl
-		ld (top),hl		; hl->[top]
+		add hl,de		; [sp0] - s_size - h_size -> hl
+		ld (top),hl		; hl -> [top]
 		ld iy,next		; set iy to next for jp (iy) in JP_NEXT
 		call docol		; (:) start interpreting
 		.dw decimal
@@ -302,9 +302,9 @@ boot::		ld (bsp),sp		; save BASIC sp to [bsp]
 		.dw type
 		.dw repl
 
-rp0		.equ USER               ; rp0=USER is top of (above) free memory
+rp0		.equ USER               ; rp0 = USER is top of (above) free memory
 sp0:		.dw 0			; sp0
-sp1:		.dw 0			; sp1=-1-sp0
+sp1:		.dw 0			; sp1 = -1 - sp0
 top:		.dw 0			; dictionary top
 bsp:		.dw 0			; saved BASIC stack pointer
 
@@ -319,12 +319,12 @@ bsp:		.dw 0			; saved BASIC stack pointer
 ;		runtime of the : compile-only word
 
 		CODE (:),docol
-		ld hl,(rp)	; 16	; [rp]->hl
+		ld hl,(rp)	; 16	; [rp] -> hl
 		dec hl		;  6	;
 		ld (hl),b	;  7	;
 		dec hl		;  6	;
-		ld (hl),c	;  7	; save bc->[--rp] with caller ip on the return stack
-		ld (rp),hl	; 16	; ip-2->[rp]
+		ld (hl),c	;  7	; save bc -> [--rp] with caller ip on the return stack
+		ld (rp),hl	; 16	; ip - 2 -> [rp]
 		pop bc		; 10(68); pop ip saved by call docol
 ;		continue with ON/BREAK key check
 cont:		in a,(0x1f)	; 11	; port 0x1f bit 7 is set if ON/BREAK is depressed
@@ -336,7 +336,7 @@ next:		ld a,(bc)	;  7	;
 		inc bc		;  6	;
 		ld a,(bc)	;  7	;
 		ld h,a		;  4	;
-		inc bc		;  6	; [ip++]->hl with xt
+		inc bc		;  6	; [ip++] -> hl with xt
 		jp (hl)		;  4(38); jump to hl
 ;		break
 break:		call INKEY		; INKEY
@@ -349,12 +349,12 @@ break:		call INKEY		; INKEY
 ;		runtime of the ; compile-only word
 
 		CODE ^|(;)|,doret
-		ld hl,(rp)	; 16	; [rp]->hl
+		ld hl,(rp)	; 16	; [rp] -> hl
 		ld c,(hl)	;  7	;
 		inc hl		;  6	;
 		ld b,(hl)	;  7	;
 		inc hl		;  6	;
-		ld (rp),hl	; 16(58); restore [rp++]->bc with ip of the caller
+		ld (rp),hl	; 16(58); restore [rp++] -> bc with ip of the caller
 		NEXT			; continue
 
 ; (EXIT)	-- ; R: ip --
@@ -369,11 +369,11 @@ break:		call INKEY		; INKEY
 ;		a runtime word compiled by the DOES> compile-only word
 
 		CODE ^|(;CODE)|,doscode
-		ld hl,(lastxt+3)	; LASTXT->hl with last defined word xt
+		ld hl,(lastxt+3)	; LASTXT -> hl with last defined word xt
 		inc hl			;
 		ld (hl),c		;
 		inc hl			;
-		ld (hl),b		; ip->[LASTXT+1] overwrite call address
+		ld (hl),b		; ip -> [LASTXT+1] overwrite call address
 		jr doret		; (;) return to caller
 
 ; (DOES)	addr -- addr ; R: -- ip
@@ -381,12 +381,12 @@ break:		call INKEY		; INKEY
 ;		a runtime word compiled by the DOES> compile-only word coded as call dodoes
 
 		CODE (DOES),dodoes
-		ld hl,(rp)	; 16	; [rp]->hl
+		ld hl,(rp)	; 16	; [rp] -> hl
 		dec hl		;  6	;
 		ld (hl),b	;  7	;
 		dec hl		;  6	;
 		ld (hl),c	;  7	;
-		ld (rp),hl	; 16	; save bc->[--rp] with old ip on the return stack
+		ld (rp),hl	; 16	; save bc -> [--rp] with old ip on the return stack
 		pop bc		; 10	; pop bc with new ip of the DOES> routine saved by call dodoes
 		pop hl		; 10	; pop pfa addr
 		push de		; 11	; save TOS
@@ -412,7 +412,7 @@ break:		call INKEY		; INKEY
 push_fetch:	push de		; 11	; save TOS
 fetch_de:	ld e,(hl)	;  7	;
 		inc hl		;  6	;
-		ld d,(hl)	;  7(41); set [hl]->de as new TOS
+		ld d,(hl)	;  7(41); set [hl] -> de as new TOS
 		NEXT			; continue
 
 ; (2VAL)	-- dx
@@ -430,7 +430,7 @@ twofetch_de:	inc hl		;  6	;
 		dec hl		;  6	;
 		dec hl		;  6	;
 		dec hl		;  6	;
-		jr push_fetch	; 31(102; save de as 2OS, set [hl]->de as new TOS and continue
+		jr push_fetch	; 31(102; save de as 2OS, set [hl] -> de as new TOS and continue
 
 ; (CON)		-- x
 ;		fetch constant;
@@ -455,7 +455,7 @@ twofetch_de:	inc hl		;  6	;
 		ld a,(hl)	;  7	;
 		inc hl		;  6	;
 		ld h,(hl)	;  7	;
-		ld l,a		;  4	; [hl]->hl with execution token
+		ld l,a		;  4	; [hl] -> hl with execution token
 		jp (hl)		;  4(38); execute the execution token
 
 ; (LIT)		-- x
@@ -469,7 +469,7 @@ twofetch_de:	inc hl		;  6	;
 		inc bc			;
 		ld a,(bc)		;
 		ld d,a			;
-		inc bc			; set [ip++]->de as new TOS
+		inc bc			; set [ip++] -> de as new TOS
 		NEXT			; continue
 
 ; (2LIT)	-- x1 x2
@@ -483,13 +483,13 @@ twofetch_de:	inc hl		;  6	;
 		inc bc			;
 		ld a,(bc)		;
 		ld d,a			;
-		inc bc			; set [ip++]->de as new TOS
+		inc bc			; set [ip++] -> de as new TOS
 		ld a,(bc)		;
 		ld l,a			;
 		inc bc			;
 		ld a,(bc)		;
 		ld h,a			;
-		inc bc			; set [ip++]->hl as new 2OS
+		inc bc			; set [ip++] -> hl as new 2OS
 		push hl			; save hl as 2OS
 		JP_NEXT			; continue
 
@@ -500,15 +500,15 @@ twofetch_de:	inc hl		;  6	;
 		CODE (SLIT),doslit
 		push de			; save TOS
 		ld a,(bc)		;
-		inc bc			; [ip++]->a with string length byte
-		push bc			; save bc=c-addr as new 2OS
+		inc bc			; [ip++] -> a with string length byte
+		push bc			; save bc = c-addr as new 2OS
 		ld e,a			;
-		ld d,0			; set a->de with u as new TOS
+		ld d,0			; set a -> de with u as new TOS
 		add c			;
 		ld c,a			;
-		ld a,d			; 0->a
+		ld a,d			; 0 -> a
 		adc b			;
-		ld b,a			; ip+u->ip
+		ld b,a			; ip + u -> ip
 		JP_NEXT			; continue
 
 ;-------------------------------------------------------------------------------
@@ -608,13 +608,13 @@ true_next	.equ mone_next		; alias
 
 		CODE TMP,tmp
 		push de			; save TOS
-		ld hl,1$		; 1$->hl
-		ld a,(hl)		; [1$]->a with counter 0 or 1
-		xor 1			; a^1->a
-		ld (hl),a		; [1$]^1->[1$]
+		ld hl,1$		; 1$ -> hl
+		ld a,(hl)		; [1$] -> a with counter 0 or 1
+		xor 1			; a ^ 1 -> a
+		ld (hl),a		; [1$] ^ 1 -> [1$]
 		ld de,TMP0		;
 		add d			;
-		ld d,a			; set TMP0+(a<<8)->de as new TOS
+		ld d,a			; set TMP0 + (a << 8) -> de as new TOS
 		JP_NEXT			; continue
 1$:		.db 1			; previous tmp buffer 0 or 1
 
@@ -643,8 +643,8 @@ true_next	.equ mone_next		; alias
 
 		CODE ?DUP,qdup
 		ld a,e		;  4	;
-		or d		;  4	; test de=0
-		jr nz,dup	; 23/7	; if de<>0 then DUP
+		or d		;  4	; test de = 0
+		jr nz,dup	; 23/7	; if de <> 0 then DUP
 		NEXT			; continue
 
 ; SWAP		x1 x2 -- x2 x1
@@ -756,16 +756,16 @@ true_next	.equ mone_next		; alias
 		CODE 2OVER,twoover
 		push de			; save TOS
 		ld hl,6			;
-		add hl,sp		; sp+6->hl
+		add hl,sp		; sp + 6 -> hl
 		ld e,(hl)		;
 		inc hl			;
 		ld d,(hl)		;
-		push de			; save [sp+6]->de new 2OS
+		push de			; save [sp+6] -> de new 2OS
 		dec hl			;
 		dec hl			;
 		ld d,(hl)		;
 		dec hl			;
-		ld e,(hl)		; set [sp+4]->de as new TOS
+		ld e,(hl)		; set [sp+4] -> de as new TOS
 		NEXT			; continue
 
 .if FULL
@@ -788,11 +788,11 @@ true_next	.equ mone_next		; alias
 
 		CODE DEPTH,depth
 		push de			; save TOS
-		ld hl,(sp0)		; [sp0]->hl
+		ld hl,(sp0)		; [sp0] -> hl
 		dec hl			;
-		scf			; 1->cf
+		scf			; 1 -> cf
 		sbc hl,sp		;
-		ex de,hl		; set [sp0]-sp-2->de as TOS
+		ex de,hl		; set [sp0] - sp - 2 -> de as TOS
 		jp twoslash		; 2/ divide TOS by 2
 
 ; CLEAR		... --
@@ -801,7 +801,7 @@ true_next	.equ mone_next		; alias
 ;    : CLEAR sp0 @ SP! ;
 
 		CODE CLEAR,clear
-		ld sp,(sp0)		; [sp0]->sp
+		ld sp,(sp0)		; [sp0] -> sp
 		JP_NEXT			; continue
 
 ; .S		--
@@ -821,7 +821,7 @@ true_next	.equ mone_next		; alias
 		CODE SP@,spfetch
 		push de			; save TOS
 		ld hl,0			;
-		add hl,sp		; sp->hl
+		add hl,sp		; sp -> hl
 		ex de,hl		; set new TOS to hl with sp
 		JP_NEXT			; continue
 
@@ -830,7 +830,7 @@ true_next	.equ mone_next		; alias
 
 		CODE SP!,spstore
 		ex de,hl		;
-		ld sp,hl		; addr->sp
+		ld sp,hl		; addr -> sp
 		pop de			;
 		JP_NEXT			; continue
 
@@ -843,23 +843,23 @@ true_next	.equ mone_next		; alias
 		push de			; save TOS
 		exx			; save bc with ip
 		pop bc			;
-		push bc			; TOS->bc
+		push bc			; TOS -> bc
 		inc bc			;
 		ld l,c			;
 		ld h,b			;
 		add hl,bc		;
 		ld c,l			;
-		ld b,h			; 2*(bc+1)->bc
-		ld hl,(rp)		; [rp]->hl
+		ld b,h			; 2 * (bc + 1) -> bc
+		ld hl,(rp)		; [rp] -> hl
 		xor a			;
-		sbc hl,bc		; hl-bc->hl
-		ld (rp),hl		; [rp]-bc->rp
-		ex de,hl		; [rp]-bc->de
+		sbc hl,bc		; hl - bc -> hl
+		ld (rp),hl		; [rp] - bc -> rp
+		ex de,hl		; [rp] - bc -> de
 		ld l,a                  ;
-		ld h,a                  ; 0->hl asserted a=0
-		add hl,sp		; sp->hl
-		ldir			; [hl++]->[de++] until --bc=0
-		ld sp,hl		; hl->sp
+		ld h,a                  ; 0 -> hl asserted a = 0
+		add hl,sp		; sp -> hl
+		ldir			; [hl++] -> [de++] until --bc = 0
+		ld sp,hl		; hl -> sp
 		exx			; restore bc with ip
 		pop de			; pop new TOS
 		JP_NEXT			; continue
@@ -870,25 +870,25 @@ true_next	.equ mone_next		; alias
 		CODE NR>,nrfrom
 		push de			; save TOS
 		exx			; save bc with ip
-		ld hl,(rp)		; [rp]->hl
+		ld hl,(rp)		; [rp] -> hl
 		ld c,(hl)		;
 		inc hl			;
 		ld b,(hl)		;
-		dec hl			; [rp]->bc
-		ex de,hl		; [rp]->de
+		dec hl			; [rp] -> bc
+		ex de,hl		; [rp] -> de
 		inc bc			;
 		ld l,c			;
 		ld h,b			;
 		add hl,bc		;
 		ld c,l			;
-		ld b,h			; 2*(bc+1)->bc
+		ld b,h			; 2 * (bc + 1) -> bc
 		ld hl,0			;
 		add hl,sp		;
 		sbc hl,bc		;
-		ld sp,hl		; sp-bc->sp,de
-		ex de,hl		; [rp]->hl
-		ldir			; [hl++]->[de++] until --bc=0
-		ld (rp),hl		; hl->rp
+		ld sp,hl		; sp - bc -> sp,de
+		ex de,hl		; [rp] -> hl
+		ldir			; [hl++] -> [de++] until --bc = 0
+		ld (rp),hl		; hl -> rp
 		exx			; restore bc with ip
 		pop de			; pop new TOS
 		JP_NEXT			; continue
@@ -899,11 +899,11 @@ true_next	.equ mone_next		; alias
 ;		move TOS to the return stack
 
 		CODE >R,tor
-		ld hl,(rp)	; 16	; [rp]->hl
+		ld hl,(rp)	; 16	; [rp] -> hl
 		dec hl		;  6	;
 		ld (hl),d	;  7	;
 		dec hl		;  6	;
-		ld (hl),e	;  7	; de->[--rp]
+		ld (hl),e	;  7	; de -> [--rp]
 		ld (rp),hl	; 16	;
 		pop de		; 10(58); pop new TOS
 		NEXT			; continue
@@ -920,11 +920,11 @@ true_next	.equ mone_next		; alias
 
 		CODE R>,rfrom
 		push de		; 11	; save TOS
-		ld hl,(rp)	; 16	; [rp]->hl
+		ld hl,(rp)	; 16	; [rp] -> hl
 		ld e,(hl)	;  7	;
 		inc hl		;  6	;
 		ld d,(hl)	;  7	;
-		inc hl		;  6	; set [rp++]->de as new TOS
+		inc hl		;  6	; set [rp++] -> de as new TOS
 		ld (rp),hl	; 16(59);
 		NEXT			; continue
 
@@ -932,18 +932,18 @@ true_next	.equ mone_next		; alias
 ;		drop cell from the return stack, a single word for R> DROP
 
 		CODE RDROP,rdrop
-		ld hl,(rp)		; [rp]->hl
+		ld hl,(rp)		; [rp] -> hl
 		inc hl			;
 		inc hl			;
-		ld (rp),hl		; rp+2->rp
+		ld (rp),hl		; rp + 2 -> rp
 		NEXT			; continue
 
 ; R@		R: x -- x ; -- x
 ;		fetch cell from the return stack
 
 		CODE R@,rfetch
-		ld hl,(rp)		; [rp]->hl
-		jp push_fetch		; set [hl]->de as new TOS and continue
+		ld hl,(rp)		; [rp] -> hl
+		jp push_fetch		; set [hl] -> de as new TOS and continue
 
 ; 2>R		x1 x2 -- ; R: -- x1 x2
 ;		move double TOS to the return stack, a single word for SWAP >R >R
@@ -951,12 +951,12 @@ true_next	.equ mone_next		; alias
 		CODE 2>R,twotor
 		pop hl			; pop hl with 2OS
 		push de			; save TOS
-		ex de,hl		; 2OS->de
-		ld hl,(rp)		; [rp]->hl
+		ex de,hl		; 2OS -> de
+		ld hl,(rp)		; [rp] -> hl
 		dec hl			;
 		ld (hl),d		;
 		dec hl			;
-		ld (hl),e		; save de->[--rp] with 2OS
+		ld (hl),e		; save de -> [--rp] with 2OS
 		ld (rp),hl		;
 		pop de			; restore TOS
 		jr tor			; >R
@@ -966,16 +966,16 @@ true_next	.equ mone_next		; alias
 
 		CODE 2R>,tworfrom
 		push de			; save TOS
-		ld hl,(rp)		; [rp]->hl
+		ld hl,(rp)		; [rp] -> hl
 		ld e,(hl)		;
 		inc hl			;
 		ld d,(hl)		;
 		inc hl			;
-		push de			; save [rp++]->de as new 2OS
+		push de			; save [rp++] -> de as new 2OS
 		ld e,(hl)		;
 		inc hl			;
 		ld d,(hl)		;
-		inc hl			; [rp++]->de as TOS
+		inc hl			; [rp++] -> de as TOS
 		ld (rp),hl		;
 		jp swap			; SWAP
 
@@ -984,12 +984,12 @@ true_next	.equ mone_next		; alias
 
 		CODE 2R@,tworfetch
 		push de			; save TOS
-		ld ix,(rp)		; [rp]->ix
+		ld ix,(rp)		; [rp] -> ix
 		ld e,(ix+2)		;
 		ld d,(ix+3)		;
-		push de			; save [ix+2]->de as new 2OS
+		push de			; save [ix+2] -> de as new 2OS
 		ld e,(ix+0)		;
-		ld d,(ix+1)		; set [ix]->de as TOS
+		ld d,(ix+1)		; set [ix] -> de as TOS
 		JP_NEXT			; continue
 
 ; RP@		-- addr
@@ -1002,8 +1002,8 @@ rp:		.dw 0
 ;		store return stack pointer
 
 		CODE RP!,rpstore
-		ld hl,rp		; [rp]->hl
-		jr store_hl		; set de->[hl] pop new TOS and continue
+		ld hl,rp		; [rp] -> hl
+		jr store_hl		; set de -> [hl] pop new TOS and continue
 
 ; PICK		xu ... x0 u -- xu ... x0 xu
 ;		pick u'th cell from the parameter stack;
@@ -1016,8 +1016,8 @@ rp:		.dw 0
 		ld l,e			;
 		ld h,d			;
 		add hl,de		;
-		adc hl,sp		; sp+2*n->hl
-		jp fetch_de		; set [hl]->de as new TOS and continue
+		adc hl,sp		; sp + 2 * n -> hl
+		jp fetch_de		; set [hl] -> de as new TOS and continue
 
 .if FULL
 
@@ -1031,18 +1031,18 @@ rp:		.dw 0
 		pop hl			; pop hl with 2OS
 		di			; disable interrupts to protect exposed stack
 		di			; "
-		ld (3$),sp		; save sp->3$
+		ld ix,0			;
+		add ix,sp		; save sp -> ix
 		inc e			; e++
 		jr 2$			;
 1$:		ex (sp),hl		; loop, exchange [sp++],hl
 		pop af			;
 2$:		dec e			;
-		jr nz,1$		; until --e=0
-		ld sp,(3$)		; restore 3$->sp
+		jr nz,1$		; until --e = 0
+		ld sp,ix		; restore ix -> sp
 		ei			; enable interrupts
 		ex de,hl		; set new TOS to hl
 		JP_NEXT			; continue
-3$:		.dw 0			; stack pointer temporary
 
 .endif
 
@@ -1056,19 +1056,19 @@ rp:		.dw 0
 ;		fetch from cell
 
 		CODE @,fetch
-		ex de,hl	;  4	; addr->hl
+		ex de,hl	;  4	; addr -> hl
 		ld e,(hl)	;  7	;
 		inc hl		;  6	;
-		ld d,(hl)	;  7(24); set [hl]->de as new TOS
+		ld d,(hl)	;  7(24); set [hl] -> de as new TOS
 		NEXT			; continue
 
 ; C@		c-addr -- char
 ;		fetch char
 
 		CODE C@,cfetch
-		ld a,(de)		; [de]->a
+		ld a,(de)		; [de] -> a
 a_next:		ld e,a			;
-		ld d,0			; a->de
+		ld d,0			; a -> de
 		NEXT			; continue
 
 ; 2@		addr -- x1 x2
@@ -1078,17 +1078,17 @@ a_next:		ld e,a			;
 
 		CODE 2@,twofetch
 		ex de,hl		;
-		jp twofetch_de		; [hl+2]->2OS [hl]->TOS and continue
+		jp twofetch_de		; [hl+2] -> 2OS [hl] -> TOS and continue
 
 ; !		x addr --
 ;		store in cell
 
 		CODE !,store
-		pop hl		; 10	; pop addr->hl
-		ex de,hl	;  4	; x->de, addr->hl
+		pop hl		; 10	; pop addr -> hl
+		ex de,hl	;  4	; x -> de, addr -> hl
 store_hl:	ld (hl),e	;  7	;
 		inc hl		;  6	;
-		ld (hl),d	;  7	; de->[hl] with x
+		ld (hl),d	;  7	; de -> [hl] with x
 		pop de		; 10(44); pop new TOS
 		NEXT			; continue
 
@@ -1102,16 +1102,16 @@ store_hl:	ld (hl),e	;  7	;
 		inc bc			;
 		ld a,(bc)		;
 		ld h,a			;
-		inc bc			; [ip++]->hl
-		jr store_hl		; de->[hl] with x pop new TOS and continue
+		inc bc			; [ip++] -> hl
+		jr store_hl		; de -> [hl] with x pop new TOS and continue
 
 ; C!		char c-addr --
 ;		store char
 
 		CODE C!,cstore
-		pop hl			; pop addr->hl
-		ex de,hl		; char->de, c-addr->hl
-		ld (hl),e		; set e->[hl] with char
+		pop hl			; pop addr -> hl
+		ex de,hl		; char -> de, c-addr -> hl
+		ld (hl),e		; set e -> [hl] with char
 		pop de			; pop new TOS
 		NEXT			; continue
 
@@ -1121,14 +1121,14 @@ store_hl:	ld (hl),e	;  7	;
 ;    : 2! TUCK ! CELL+ ! ;
 
 		CODE 2!,twostore
-		pop hl			; pop x2->hl
-		ex de,hl		; x2->de, addr->hl
+		pop hl			; pop x2 -> hl
+		ex de,hl		; x2 -> de, addr -> hl
 twostore_hl:	ld (hl),e		;
 		inc hl			;
 		ld (hl),d		;
-		inc hl			; de->[hl++] with x2
+		inc hl			; de -> [hl++] with x2
 		pop de			; pop de with x1
-		jr store_hl		; de->[hl] with x1 pop new TOS and continue
+		jr store_hl		; de -> [hl] with x1 pop new TOS and continue
 
 ; (2TO)		dx --
 ;		store in double value;
@@ -1140,22 +1140,22 @@ twostore_hl:	ld (hl),e		;
 		inc bc			;
 		ld a,(bc)		;
 		ld h,a			;
-		inc bc			; [ip++]->hl
-		jr twostore_hl		; de->[hl], 2OS->[hl+2] pop new TOS and continue
+		inc bc			; [ip++] -> hl
+		jr twostore_hl		; de -> [hl], 2OS -> [hl+2] pop new TOS and continue
 
 ; +!		n addr --
 ;		increment cell
 
 		CODE +!,plusstore
-		pop hl			; pop addr->hl
-		ex de,hl		; x->de, addr->hl
+		pop hl			; pop addr -> hl
+		ex de,hl		; x -> de, addr -> hl
 plusstore_hl:	ld a,(hl)		;
 		add e			;
 		ld (hl),a		;
 		inc hl			;
 		ld a,(hl)		;
 		adc d			;
-		ld (hl),a		; [hl]+de->[hl]
+		ld (hl),a		; [hl] + de -> [hl]
 		pop de			; pop new TOS
 		NEXT			; continue
 
@@ -1169,8 +1169,8 @@ plusstore_hl:	ld a,(hl)		;
 		inc bc			;
 		ld a,(bc)		;
 		ld h,a			;
-		inc bc			; [ip++]->hl
-		jr plusstore_hl		; set [hl]+de->[hl] pop new TOS and continue
+		inc bc			; [ip++] -> hl
+		jr plusstore_hl		; set [hl] + de -> [hl] pop new TOS and continue
 
 ; ON		addr --
 ;		store TRUE (-1) in cell
@@ -1178,11 +1178,11 @@ plusstore_hl:	ld a,(hl)		;
 ;    : ON -1 SWAP ! ;
 
 		CODE ON,on
-		ld a,-1			; -1->a
-store_a_de:	ex de,hl		; addr->hl
+		ld a,-1			; -1 -> a
+store_a_de:	ex de,hl		; addr -> hl
 store_a_hl:	ld (hl),a		;
 		inc hl			;
-		ld (hl),a		; a->[hl]
+		ld (hl),a		; a -> [hl]
 		pop de			; pop new TOS
 		NEXT			; continue
 
@@ -1192,8 +1192,8 @@ store_a_hl:	ld (hl),a		;
 ;    : OFF 0 SWAP ! ;
 
 		CODE OFF,off
-		xor a			; 0->a
-		jr store_a_de		; 0->[addr] pop new TOS and continue
+		xor a			; 0 -> a
+		jr store_a_de		; 0 -> [addr] pop new TOS and continue
 
 ;-------------------------------------------------------------------------------
 ;
@@ -1205,8 +1205,8 @@ store_a_hl:	ld (hl),a		;
 ;		sum n1+n2
 
 		CODE +,plus
-		pop hl			; pop n1->hl
-		add hl,de		; x1+x2->hl
+		pop hl			; pop n1 -> hl
+		add hl,de		; x1 + x2 -> hl
 		ex de,hl		; set new TOS to hl
 		NEXT			; continue
 
@@ -1216,10 +1216,10 @@ store_a_hl:	ld (hl),a		;
 		CODE M+,mplus
 		pop hl			; pop hl with high order of d1
 		ex (sp),hl		; exchange hl low/high order of d1
-		add hl,de		; hl+n->de
+		add hl,de		; hl + n -> de
 		pop de			; pop de with high order d2
 		push hl			; save hl with low order d2
-		jr nc,1$		; if cf=1 then
+		jr nc,1$		; if cf = 1 then
 		inc de			;   de++ increment high order of d2
 1$:		NEXT			; continue
 
@@ -1236,9 +1236,9 @@ store_a_hl:	ld (hl),a		;
 ;		difference n1-n2
 
 		CODE -,minus
-		pop hl			; pop n1->hl
-		or a			; 0->cf
-		sbc hl,de		; set n1-n2->de as new TOS
+		pop hl			; pop n1 -> hl
+		or a			; 0 -> cf
+		sbc hl,de		; set n1 - n2 -> de as new TOS
 		ex de,hl		; set new TOS to hl
 		NEXT			; continue
 
@@ -1257,20 +1257,20 @@ store_a_hl:	ld (hl),a		;
 		CODE UM*,umstar
 		push de			; save TOS
 		exx			; save bc with ip
-		pop bc			; pop u2->bc
-		pop de			; pop u1->de
-		xor a			; 0->cf
+		pop bc			; pop u2 -> bc
+		pop de			; pop u1 -> de
+		xor a			; 0 -> cf
 		ld l,a			;
-		ld h,a			; 0->hl
-		ld a,17			; 17->a loop counter
+		ld h,a			; 0 -> hl
+		ld a,17			; 17 -> a loop counter
 1$:		rr h		;  8	; loop
 		rr l		;  8	;
 		rr d		;  8	;
-		rr e		;  8	;   de,hl+cf>>1->de,hl
-		jr nc,2$	;  7	;   if cf=1 then
-		add hl,bc	; 11	;     hl+bc->hl
+		rr e		;  8	;   (cf + hlde) >> 1 -> hlde
+		jr nc,2$	;  7	;   if cf = 1 then
+		add hl,bc	; 11	;     hl + bc -> hl
 2$:		dec a		;  4	;
-		jp nz,1$	; 10(64); until --b=0
+		jp nz,1$	; 10(64); until --a = 0
 		push de			; save de with low order ud
 		push hl			; save hl with high order ud
 		exx			; restore bc with ip
@@ -1307,26 +1307,26 @@ store_a_hl:	ld (hl),a		;
 		CODE *,star
 		push de			; save TOS
 		exx			; save bc with ip
-		pop de			; n2->de
-		pop bc			; n1->bc
-		ld hl,0			; 0->hl
-		ld a,c			; c->a low order byte of n1
-		ld c,b			; b->c save high order byte of n1
-		ld b,8			; 8->b loop counter
-1$:		rra		;  4	; loop, a>>1->a set cf
-		jr nc,2$	;  7	;   if cf=1 then
-		add hl,de	; 11	;     hl+de->hl
+		pop de			; n2 -> de
+		pop bc			; n1 -> bc
+		ld hl,0			; 0 -> hl
+		ld a,c			; c -> a low order byte of n1
+		ld c,b			; b -> c save high order byte of n1
+		ld b,8			; 8 -> b loop counter
+1$:		rra		;  4	; loop, a >> 1 -> a set cf
+		jr nc,2$	;  7	;   if cf = 1 then
+		add hl,de	; 11	;     hl + de -> hl
 2$:		sla e		;  8	;
-		rl d		;  8	;   de<<1->de
-		djnz 1$		; 13(51); until --b=0
-		ld a,c			; c->a high order byte of n1
-		ld b,8			; 8->b loop counter
-3$:		rra		;  4	; loop, a>>1->a set cf
-		jr nc,4$	;  7	;   if cf=1 then
-		add hl,de	; 11	;     hl+de->hl
+		rl d		;  8	;   de << 1 -> de
+		djnz 1$		; 13(51); until --b = 0
+		ld a,c			; c -> a high order byte of n1
+		ld b,8			; 8 -> b loop counter
+3$:		rra		;  4	; loop, a >> 1 -> a set cf
+		jr nc,4$	;  7	;   if cf = 1 then
+		add hl,de	; 11	;     hl + de -> hl
 4$:		sla e		;  8	;
-		rl d		;  8	;   de<<1->de
-		djnz 3$		; 13(51); until --b=0
+		rl d		;  8	;   de << 1 -> de
+		djnz 3$		; 13(51); until --b = 0
 		push de			; save de with product as TOS
 		exx			; restore bc with ip
 		pop de			; pop new TOS
@@ -1370,39 +1370,45 @@ store_a_hl:	ld (hl),a		;
 
 ; UM/MOD	ud u1 -- u2 u3
 ;		remainder and quotient ud/u1;
-;		the result is undefined when u1=0
+;		the result is undefined when u1 = 0
 
 		CODE UM/MOD,umslashmod
 		push de			; save TOS
 		exx			; save bc with ip
-		pop bc			; pop u1->bc divisor
-		pop hl			; pop ud->hl high order dividend
-		pop de			; pop ud->de low order dividend
-		ld a,16			; 16->a loop counter
-		sla e			;
-		rl d			; de<<1->de
-1$:		adc hl,hl	; 15	; loop, hl<<1+cf->hl
-		jr nc,2$	; 12/ 7	;   if cf=1 then
-		or a		;     4	;     0->cf
-		sbc hl,bc	;    15	;     hl-bc->hl
-		or a		;     4	;     0->cf
-		jp 3$		;    10	;   else
-2$:		sbc hl,bc	; 15	;     hl-bc->hl
-		jr nc,3$	; 12/ 7 ;     if cf=1 then
-		add hl,bc	;    11	;       hl+bc->hl to undo sbc, sets cf
-3$:		rl e		;  8	;
-		rl d		;  8	;   de<<1+cf->de with inverse cf we'll need
-		dec a		;  4	;
-		jp nz,1$	; 10(88); until --a=0
+		pop de			; pop u1 -> de divisor
+		pop hl			; pop ud -> hl high order dividend
+		pop bc			; pop ud -> bc low order dividend
+		xor a			;
+		sub e			;
+		ld e,a			;
+		sbc a			;
+		sub d			;
+		ld d,a			; -de -> de with -u1
+		ld a,b			; b -> a low order dividend in ac
+		ld b,16			; 16 -> b loop counter
+		sla c			;
+		rla			; ac << 1 -> ac
+1$:		adc hl,hl	; 15	; loop, hl << 1 + cf -> hl
+		jr nc,2$	; 12/ 7	;   if cf = 1 then
+		add hl,de	;    11	;     hl + -u1 -> hl
+		scf		;     4	;     1 -> cf
+		jr 3$		;    12	;   else
+2$:		add hl,de	; 11	;     hl + -u1 -> hl
+		jr c,3$		; 12/ 7 ;     if cf = 0 then
+		sbc hl,de	;    15	;       hl - -u1 -> hl to undo, no carry
+3$:		rl c		;  8	;
+		rla		;  4	;   ac << 1 + cf -> ac
+		djnz 1$		; 13(85); until --b = 0
+		ld b,a			; a -> b quotient bc
 		push hl			; save hl with u2 remainder
-		push de			; save de with u3 complemented quotient
+		push bc			; save bc with u3 quotient
 		exx			; restore bc with ip
-		pop de			; pop new TOS with complemented quotient
-		jp invert		; complement TOS, faster than ccf in loop
+		pop de			; pop new TOS with quotient
+		JP_NEXT			; continue
 
 ; SM/REM	d1 n1 -- n2 n3
 ;		symmetric signed remainder and quotient d1/n1;
-;		the result is undefined when n1=0
+;		the result is undefined when n1 = 0
 ;
 ;    : SM/REM
 ;      2DUP XOR >R
@@ -1429,7 +1435,7 @@ store_a_hl:	ld (hl),a		;
 
 ; FM/MOD	d1 n1 -- n2 n3
 ;		floored signed modulus and quotient d1/n1;
-;		the result is undefined when n1=0
+;		the result is undefined when n1 = 0
 ;
 ;    : FM/MOD
 ;      DUP>R
@@ -1451,7 +1457,7 @@ store_a_hl:	ld (hl),a		;
 
 ; /MOD		n1 n2 -- n3 n4
 ;		signed symmetric remainder and quotient n1/n2;
-;		the result is undefined when n2=0
+;		the result is undefined when n2 = 0
 ;
 ;    : /MOD SWAP S>D ROT SM/REM ;
 
@@ -1462,7 +1468,7 @@ store_a_hl:	ld (hl),a		;
 
 ; MOD		n1 n2 -- n3
 ;		signed symmetric remainder of n1/n2;
-;		the result is undefined when n2=0
+;		the result is undefined when n2 = 0
 ;
 ;    : / /MOD DROP ;
 
@@ -1472,7 +1478,7 @@ store_a_hl:	ld (hl),a		;
 
 ; /		n1 n2 -- n3
 ;		signed symmetric quotient n1/n2;
-;		the result is undefined when n2=0
+;		the result is undefined when n2 = 0
 ;
 ;    : / /MOD NIP ;
 
@@ -1482,7 +1488,7 @@ store_a_hl:	ld (hl),a		;
 
 ; */MOD		n1 n2 n3 -- n4 n5
 ;		signed product symmetric remainder and quotient n1*n2/n3;
-;		the result is undefined when n3=0
+;		the result is undefined when n3 = 0
 ;
 ;    : */MOD -ROT M* ROT SM/REM ;
 
@@ -1493,7 +1499,7 @@ store_a_hl:	ld (hl),a		;
 
 ; */		n1 n2 n3 -- n4
 ;		signed product symmetric quotient n1*n2/n3;
-;		the result is undefined when n3=0
+;		the result is undefined when n3 = 0
 ;
 ;    : */ */MOD NIP ;
 
@@ -1503,7 +1509,7 @@ store_a_hl:	ld (hl),a		;
 
 ; M*/		d1 n1 n2 -- d2
 ;		signed double product symmetric quotient d1*n1/n2;
-;		the result is undefined when n2=0
+;		the result is undefined when n2 = 0
 ;
 ;    : M*/ >R MD* R> SM/REM NIP ;
 
@@ -1527,11 +1533,11 @@ store_a_hl:	ld (hl),a		;
 ;		disabled since this is only a bit faster than coded in Forth below
 
 		CODE D*,dstar
-		ld hl,0			; 0->hl high order d3, de with d2 high order
+		ld hl,0			; 0 -> hl high order d3, de with d2 high order
 		exx			; save bc with ip
-		pop de			; d2->de' low order d2
-		pop hl			; d1->hl' high order d1
-		pop bc			; d1->bc' low order d1
+		pop de			; d2 -> de' low order d2
+		pop hl			; d1 -> hl' high order d1
+		pop bc			; d1 -> bc' low order d1
 		ld a,h			;
 		push af			; save d1 high order byte 3
 		ld a,l			;
@@ -1540,25 +1546,25 @@ store_a_hl:	ld (hl),a		;
 		push af			; save d1 low order byte 1
 		ld a,c			;
 		push af			; save d1 low order byte 0
-		ld hl,0			; 0->hl' low order d3
-		ld c,4			; 4->c outer loop counter
-1$:		pop af			; loop, [sp++]->a next d1 byte
-		ld b,8			;   8->b inner loop counter
-2$:		rra		;  4	;   loop, a>>1->a set cf
-		jr nc,3$	;  7	;     if cf=1 then
-		add hl,de	; 11	;       hl'+de'->hl add low order
+		ld hl,0			; 0 -> hl' low order d3
+		ld c,4			; 4 -> c outer loop counter
+1$:		pop af			; loop, [sp++] -> a next d1 byte
+		ld b,8			;   8 -> b inner loop counter
+2$:		rra		;  4	;   loop, a >> 1 -> a set cf
+		jr nc,3$	;  7	;     if cf = 1 then
+		add hl,de	; 11	;       hl' + de' -> hl add low order
 		exx		;  4	;
-		adc hl,de	; 15	;       hl+de+cf->hl add high order
+		adc hl,de	; 15	;       hl + de + cf -> hl add high order
 		exx		;  4	;
 3$:		sla e		;  8	;
-		rl d		;  8	;     de'<<1->de' shift low order
+		rl d		;  8	;     de' << 1 -> de' shift low order
 		exx		;  4	;
 		rl e		;  8	;
-		rl d		;  8	;     de<<1+cf->de shift high order
+		rl d		;  8	;     de << 1 + cf -> de shift high order
 		exx		;  4	;
-		djnz 2$		; 13(98);   until --b=0
+		djnz 2$		; 13(98);   until --b = 0
 		dec c			;
-		jr nz,1$		; until --c=0
+		jr nz,1$		; until --c = 0
 		push hl			; save hl' with low order d3
 		exx			; restore bc with ip
 		ex de,hl		; set new TOS to hl with high order d3
@@ -1582,69 +1588,69 @@ store_a_hl:	ld (hl),a		;
 ;		bitwise and x1 with x2
 
 		CODE AND,and
-		pop hl			; pop x1->hl
+		pop hl			; pop x1 -> hl
 		ld a,e			;
 		and l			;
 		ld e,a			;
 		ld a,d			;
 		and h			;
-		ld d,a			; set hl&de->de as new TOS
+		ld d,a			; set hl & de -> de as new TOS
 		NEXT			; continue
 
 ; OR		x1 x2 -- x1|x2
 ;		bitwise or x1 with x2
 
 		CODE OR,or
-		pop hl			; pop x1->hl
+		pop hl			; pop x1 -> hl
 		ld a,e			;
 		or l			;
 		ld e,a			;
 		ld a,d			;
 		or h			;
-		ld d,a			; set hl|de->de as new TOS
+		ld d,a			; set hl | de -> de as new TOS
 		NEXT			; continue
 
 ; XOR		x1 x2 -- x1^x2
 ;		bitwise xor x1 with x2
 
 		CODE XOR,xor
-		pop hl			; pop x1->hl
+		pop hl			; pop x1 -> hl
 		ld a,e			;
 		xor l			;
 		ld e,a			;
 		ld a,d			;
 		xor h			;
-		ld d,a			; set hl^de->de as new TOS
+		ld d,a			; set hl ^ de -> de as new TOS
 		NEXT			; continue
 
 ; =		x1 x2 -- flag
-;		true if x1=x2
+;		true if x1 = x2
 
 		CODE ^|=|,equal
-		pop hl			; pop x1->hl
-		xor a			; 0->a, 0->Cf
-		sbc hl,de		; test if hl=de
-true_if_z_next:	ld d,a			; require a=0
+		pop hl			; pop x1 -> hl
+		xor a			; 0 -> a, 0 -> cf
+		sbc hl,de		; test if hl = de
+true_if_z_next:	ld d,a			; require a = 0
 		ld e,a			; set new TOS to FALSE
-		jr nz,1$		; set new TOS to TRUE if x1=x2 else FALSE
+		jr nz,1$		; set new TOS to TRUE if x1 = x2 else FALSE
 		dec de			;
 1$:		NEXT			; continue
 
 ; <>		x1 x2 -- flag
-;		true if x1<>x2
+;		true if x1 <> x2
 
 		CODE <>,notequal
-		pop hl			; pop x1->hl
-		xor a			; 0->a, 0->cf
-		sbc hl,de		; test if hl=de
-true_if_nz_next:ld d,a			; require a=0
+		pop hl			; pop x1 -> hl
+		xor a			; 0 -> a, 0 -> cf
+		sbc hl,de		; test if hl = de
+true_if_nz_next:ld d,a			; require a = 0
 		ld e,a			; set new TOS to FALSE
-		jr z,1$			; set new TOS to TRUE if x1<>x2 else FALSE
+		jr z,1$			; set new TOS to TRUE if x1 <> x2 else FALSE
 		dec de			;
 1$:		NEXT			; continue
 
 ; <		n1 n2 -- flag
-;		true if n1<n2 signed
+;		true if n1 < n2 signed
 ;
 ;    : <
 ;      2DUP XOR 0< IF
@@ -1654,33 +1660,33 @@ true_if_nz_next:ld d,a			; require a=0
 ;      - 0< ;
 
 		CODE <,less
-		pop hl			; pop n1->hl
-less_hl_de:	xor a			; 0->a, 0->cf
-		sbc hl,de		; test hl<de
+		pop hl			; pop n1 -> hl
+less_hl_de:	xor a			; 0 -> a, 0 -> cf
+		sbc hl,de		; test hl < de
 		jp pe,true_if_p_next	; if not OV then
-true_if_m_next:	ld d,a			;   require a=0
+true_if_m_next:	ld d,a			;   require a = 0
 		ld e,a			;   set new TOS to FALSE
 		jp p,1$			;   if not positive then
 		dec de			;     set new TOS to TRUE
 1$:		NEXT			; continue
-true_if_p_next:	ld d,a			; require a=0
+true_if_p_next:	ld d,a			; require a = 0
 		ld e,a			; set new TOS to FALSE
 		jp m,1$			; if not negative then
 		dec de			;   set new TOS to TRUE
 1$:		NEXT			; continue
 
 ; >		n1 n2 -- flag
-;		true if n1>n2 signed
+;		true if n1 > n2 signed
 ;
 ;    : > SWAP < ;
 
 		CODE >,greater
-		pop hl			; pop n1->hl
-		ex de,hl		; n1->de, n2->hl
-		jr less_hl_de		; set new TOS to TRUE if n1>n2
+		pop hl			; pop n1 -> hl
+		ex de,hl		; n1 -> de, n2 -> hl
+		jr less_hl_de		; set new TOS to TRUE if n1 > n2
 
 ; U<		u1 u2 -- flag
-;		true if u1<u2 unsigned
+;		true if u1 < u2 unsigned
 ;
 ;    : U<
 ;      2DUP XOR 0< IF
@@ -1690,42 +1696,42 @@ true_if_p_next:	ld d,a			; require a=0
 ;      - 0< ;
 
 		CODE U<,uless
-		pop hl			; pop n1->hl
-uless_hl_de:	or a			; 0->cf
+		pop hl			; pop n1 -> hl
+uless_hl_de:	or a			; 0 -> cf
 		sbc hl,de		; subtract 2OS from TOS
-true_if_c_next:	sbc a			; -cf->a
+true_if_c_next:	sbc a			; -cf -> a
 		ld d,a			;
-		ld e,a			; set new TOS to TRUE if cf=1 else FALSE
+		ld e,a			; set new TOS to TRUE if cf = 1 else FALSE
 		NEXT			; continue
 
 ; U>		u1 u2 -- flag
-;		true if u1>u2 unsigned
+;		true if u1 > u2 unsigned
 ;
 ;    : U> SWAP U< ;
 
 		CODE U>,ugreater
-		pop hl			; pop u1->hl
-		ex de,hl		; u1->de. u2->hl
-		jr uless_hl_de		; set new TOS to TRUE if u1>u2 else FALSE
+		pop hl			; pop u1 -> hl
+		ex de,hl		; u1 -> de. u2 -> hl
+		jr uless_hl_de		; set new TOS to TRUE if u1 > u2 else FALSE
 
 ; 0=		x -- flag
-;		true if x=0
+;		true if x = 0
 
 		CODE 0=,zeroequal
 		ld a,e			;
 		or d			;
-		sub 1			; cf=1 if x=0
-		jr true_if_c_next	; set new TOS to TRUE if x=0 else FALSE
+		sub 1			; cf = 1 if x = 0
+		jr true_if_c_next	; set new TOS to TRUE if x = 0 else FALSE
 
 ; 0<		n -- flag
-;		true if n<0
+;		true if n < 0
 
 		CODE 0<,zeroless
-		sla d			; cf=1 if n<0
-		jr true_if_c_next	; set new TOS to TRUE if cf=1 else FALSE
+		sla d			; cf = 1 if n < 0
+		jr true_if_c_next	; set new TOS to TRUE if cf = 1 else FALSE
 
 ; D0=		dx -- flag
-;		true if dx=0
+;		true if dx = 0
 ;
 ;    : D0= OR 0= ;
 
@@ -1735,26 +1741,26 @@ true_if_c_next:	sbc a			; -cf->a
 		pop de			;
 		or e			;
 		or d			;
-		sub 1			; cf=1 if dx=0
-		jr true_if_c_next	; set new TOS to TRUE if cf=1 else FALSE
+		sub 1			; cf = 1 if dx = 0
+		jr true_if_c_next	; set new TOS to TRUE if cf = 1 else FALSE
 
 ; D0<		d -- flag
-;		true if d<0
+;		true if d < 0
 ;
 ;    : D0< NIP 0< ;
 
 		CODE D0<,dzeroless
-		sla d			; cf=1 if d is negative
+		sla d			; cf = 1 if d is negative
 		pop de			; pop to discard low order of d
-		jr true_if_c_next	; set new TOS to TRUE if cf=1 else FALSE
+		jr true_if_c_next	; set new TOS to TRUE if cf = 1 else FALSE
 
 ; S>D		n -- d
 ;		widen n to a double
 
 		CODE S>D,stod
 		push de			; save TOS
-		sla d			; test if n<0
-		jr true_if_c_next	; set new TOS to -1 if cf=1 else 0
+		sla d			; test if n < 0
+		jr true_if_c_next	; set new TOS to -1 if cf = 1 else 0
 
 ; D>S		d -- n
 ;		narrow d to a single;
@@ -1762,26 +1768,26 @@ true_if_c_next:	sbc a			; -cf->a
 
 		CODE D>S,dtos
 		ld a,e			;
-		or d			; test TOS=0 high order of d
-		jr nz,3$		; if TOS=0 then
+		or d			; test TOS = 0 high order of d
+		jr nz,3$		; if TOS = 0 then
 		pop de			;   pop to discard TOS high order of d
 2$:		JP_NEXT			;   continue
-3$:		pop hl			; pop 2OS->hl low order of d
+3$:		pop hl			; pop 2OS -> hl low order of d
 		bit 7,h			;
 		jr z,4$			; if 2OS is negative then
 		ld a,d			;
 		add e			;
 		rra			;
-		inc a			;   test TOS=0xffff
+		inc a			;   test TOS = 0xffff
 		ex de,hl		;   set new TOS to hl
-		jr z,2$			;   if TOS=0xffff then continue
+		jr z,2$			;   if TOS = 0xffff then continue
 4$:		ld a,-11		;
 		jp throw_a		; throw -11 "result out of range"
 
 .if FULL
 
 ;+ D=		d1 d2 -- flag
-;		true if d1=d2
+;		true if d1 = d2
 ;
 ;    : D= D- D0= ;
 
@@ -1790,7 +1796,7 @@ true_if_c_next:	sbc a			; -cf->a
 		.dw doret
 
 ;+ D<		d1 d2 -- flag
-;		true if d1<d2
+;		true if d1 < d2
 ;
 ;    : D<
 ;      DUP 3 PICK XOR 0< IF
@@ -1807,7 +1813,7 @@ true_if_c_next:	sbc a			; -cf->a
 		.dw doret
 
 ;+ DU<		du1 du2 -- flag
-;		true if ud1<ud2
+;		true if ud1 < ud2
 ;
 ;    : DU<
 ;      DUP 3 PICK XOR 0< IF
@@ -1819,13 +1825,13 @@ true_if_c_next:	sbc a			; -cf->a
 		CODE DU<,duless
 		pop hl			; pop hl with low order d2
 		ex (sp),hl		; save low order d2, hl with high order d1
-		or a			; 0->cf
+		or a			; 0 -> cf
 		sbc hl,de		; compare high order d1 with high order d2
 		pop de			; pop de with low order d2
 		pop hl			; pop hl with low order d1
-		jp c,true_next		; if cf=1 then set TOS to TRUE
+		jp c,true_next		; if cf = 1 then set TOS to TRUE
 		sbc hl,de		; compare low order d1 with low order d2
-		jp true_if_c_next	; set TOS to TRUE if cf=1
+		jp true_if_c_next	; set TOS to TRUE if cf = 1
 
 .endif
 
@@ -1930,17 +1936,17 @@ true_if_c_next:	sbc a			; -cf->a
 		CODE INVERT,invert
 		ld a,e			;
 		cpl			;
-		ld e,a			; ~e->e
+		ld e,a			; ~e -> e
 		ld a,d			;
 		cpl			;
-		ld d,a			; ~d->d
+		ld d,a			; ~d -> d
 		NEXT			; continue
 
 .else
 
 		CODE INVERT,invert
 		inc de			;
-		jr negate		; set new TOS to -x1-1 and continue
+		jr negate		; set new TOS to -x1 - 1 and continue
 
 .endif
 	
@@ -1949,12 +1955,12 @@ true_if_c_next:	sbc a			; -cf->a
 ;		two's complement -n
 
 		CODE NEGATE,negate
-		xor a			; 0->a
+		xor a			; 0 -> a
 		sub e			;
-		ld e,a			; -e->e
+		ld e,a			; -e -> e
 		sbc a			;
 		sub d			;
-		ld d,a			; -cf-d->d, set new TOS
+		ld d,a			; -cf - d -> d, set new TOS
 		NEXT			; continue
 
 ; ABS		n1 -- n2
@@ -1975,16 +1981,16 @@ true_if_c_next:	sbc a			; -cf->a
 		CODE DNEGATE,dnegate
 		pop hl			; pop hl with low order d1
 		push de			; save de with high order d1
-		ex de,hl		; hl->de
-		xor a			; 0->cf
+		ex de,hl		; hl -> de
+		xor a			; 0 -> cf
 		ld l,a			;
-		ld h,a			; 0->hl
-		sbc hl,de		; -de->hl low order d2
+		ld h,a			; 0 -> hl
+		sbc hl,de		; -de -> hl low order d2
 		pop de			; pop de with high order d1
 		push hl			; save hl with low order d2
 		ld l,a			;
-		ld h,a			; 0->hl
-		sbc hl,de		; -de->hl high order d2
+		ld h,a			; 0 -> hl
+		sbc hl,de		; -de -> hl high order d2
 		ex de,hl		; set new TOS to hl
 		JP_NEXT			; continue
 
@@ -1999,25 +2005,25 @@ true_if_c_next:	sbc a			; -cf->a
 		JP_NEXT			; continue
 
 ; LSHIFT	x1 u -- x2
-;		logical shift left x1<<u
+;		logical shift left x1 << u
 
 		CODE LSHIFT,lshift
-		pop hl			; pop x1->hl
+		pop hl			; pop x1 -> hl
 		jr 2$			; while --e is nonnegative
-1$:		add hl,hl		;   hl<<1->hl
+1$:		add hl,hl		;   hl << 1 -> hl
 2$:		dec e			;
 		jp p,1$			; repeat
 		ex de,hl		; set new TOS to hl
 		JP_NEXT			; continue
 
 ; RSHIFT	x1 u -- x2
-;		logical shift right x1>>u
+;		logical shift right x1 >> u
 
 		CODE RSHIFT,rshift
-		pop hl			; pop x1->hl
+		pop hl			; pop x1 -> hl
 		jr 2$			; while --e is nonnegative
 1$:		srl h			;
-		rr l			;   hl>>1->hl
+		rr l			;   hl >> 1 -> hl
 2$:		dec e			;
 		jp p,1$			; repeat
 		ex de,hl		; set new TOS to hl
@@ -2039,7 +2045,7 @@ true_if_c_next:	sbc a			; -cf->a
 
 		CODE 2+,twoplus
 		inc de
-		jr oneplus		; set de+2 as TOS
+		jr oneplus		; set de + 2 -> de as TOS
 
 ; 1-		n1 -- n2
 ;		decrement n1-1
@@ -2057,26 +2063,26 @@ true_if_c_next:	sbc a			; -cf->a
 
 		CODE 2-,twominus
 		dec de
-		jr oneminus		; set de-2->de as TOS
+		jr oneminus		; set de - 2 -> de as TOS
 
 ; 2*		n1 -- n2
-;		arithmetic shift left n1<<1
+;		arithmetic shift left n1 << 1
 ;
 ;    : 2* 2 * ;
 
 		CODE 2*,twostar
 		sla e
-		rl d			; set 2*de->de as TOS
+		rl d			; set 2 * de -> de as TOS
 		NEXT			; continue
 
 ; 2/		n1 -- n2
-;		arithmetic shift right n1>>1
+;		arithmetic shift right n1 >> 1
 ;
 ;    : 2/ 2 / ;
 
 		CODE 2/,twoslash
 		sra d
-		rr e			; set de/2->de as TOS
+		rr e			; set de / 2 -> de as TOS
 		NEXT			; continue
 
 .if FULL
@@ -2137,50 +2143,50 @@ cells		.equ twostar		; alias
 		.dw doret
 
 ; COMPARE	c-addr1 u1 c-addr2 u2 -- -1|0|1
-;		compare strings, leaves -1=less or 0=equal or 1=greater
+;		compare strings, leaves -1 = less or 0 = equal or 1 = greater
 
 		CODE COMPARE,compare
 		push de			; save TOS
 		exx			; save bc with ip
-		pop bc			; pop u2->bc
-		pop de			; pop c-addr2->de
-		pop hl			; u1->hl
+		pop bc			; pop u2 -> bc
+		pop de			; pop c-addr2 -> de
+		pop hl			; u1 -> hl
 		push hl			; keep u1 on the stack
-		xor a			; 0->a flags u1=u2, 0->cf
+		xor a			; 0 -> a flags u1 = u2, 0 -> cf
 		sbc hl,bc		;
-		jr z,1$			; if u1<>u2 then
-		inc a			;   1->a flags u1>u2
-		jr nc,1$		;   if u1<u2 then
-		pop bc			;     pop u1->bc
+		jr z,1$			; if u1 <> u2 then
+		inc a			;   1 -> a flags u1 > u2
+		jr nc,1$		;   if u1 < u2 then
+		pop bc			;     pop u1 -> bc
 		push bc			;     rebalance stack
-		ld a,-1			;   -1->a flags u1<u2
+		ld a,-1			;   -1 -> a flags u1 < u2
 1$:		pop hl			; pop to discard u1
-		pop hl			; pop c-addr1->hl
+		pop hl			; pop c-addr1 -> hl
 		ex af,af'		; save a with -1|0|1 flag
 		ld a,c			;
 		or b			;
-		jr z,3$			; if bc<>0 then
+		jr z,3$			; if bc <> 0 then
 ;		compare chars
 2$:		ld a,(de)	;  7	;   loop
 		cpi		; 16	;     compare [hl++] to [de], --bc
 		jr nz,5$	;  7	;     while characters [hl] and [de] are equal
 		inc de		;  6	;     de++
-		jp pe,2$	; 10(46);   until bc=0
+		jp pe,2$	; 10(46);   until bc = 0
 ;		chars match, check lengths
 3$:		ex af,af'		; restore a with -1|0|1 flag
 4$:		exx			; restore bc with ip
 		ld e,a			;
 		add a			;
-		sbc a			; a=-1 if e<0 else 0
-		ld d,a			; a->de set sign extended TOS
+		sbc a			; a = -1 if e < 0 else 0
+		ld d,a			; a -> de set sign extended TOS
 		JP_NEXT			; continue
 ;		strings differ
 5$:		dec hl			; hl-- to correct cpi overshoot
-		cp (hl)			; test a<[hl]
-		ccf			; complement cf, cf=1 if [hl]<a
-		sbc a			; a=-1 if cf=1 else 0
-		add a			; a=-2 if cf=1 else 0
-		inc a			; a=-1 if cf=1 else 1
+		cp (hl)			; test a < [hl]
+		ccf			; complement cf, cf = 1 if [hl] < a
+		sbc a			; a = -1 if cf = 1 else 0
+		add a			; a = -2 if cf = 1 else 0
+		inc a			; a = -1 if cf = 1 else 1
 		jr 4$			;
 
 ; S=		c-addr1 u1 c-addr2 u2 -- flag
@@ -2200,44 +2206,44 @@ cells		.equ twostar		; alias
 		CODE SEARCH,search
 		push de			; save TOS
 		exx			; save bc with ip
-		pop bc			; pop u2->bc
-		pop de			; pop c-addr2->de
-		pop hl			; pop u1->hl
-		or a			; 0->cf
-		sbc hl,bc		; u1-u2->hl
-		jr c,5$			; if u2>u1 then impossible search
+		pop bc			; pop u2 -> bc
+		pop de			; pop c-addr2 -> de
+		pop hl			; pop u1 -> hl
+		or a			; 0 -> cf
+		sbc hl,bc		; u1 - u2 -> hl
+		jr c,5$			; if u2 > u1 then impossible search
 		push bc			;
-		pop ix			; u2->ix
+		pop ix			; u2 -> ix
 		ld a,c			;
 		or b			;
-		jr z,4$			; if u2=0 then found
+		jr z,4$			; if u2 = 0 then found
 		ld c,l			;
 		ld b,h			;
-		inc bc			; u1-u2+1->bc correct for cpir
+		inc bc			; u1 - u2 + 1 -> bc correct for cpir
 		pop hl			;
-		push hl			; c-addr1->hl, keep c-addr1 on the stack
+		push hl			; c-addr1 -> hl, keep c-addr1 on the stack
 ;		find char match
 1$:		push de			; loop, save de with c-addr2
-		ld a,(de)		;   [de]->a
-		cpir		; 21/16	;   repeat until a=[hl++] or --bc=0
+		ld a,(de)		;   [de] -> a
+		cpir		; 21/16	;   repeat until a = [hl++] or --bc = 0
 		jr nz,6$		;   if no match then not found
 		pop de			;   restore de with c-addr2
 		push bc			;
 		push de			;
 		push hl			;   save bc,de,hl
 		push ix			;
-		pop bc			;   u2->bc
+		pop bc			;   u2 -> bc
 ;		compare substrings
-		dec bc			;   u2-1->bc since u2>0
+		dec bc			;   u2 - 1 -> bc since u2 > 0
 		ld a,c			;
 		or b			;
-		jr z,3$			;   if bc<> 0 then
-		inc de			;     de++ to start matching at c-addr2+1
+		jr z,3$			;   if bc <> 0 then
+		inc de			;     de++ to start matching at c-addr2 + 1
 2$:		ld a,(de)	;  7	;     loop
 		cpi		; 16	;       compare [hl++] to [de], --bc
 		jr nz,3$	;  7	;       while characters [hl] and [de] are equal
 		inc de		;  6	;       de++
-		jp pe,2$	; 10(46);     until bc=0
+		jp pe,2$	; 10(46);     until bc = 0
 3$:		pop hl			;
 		pop de			;
 		pop bc			;   restore bc,de,hl
@@ -2245,20 +2251,20 @@ cells		.equ twostar		; alias
 ;		substrings match
 		dec hl			; hl-- to correct cpir overshoot
 		ex (sp),hl		; save hl with c-addr3, discard c-addr1
-		add ix,bc		; compute u3=u2+bc
+		add ix,bc		; compute u3 = u2 + bc
 4$:		push ix			; save ix with u3 as new 2OS
 		exx			; restore bc with ip
 		jp true_next		; set new TOS to TRUE
 ;		impossible search
-5$:		add hl,bc		; u1-u2+u2=u1->hl
+5$:		add hl,bc		; u1 - u2 + u2 = u1 -> hl
 		push hl			; save hl with u1
 		exx			; restore bc with ip
 		jp false_next		; set new TOS to FALSE
 ;		not found
 6$:		pop de			; pop to discard c-addr2
 		pop de			;
-		push de			; c-addr1->de, keep c-addr1 as 3OS
-		sbc hl,de		; (c-addr1)+u1-de=u1->hl, cf=0 asserted
+		push de			; c-addr1 -> de, keep c-addr1 as 3OS
+		sbc hl,de		; c-addr1 + u1 - de = u1 -> hl, cf = 0 asserted
 		push hl			; save hl with u1 as 2OS
 		exx			; restore bc with ip
 		jp false_next		; set new TOS to FALSE
@@ -2278,13 +2284,13 @@ cells		.equ twostar		; alias
 		CODE CMOVE,cmove
 		push de			; save TOS
 		exx			; save bc with ip
-		pop bc			; pop u->bc
-		pop de			; pop c-addr2->de
-		pop hl			; pop c-addr1->hl
+		pop bc			; pop u -> bc
+		pop de			; pop c-addr2 -> de
+		pop hl			; pop c-addr1 -> hl
 		ld a,c			;
-		or b			; test bc=0
-		jr z,1$			; if bc<>0 then
-		ldir			;   repeat [hl++]->[de++] until --bc=0
+		or b			; test bc = 0
+		jr z,1$			; if bc <> 0 then
+		ldir			;   repeat [hl++] -> [de++] until --bc = 0
 1$:		exx			; restore bc with ip
 		pop de			; pop new TOS
 		JP_NEXT			; continue
@@ -2295,18 +2301,18 @@ cells		.equ twostar		; alias
 		CODE CMOVE>,cmoveup
 		push de			; save TOS
 		exx			; save bc with ip
-		pop bc			; pop u->bc
-		pop hl			; pop c-addr2->hl
+		pop bc			; pop u -> bc
+		pop hl			; pop c-addr2 -> hl
 		add hl,bc		;
-		ex de,hl		; c-addr2+u->de
-		pop hl			; pop c-addr1->hl
-		add hl,bc		; c-addr1+u->hl
+		ex de,hl		; c-addr2 + u -> de
+		pop hl			; pop c-addr1 -> hl
+		add hl,bc		; c-addr1 + u -> hl
 		ld a,c			;
-		or b			; test bc=0
-		jr z,1$			; if bc<>0 then
-		dec de			;   c-addr2+u-1->de
-		dec hl			;   c-addr1+u-1->hl
-		lddr			;   repeat [hl--]->[de--] until --bc=0
+		or b			; test bc = 0
+		jr z,1$			; if bc <> 0 then
+		dec de			;   c-addr2 + u - 1 -> de
+		dec hl			;   c-addr1 + u - 1 -> hl
+		lddr			;   repeat [hl--] -> [de--] until --bc = 0
 1$:		exx			; restore bc with ip
 		pop de			; pop new TOS
 		JP_NEXT			; continue
@@ -2333,21 +2339,21 @@ cells		.equ twostar		; alias
 ;		fill memory with char
 
 		CODE FILL,fill
-		ld a,e			; char->a
+		ld a,e			; char -> a
 		exx			; save bc with ip
-		pop bc			; pop u->bc
-		pop de			; pop c-addr->de
-		or a			; 0->cf
+		pop bc			; pop u -> bc
+		pop de			; pop c-addr -> de
+		or a			; 0 -> cf
 		ld hl,-1		;
-		adc hl,bc		; bc-1->hl and set flags
-		jr nc,1$		; if u<>0 then
-		ld (de),a		;   char->[de]
-		jr z,1$			;   if u<>1 then
-		dec bc			;     bc-- since bc=u>1
+		adc hl,bc		; bc - 1 -> hl and set flags
+		jr nc,1$		; if u <> 0 then
+		ld (de),a		;   char -> [de]
+		jr z,1$			;   if u <> 1 then
+		dec bc			;     bc-- since bc = u > 1
 		ld l,e			;
-		ld h,d			;     c-addr->hl
-		inc de			;     c-addr+1->de
-		ldir			;     [hl++]->[de++] until --bc=0
+		ld h,d			;     c-addr -> hl
+		inc de			;     c-addr + 1 -> de
+		ldir			;     [hl++] -> [de++] until --bc = 0
 1$:		exx			; restore bc with ip
 		pop de			; pop new TOS
 		JP_NEXT			; continue
@@ -2373,59 +2379,59 @@ cells		.equ twostar		; alias
 ; CHOP		c-addr u1 char -- c-addr u2
 ;		truncate string up to matching char;
 ;		leaves string if char not found;
-;		char=0x20 (bl) chops 0x00 to 0x20 (white space and control)
+;		char = 0x20 (bl) chops 0x00 to 0x20 (white space and control)
 
 		CODE CHOP,chop
-		ld a,e			; char->a
+		ld a,e			; char -> a
 		exx			; save bc with ip
 		ex af,af'		; save a with char
-		pop bc			; pop u1->bc
+		pop bc			; pop u1 -> bc
 		ld e,c			;
-		ld d,b			; u1->de
+		ld d,b			; u1 -> de
 		ld a,c			;
-		or b			; test bc=0, 0->cf
-		jr z,2$			; if bc=0 then not found
+		or b			; test bc = 0, 0 -> cf
+		jr z,2$			; if bc = 0 then not found
 		pop hl			;
-		push hl			; c-addr->hl
+		push hl			; c-addr -> hl
 		ex af,af'		; restore a with char
 		cp 0x20			;
-		jr z,3$			; if a=0x20 then find white space
-		or a			; 0->cf for when cpir ends with nz
+		jr z,3$			; if a = 0x20 then find white space
+		or a			; 0 -> cf for when cpir ends with nz
 ;		find char in string
-		cpir		; 21/16	; repeat until a=[hl++] or --bc=0
+		cpir		; 21/16	; repeat until a = [hl++] or --bc = 0
 		jr nz,2$		; if match then
 1$:		ccf			;   complement cf to correct cpi bc--
-2$:		ex de,hl		; u1->hl
-		sbc hl,bc		; u1-bc-cf->hl
+2$:		ex de,hl		; u1 -> hl
+		sbc hl,bc		; u1 - bc - cf -> hl
 		push hl			; save hl as TOS
 		exx			; restore bc with ip
 		pop de			; pop new TOS
 		JP_NEXT			; continue
 ;		find white space or control char in string
 3$:		cp (hl)		;  7	; loop to compare a to [hl]
-		cpi		; 16	;   hl++,bc--
-		jr nc,1$	;  7	;   if [hl]<a then found
-		jp pe,3$	; 10	; until bc=0
+		cpi		; 16	;   hl++, bc--
+		jr nc,1$	;  7	;   if [hl] < a then found
+		jp pe,3$	; 10	; until bc = 0
 		jr 1$			; not found
 
 ; TRIM		c-addr1 u1 char -- c-addr2 u2
 ;		trim initial chars;
-;		char=0x20 (bl) trims 0x00 to 0x20 (white space and control)
+;		char = 0x20 (bl) trims 0x00 to 0x20 (white space and control)
 
 		CODE TRIM,trim
-		ld a,e			; char->a
+		ld a,e			; char -> a
 		exx			; save bc with ip
-		pop bc			; u1->bc
-		pop hl			; c-addr1->hl
+		pop bc			; u1 -> bc
+		pop hl			; c-addr1 -> hl
 1$:		ex af,af'		; save a
 		ld a,c			;
 		or b			;
-		jr z,3$			; if bc<>0 then
+		jr z,3$			; if bc <> 0 then
 		ex af,af'		;   restore a
 ;		trim char from front of the string
 2$:		cpi		; 16	;   loop
-		jr nz,4$	;  7	;     while a=[hl++],--bc
-		jp pe,2$	; 10	;   until b=0
+		jr nz,4$	;  7	;     while a = [hl++], --bc
+		jp pe,2$	; 10	;   until b = 0
 ;		done trimming
 3$:		push hl			; save hl as 2OS
 		push bc			; save bc as TOS
@@ -2433,12 +2439,12 @@ cells		.equ twostar		; alias
 		pop de			; pop new TOS
 		JP_NEXT			; continue
 4$:		cp 0x20			;
-		jr nz,5$		; if char=0x20 then
+		jr nz,5$		; if char = 0x20 then
 ;		trim white space and control char
 		dec hl			;
 		cp (hl)			;
 		inc hl			;
-		jr nc,1$		;   if [hl-1]<=0x20 then keep trimming
+		jr nc,1$		;   if [hl-1] <= 0x20 then keep trimming
 ;		stop trimming at mismatch
 5$:		inc bc			; correct bc++ for mismatch
 		dec hl			; correct hl-- for mismatch
@@ -2446,37 +2452,37 @@ cells		.equ twostar		; alias
 
 ; -TRIM		c-addr u1 char -- c-addr u2
 ;		trim trailing chars;
-;		char=0x20 (bl) trims 0x00 to 0x20 (white space and control)
+;		char = 0x20 (bl) trims 0x00 to 0x20 (white space and control)
 
 		CODE -TRIM,mtrim
-		ld a,e			; char->a
+		ld a,e			; char -> a
 		exx			; save bc with ip
-		pop bc			; u1->bc
-		pop hl			; c-addr1->hl
+		pop bc			; u1 -> bc
+		pop hl			; c-addr1 -> hl
 		push hl			; keep c-addr1
 		add hl,bc		;
-		dec hl			; (c-addr)+u1-1->hl trim from end
+		dec hl			; c-addr + u1 - 1 -> hl trim from end
 1$:		ex af,af'		; save a with char
 		ld a,c			;
 		or b			;
-		jr z,3$			; if bc<>0 then
+		jr z,3$			; if bc <> 0 then
 		ex af,af'		;   restore a with char
 ;		trim char from back of the string
 2$:		cpd		; 16	;   loop
-		jr nz,4$	;  7	;     while a=[hl--],--bc
-		jp pe,2$	; 10	;   until b=0
+		jr nz,4$	;  7	;     while a = [hl--], --bc
+		jp pe,2$	; 10	;   until b = 0
 ;		done trimming
 3$:		push bc			; save bc as TOS
 		exx			; restore bc with ip
 		pop de			; pop new TOS
 		JP_NEXT			; continue
 4$:		cp 0x20			;
-		jr nz,5$		; if char=0x20 then
+		jr nz,5$		; if char = 0x20 then
 ;		trim white space and control char
 		inc hl			;
 		cp (hl)			;
 		dec hl			;
-		jr nc,1$		;   if [hl+1]<=0x20 then keep trimming
+		jr nc,1$		;   if [hl+1] <= 0x20 then keep trimming
 ;		stop trimming at mismatch
 5$:		inc bc			; correct bc++ for cpd bc-- mismatch
 		jr 3$			; finalize trimming
@@ -2496,12 +2502,12 @@ cells		.equ twostar		; alias
 ;    : /STRING ROT OVER + -ROT - ;
 
 		CODE /STRING,slashstring
-		pop hl			; pop u1->hl
-		ex (sp),hl		; c-addr1->hl, save u1
-		add hl,de		; c-addr1+n->hl
-		ex (sp),hl		; u1->hl, save c-addr1+n as new 2OS
-		or a			; 0->cf
-		sbc hl,de		; u1-n->hl
+		pop hl			; pop u1 -> hl
+		ex (sp),hl		; c-addr1 -> hl, save u1
+		add hl,de		; c-addr1 + n -> hl
+		ex (sp),hl		; u1 -> hl, save c-addr1 + n as new 2OS
+		or a			; 0 -> cf
+		sbc hl,de		; u1 - n -> hl
 		ex de,hl		; set new TOS to hl
 		JP_NEXT			; continue
 
@@ -2512,12 +2518,12 @@ cells		.equ twostar		; alias
 ;    : NEXT-CHAR OVER C@ -ROT 1- SWAP 1+ SWAP ROT ;
 
 		CODE NEXT-CHAR,nextchar
-		pop hl			; c-addr1->hl
-		ld a,(hl)		; [c-addr1]->a
-		inc hl			; c-addr1+1->hl
-		push hl			; save c-addr1+1 as 3OS
+		pop hl			; c-addr1 -> hl
+		ld a,(hl)		; [c-addr1] -> a
+		inc hl			; c-addr1 + 1 -> hl
+		push hl			; save c-addr1 + 1 as 3OS
 		dec de			;
-		push de			; save u1-1->de as new 2OS
+		push de			; save u1 - 1 -> de as new 2OS
 		ld e,a			;
 		ld d,0			; set new TOS to a with char
 		JP_NEXT			; continue
@@ -2529,15 +2535,15 @@ cells		.equ twostar		; alias
 ;-------------------------------------------------------------------------------
 
 xy:
-x:		.db 0			; cursor column 0 to win_cols-1
-y:		.db 0			; cursor row 0 to win_rows-1
+x:		.db 0			; cursor column 0 to win_cols - 1
+y:		.db 0			; cursor row 0 to win_rows - 1
 
 ; X!		u --
 ;		set cursor column 0 to 23
 
 		CODE X!,xstore
-		ld a,e			; TOS->a
-		ld (x),a		; a->[x]
+		ld a,e			; TOS -> a
+		ld (x),a		; a -> [x]
 		pop de			; pop new TOS
 		JP_NEXT			; continue
 
@@ -2545,8 +2551,8 @@ y:		.db 0			; cursor row 0 to win_rows-1
 ;		set cursor row 0 to 5
 
 		CODE Y!,ystore
-		ld a,e			; TOS->a
-		ld (y),a		; a->[y]
+		ld a,e			; TOS -> a
+		ld (y),a		; a -> [y]
 		pop de			; pop new TOS
 		JP_NEXT			; continue
 
@@ -2555,9 +2561,9 @@ y:		.db 0			; cursor row 0 to win_rows-1
 
 		CODE X@,xfetch
 		push de			; save TOS
-		ld a,(x)		; [x]->a
+		ld a,(x)		; [x] -> a
 		ld e,a			;
-		ld d,0			; set [x]->de as new TOS
+		ld d,0			; set [x] -> de as new TOS
 		JP_NEXT			; continue
 
 ; Y@		-- u
@@ -2565,9 +2571,9 @@ y:		.db 0			; cursor row 0 to win_rows-1
 
 		CODE Y@,yfetch
 		push de			; save TOS
-		ld a,(y)		; [y]->a
+		ld a,(y)		; [y] -> a
 		ld e,a			;
-		ld d,0			; set [y]->de as new TOS
+		ld d,0			; set [y] -> de as new TOS
 		JP_NEXT			; continue
 
 ; AT-XY		u1 u2 --
@@ -2595,29 +2601,29 @@ y:		.db 0			; cursor row 0 to win_rows-1
 ;		31 (down)
 
 		CODE EMIT,emit
-		ld hl,xy		; xy->hl
-		ld a,e			; char->a
+		ld hl,xy		; xy -> hl
+		ld a,e			; char -> a
 		cp 0x20			; test if control
-		jr c,emit_check_bs		; if a<0x20 then handle control
+		jr c,emit_check_bs		; if a < 0x20 then handle control
 		exx			; save regs
-		ld de,(xy)		; x->e,y->d
+		ld de,(xy)		; x -> e, y -> d
 		call PUTCHR		; PUTCHR at de (xy)
 		exx			; restore regs
 cursor_right:	ld a,(hl)		;
 		cp win_cols-1		;
-		jr nc,emit_crlf		; if [x]>=win_cols-1 then CRLF
-		inc (hl)		; [x]+1->[x]
+		jr nc,emit_crlf		; if [x] >= win_cols - 1 then CRLF
+		inc (hl)		; [x] + 1 -> [x]
 emit_exit:	pop de			; pop new TOS
 		JP_NEXT			; continue
 ;		handle control chars
 emit_check_bs:	cp 0x08			;
 		jr nz,emit_check_tab	; if BS then
 cursor_left:	dec (hl)		;   [x]--
-		jp p,emit_exit		;   if [x]<0 then
-		ld (hl),win_cols-1	;     win_cols-1->[x]
+		jp p,emit_exit		;   if [x] < 0 then
+		ld (hl),win_cols-1	;     win_cols - 1 -> [x]
 cursor_up:	inc hl			;
 		dec (hl)		;     [y]--
-		jp p,emit_exit		;     if [y]<0 then
+		jp p,emit_exit		;     if [y] < 0 then
 		inc (hl)		;       [y]++
 		exx			;
 		ld de,0			;
@@ -2630,13 +2636,13 @@ emit_tab:	ld a,(hl)		;
 		and -8			;
 		add 8			;
 		cp win_cols		;
-		ld (hl),a		;   ([x]&-8)+8->[x]
-		jr c,emit_exit		;   if [x]<win_cols then exit
-emit_crlf:	ld (hl),0		;   0->[x] carriage return
+		ld (hl),a		;   ([x] & -8) + 8 -> [x]
+		jr c,emit_exit		;   if [x] < win_cols then exit
+emit_crlf:	ld (hl),0		;   0 -> [x] carriage return
 cursor_down:	inc hl			;
 		ld a,(hl)		;
 		cp win_rows-1		;
-		jr nc,scroll_up		;   if [y]>=win_rows-1 then scroll up
+		jr nc,scroll_up		;   if [y] >= win_rows - 1 then scroll up
 		inc (hl)		;   [y]++
 		jr emit_exit		;   exit
 emit_check_lf:	cp 0x0a			;
@@ -2653,13 +2659,13 @@ emit_cls:	exx			;   save regs
 		ld a,0x20		;
 		ld b,win_rows*win_cols	;
 		ld de,0			;
-		ld (xy),de		;   0->[xy]
+		ld (xy),de		;   0 -> [xy]
 		call REPCHR		;   repeat space to clear screen
 		exx			;   restore regs
 		jr emit_exit		;   exit
 emit_check_cr:	cp 0x0d			;
 		jr nz,emit_check_rt	; if CR then
-emit_cr:	ld (hl),0		;   0->[x]
+emit_cr:	ld (hl),0		;   0 -> [x]
 		jr emit_exit		;   exit
 emit_check_rt:	cp 0x1c			;
 		jr z,cursor_right	; if RIGHT then cursor right
@@ -2780,7 +2786,7 @@ emit_check_dn:	cp 0x1f			;
 
 		CODE DECIMAL,decimal
 		ld hl,10		;
-set_base:	ld (base+3),hl		; 10->[base]
+set_base:	ld (base+3),hl		; 10 -> [base]
 		JP_NEXT			; continue
 
 ; HEX		--
@@ -2790,7 +2796,7 @@ set_base:	ld (base+3),hl		; 10->[base]
 
 		CODE HEX,hex
 		ld hl,16		;
-		jr set_base		; 16->[base] continue
+		jr set_base		; 16 -> [base] continue
 
 ; HP		-- addr
 ;		hold pointer
@@ -2870,7 +2876,7 @@ set_base:	ld (base+3),hl		; 10->[base]
 		.dw doret
 
 ; SIGN		n --
-;		hold minus sign if n<0
+;		hold minus sign if n < 0
 ;
 ;    : SIGN 0< IF '- HOLD THEN ;
 
@@ -2971,11 +2977,11 @@ set_base:	ld (base+3),hl		; 10->[base]
 ;		output byte u1 to port u2
 
 		CODE OUT,out
-		ld a,e			; u2->a port
-		pop de			; pop u1->de
+		ld a,e			; u2 -> a port
+		pop de			; pop u1 -> de
 		push bc			; save bc with ip
 		ld c,a			;
-		out (c),e		; u1->out(u2)
+		out (c),e		; u1 -> out(u2)
 		pop bc			; restore bc with ip
 		pop de			; set new TOS
 		JP_NEXT			; continue
@@ -2985,9 +2991,9 @@ set_base:	ld (base+3),hl		; 10->[base]
 
 		CODE INP,inp
 		push bc			; save bc with ip
-		ld c,e			; u1->c
-		in e,(c)		; in(u1)->e
-		ld d,0			; 0->d
+		ld c,e			; u1 -> c
+		in e,(c)		; in(u1) -> e
+		ld d,0			; 0 -> d
 		pop bc			; restore bc with ip
 		JP_NEXT			; continue
 
@@ -3004,10 +3010,10 @@ set_base:	ld (base+3),hl		; 10->[base]
 		ld h,a			; reset counters
 1$:		out (0x18),a		; loop, out to speaker port
 2$:		dec l			;   loop
-		jr nz,2$		;   until --l=0
+		jr nz,2$		;   until --l = 0
 		cpl			;   switch pattern on/off
 		dec h			;
-		jr nz,1$		; until --h=0
+		jr nz,1$		; until --h = 0
 		ei			; enable interrupts
 		JP_NEXT			; continue
 
@@ -3027,10 +3033,10 @@ set_base:	ld (base+3),hl		; 10->[base]
 		CODE DRAW,draw
 		push de			; save TOS
 		exx			; save bc with ip
-		pop bc			; pop u->bc
-		ld b,c			; u->b
-		pop hl			; pop c-addr->hl
-		ld de,(xy)		; xy->dr
+		pop bc			; pop u -> bc
+		ld b,c			; u -> b
+		pop hl			; pop c-addr -> hl
+		ld de,(xy)		; xy -> dr
 		call WRPSTR		; draw pixel string
 		exx			; restore bc with ip
 		pop de			; set new TOS
@@ -3044,10 +3050,10 @@ set_base:	ld (base+3),hl		; 10->[base]
 		CODE VIEW,view
 		push de			; save TOS
 		exx			; save bc with ip
-		pop bc			; pop u->bc
-		ld b,c			; u->b
-		pop hl			; pop c-addr->hl
-		ld de,(xy)		; xy->de
+		pop bc			; pop u -> bc
+		ld b,c			; u -> b
+		pop hl			; pop c-addr -> hl
+		ld de,(xy)		; xy -> de
 		call RDPSTR		; read pixel string
 		exx			; restore bc with ip
 		pop de			; set new TOS
@@ -3060,23 +3066,23 @@ set_base:	ld (base+3),hl		; 10->[base]
 		CODE REVERSE,reverse
 		push de			; save TOS
 		exx			; save bc with ip
-		pop bc			; pop +n->bc
-		ld de,(xy)		; xy->de
-		ld hl,4$		; pixelbuffer->hl
+		pop bc			; pop +n -> bc
+		ld de,(xy)		; xy -> de
+		ld hl,4$		; pixelbuffer -> hl
 		jr 3$			;
-1$:		ld b,6			; loop, 6->b
+1$:		ld b,6			; loop, 6 -> b
 		push de			;   save de with xy
 		push hl			;   save hl with pixelbuffer
 		call RDPSTR		;   read pixel string from screen
 		pop hl			;   restore hl with pixelbuffer
 		push hl			;   save hl with pixelbuffer
-		ld b,6			;   6->b
+		ld b,6			;   6 -> b
 2$:		ld a,(hl)		;   loop
 		cpl			;
-		ld (hl),a		;     ~[hl]->[hl]
+		ld (hl),a		;     ~[hl] -> [hl]
 		inc hl			;     hl++
-		djnz 2$			;   until --b=0
-		ld b,6			;   6->b
+		djnz 2$			;   until --b = 0
+		ld b,6			;   6 -> b
 		pop hl			;   restore hl with pixelbuffer
 		pop de			;   restore de with xy
 		push de			;   save de with xy
@@ -3086,7 +3092,7 @@ set_base:	ld (base+3),hl		; 10->[base]
 		pop de			;   restore de with xy
 		inc e			;   e++
 3$:		dec c			;   c--
-		jp p,1$			; until c<0
+		jp p,1$			; until c < 0
 		exx			; restore bc with ip
 		pop de			; set new TOS
 		JP_NEXT			; continue
@@ -3099,14 +3105,14 @@ set_base:	ld (base+3),hl		; 10->[base]
 ;-------------------------------------------------------------------------------
 
 ; INKEY		-- x
-;		check key, where 0x00=no key and 0x52=multiple keys
+;		check key, where 0x00 = no key and 0x52 = multiple keys
 
 		CODE INKEY,inkey
 		push de			; save TOS
 		push bc			; save bc with ip
 		call INKEY		; INKEY key code, changes bc and bc'
 		pop bc			; restore bc with ip
-		jp a_next		; set a->de new TOS and continue
+		jp a_next		; set a -> de new TOS and continue
 
 .if FULL
 
@@ -3132,7 +3138,7 @@ set_base:	ld (base+3),hl		; 10->[base]
 		push bc			; save bc with ip
 		call INKEY		; INKEY key code, changes bc and bc'
 		pop bc			; restore bc with ip
-		jp true_if_c_next	; set new TOS to TRUE if cf=1
+		jp true_if_c_next	; set new TOS to TRUE if cf = 1
 
 .endif
 
@@ -3158,14 +3164,14 @@ set_base:	ld (base+3),hl		; 10->[base]
 ;		up      =$1e
 ;		down    =$1f;
 ;		calc keys and BASIC keys produce BASIC tokens as key code $fe:
-;		SIN     =$fe register B=$95 BASIC token for SIN (ignored)
+;		SIN     =$fe register B = $95 BASIC token for SIN (ignored)
 
 		CODE GETKEY,getkey
 		push de			; save TOS
 		push bc			; save bc with ip
 		call GETCHR		; GETCHR ASCII key code, changes bc and bc'
 		pop bc			; restore bc with ip
-		jp a_next		; set a->de new TOS and continue
+		jp a_next		; set a -> de new TOS and continue
 
 ; KEY		-- char
 ;		display cursor and wait to read key;
@@ -3284,7 +3290,7 @@ edit_toxy:	call docol		; n -- x y	cursor pos n to xy
 		.dw 0
 
 ; SOURCE-ID	-- 0|-1
-;		value with 0=source input or -1=string input
+;		value with 0 = source input or -1 = string input
 ;
 ;    0 VALUE SOURCE-ID
 
@@ -3489,23 +3495,23 @@ edit_toxy:	call docol		; n -- x y	cursor pos n to xy
 
 		CODE >DIGIT,todigit
 		ld a,d			;
-		or a			; test d=0 TOS high byte
+		or a			; test d = 0 TOS high byte
 		jp nz,mone_next		; set new TOS to -1 if TOS high byte is nonzero
-		ld a,e			; char->a
-		cp '0			; test char<'0'
-		jp c,mone_next		; set new TOS to -1 if char<'0'
-		cp '9+1			; test char<='9'
-		jr c,1$			; set new TOS to char-'0' if char<='9'
+		ld a,e			; char -> a
+		cp '0			; test char < '0'
+		jp c,mone_next		; set new TOS to -1 if char < '0'
+		cp '9+1			; test char <= '9'
+		jr c,1$			; set new TOS to char - '0' if char <= '9'
 		and 0xdf		; make char upper case
-		cp 'A			; test char<'A'
-		jp c,mone_next		; set new TOS to -1 if char<'A'
-		cp 'Z+1			; test char>'Z'
-		jp nc,mone_next		; set new TOS to -1 if char>'Z'
+		cp 'A			; test char < 'A'
+		jp c,mone_next		; set new TOS to -1 if char < 'A'
+		cp 'Z+1			; test cha > 'Z'
+		jp nc,mone_next		; set new TOS to -1 if char > 'Z'
 		sub 7			; convert char 'A'..'Z' to n
 1$:		sub '0			; convert char to n
-		ld hl,base+3		; BASE->hl
-		cp (hl)			; test n>=[BASE] using BASE low order byte
-		jp nc,mone_next		; set new TOS to -1 if n>=[BASE]
+		ld hl,base+3		; BASE -> hl
+		cp (hl)			; test n >= [BASE] using BASE low order byte
+		jp nc,mone_next		; set new TOS to -1 if n >= [BASE]
 		ld e,a			; set new TOS to n
 		JP_NEXT			; continue
 
@@ -3651,31 +3657,31 @@ edit_toxy:	call docol		; n -- x y	cursor pos n to xy
 
 		CODE >NAME,toname
 		push bc			; save bc with ip
-		ld b,0			; 0->b for add hl,bc
-		ld hl,(context+3)	; CONTEXT->hl
+		ld b,0			; 0 -> b for add hl,bc
+		ld hl,(context+3)	; CONTEXT -> hl
 ;		loop over dictionary
 1$:		ld a,(hl)	;  7	; loop
 		inc hl		;  6	;
 		ld h,(hl)	;  7	;
-		ld l,a		;  4	;   [hl]->hl follow link
+		ld l,a		;  4	;   [hl] -> hl follow link
 		or h		;  4	;
-		jr z,3$		;  7	;   if hl=0 then throw -24
+		jr z,3$		;  7	;   if hl = 0 then throw -24
 		push hl		; 11	;   save hl with lfa
 		inc hl		;  6	;
-		inc hl		;  6	;   hl+2->hl with nt (nfa)
+		inc hl		;  6	;   hl + 2 -> hl with nt (nfa)
 		ld a,(hl)	;  7	;   get word length
 		bit smudge_bit,a;  8	;
 		jr nz,2$	;  7	;   if smudge bit not set then
 		and length_bits	;  7	;     ignore control bits
 		inc a		;  4	;
-		ld c,a		;  4	;     word length+1
-		add hl,bc	; 11	;     hl+length+1->hl with cfa
-		sbc hl,de	; 15	;     test if hl=de with xt
+		ld c,a		;  4	;     word length + 1
+		add hl,bc	; 11	;     hl + length + 1 -> hl with cfa
+		sbc hl,de	; 15	;     test if hl = de with xt
 2$:		pop hl		; 10	;   restore hl with lfa
-		jr nz,1$	; 12	; until hl=xt matches
+		jr nz,1$	; 12	; until hl = xt matches
 ;		found the matching word
 		inc hl			;
-		inc hl			; hl+2-hl with nt (nfa)
+		inc hl			; hl + 2 - hl with nt (nfa)
 		pop bc			; restore bc with ip
 		ex de,hl		; set new TOS to hl
 		JP_NEXT			; continue
@@ -3688,25 +3694,25 @@ edit_toxy:	call docol		; n -- x y	cursor pos n to xy
 
 		CODE >BODY,tobody
 		inc de			;
-		jp twoplus		; set de+3->de new TOS and continue
+		jp twoplus		; set de + 3 -> de new TOS and continue
 
 ; FIND-WORD	c-addr u -- c-addr 0 | xt 1 | xt -1
 ;		search dictionary for matching word;
-;		leaves execution token and 1=immediate or -1=not immediate;
+;		leaves execution token and 1 = immediate or -1 = not immediate;
 ;		leaves c-addr and 0 when not found
 
 		CODE FIND-WORD,findword
 		ld a,d			;
-		or a			; test d=0 high order byte of u
+		or a			; test d = 0 high order byte of u
 		jp nz,zero_next		; if u is too large then set new TOS to 0
 		sla e			; shift u to compare w/o immediate bit
 		jp c,zero_next		; if u is too large then set new TOS to 0
-		jp z,zero_next		; if u=0 then set new TOS to 0
+		jp z,zero_next		; if u = 0 then set new TOS to 0
 		push de			; save de with 2*u
 		exx			; save bc with ip
-		pop bc			; pop 2*u->bc
-		pop de			; pop c-addr->de
-		ld hl,(context+3)	; CONTEXT->hl
+		pop bc			; pop 2 * u -> bc
+		pop de			; pop c-addr -> de
+		ld hl,(context+3)	; CONTEXT -> hl
 		jr 3$			; start searching
 ;		loop over dictionary
 1$:		pop de			; restore de with c-addr
@@ -3714,41 +3720,41 @@ edit_toxy:	call docol		; n -- x y	cursor pos n to xy
 3$:		ld a,(hl)	;  7	;
 		inc hl		;  6	;
 		ld h,(hl)	;  7	;
-		ld l,a		;  4	;   [hl]->hl follow link at hl=lfa
+		ld l,a		;  4	;   [hl] -> hl follow link at hl = lfa
 		or h		;  4	;
-		jr z,6$		;  7	;   if hl=0 then not found
+		jr z,6$		;  7	;   if hl = 0 then not found
 		push hl		; 11	;   save hl with lfa
 		inc hl		;  6	;
-		inc hl		;  6	;   hl+2->hl with nt (nfa)
+		inc hl		;  6	;   hl + 2 -> hl with nt (nfa)
 		ld a,(hl)	;  7	;   word length
 		add a		;  4	;   shift away immediate bit
-		cp c		;  4	;   test a=c word length match (both shifted)
+		cp c		;  4	;   test a = c word length match (both shifted)
 		jr nz,2$	; 12(95);   if lengths differ then continue searching
 ;		compare string to word
 		push de			;   save de with c-addr
 		inc hl			;   hl++ point to nfa chars
-		ld b,c			;   2*u->b
-		srl b			;   u->b word length (nonzero)
+		ld b,c			;   2 * u -> b
+		srl b			;   u -> b word length (nonzero)
 ;		loop over word chars
 4$:		ld a,(de)	;  7	;   loop
-		cp (hl)		;  7	;     compare [de]=[hl]
+		cp (hl)		;  7	;     compare [de] = [hl]
 		jr z,5$		; 12/7	;     if mismatch then
 		and 0xdf	;    7	;       make upper case
 		cp 'A		;    7	;
-		jr c,1$		;    7	;       if a<'A' then continue search
+		jr c,1$		;    7	;       if a < 'A' then continue search
 		cp 'Z+1		;    7	;
-		jr nc,1$	;    7	;       if a>'Z' then continue search
+		jr nc,1$	;    7	;       if a > 'Z' then continue search
 		xor (hl)	;    7	;
-		and 0xdf	;    7	;       case insensitive compare [de]=[hl]
+		and 0xdf	;    7	;       case insensitive compare [de] = [hl]
 		jr nz,1$	;    7	;       if mismatch then continue search
 5$:		inc de		;  6	;     de++ point to next char of c-addr
 		inc hl		;  6	;     hl++ point to next char of word
-		djnz 4$		; 13(51/102);until --b=0
+		djnz 4$		; 13(51/102);until --b = 0
 ;		found a matching word
 		pop de			;   discard saved c-addr
 		ex (sp),hl		;   save hl with xt as 2OS, restore hl with lfa
 		inc hl			;
-		inc hl			;   hl+2->hl with nt (nfa)
+		inc hl			;   hl + 2 -> hl with nt (nfa)
 		bit immediate_bit,(hl)	;   test immediate bit of [hl] word length
 		exx			;   restore bc with ip
 		jp nz,one_next		;   set new TOS to 1 if word is immediate
@@ -3847,8 +3853,8 @@ edit_toxy:	call docol		; n -- x y	cursor pos n to xy
 ;    : [ STATE OFF ;
 
 		CODE_IMM [,leftbracket
-		ld hl,0			; 0->hl
-store_state:	ld (state+3),hl		; hl->STATE
+		ld hl,0			; 0 -> hl
+store_state:	ld (state+3),hl		; hl -> STATE
 		JP_NEXT			; continue
 
 ; ]		--
@@ -3857,8 +3863,8 @@ store_state:	ld (state+3),hl		; hl->STATE
 ;    : ] STATE ON ;
 
 		CODE ],rightbracket
-		ld hl,-1		; -1->hl
-		jr store_state		; hl->STATE and contnue
+		ld hl,-1		; -1 -> hl
+		jr store_state		; hl -> STATE and contnue
 
 ; HIDE		--
 ;		hide the last definition
@@ -3928,10 +3934,10 @@ throw_a:	push de			; Save TOS
 
 		CODE UNUSED,unused
 		push de			; save TOS
-		ld de,(here+3)		; HERE->de
-		ld hl,(top)		; [top]->hl
-		or a			; 0->cf
-		sbc hl,de		; [top]-HERE->hl
+		ld de,(here+3)		; HERE -> de
+		ld hl,(top)		; [top] -> hl
+		or a			; 0 -> cf
+		sbc hl,de		; [top] - HERE -> hl
 		ex de,hl		; set new TOS to hl
 		JP_NEXT			; continue
 
@@ -3941,15 +3947,15 @@ throw_a:	push de			; Save TOS
 ;		may throw -8 "dictionary overflow"
 
 		CODE ALLOT,allot
-		ld hl,(here+3)		; HERE->hl
-		add hl,de		; hl+de->hl
-allot_check:	ld de,(top)		; [top]->de
-		or a			; 0->cf
+		ld hl,(here+3)		; HERE -> hl
+		add hl,de		; hl + de -> hl
+allot_check:	ld de,(top)		; [top] -> de
+		or a			; 0 -> cf
 		sbc hl,de		;
-		add hl,de		; test hl<[top]
+		add hl,de		; test hl < [top]
 		ld a,-8			; -8 "dictionary overflow"
 		jr nc,throw_a		;
-		ld (here+3),hl		; hl->HERE
+		ld (here+3),hl		; hl -> HERE
 		pop de			; pop new TOS
 		JP_NEXT			; continue
 
@@ -3967,22 +3973,22 @@ allot_check:	ld de,(top)		; [top]->de
 ;		may throw -8 "dictionary overflow"
 
 		CODE ^|,|,comma
-		ld hl,(here+3)		; HERE->hl
+		ld hl,(here+3)		; HERE -> hl
 comma_de:	ld (hl),e		;
 		inc hl			;
 		ld (hl),d		;
-		inc hl			; de->[hl++]
-		jr allot_check		; check and set hl->HERE
+		inc hl			; de -> [hl++]
+		jr allot_check		; check and set hl -> HERE
 
 ; C,		char --
 ;		append char to dictionary;
 ;		may throw -8 "dictionary overflow"
 
 		CODE ^|C,|,ccomma
-		ld hl,(here+3)		; HERE->hl
+		ld hl,(here+3)		; HERE -> hl
 		ld (hl),e		;
-		inc hl			; e->[hl++]
-		jr allot_check		; check and set hl->HERE
+		inc hl			; e -> [hl++]
+		jr allot_check		; check and set hl -> HERE
 
 ; 2,		x1 x2 --
 ;		append double cell to dictionary;
@@ -4016,10 +4022,10 @@ comma_de:	ld (hl),e		;
 ;		may throw -8 "dictionary overflow"
 
 		CODE ^|CFA,|,cfacomma
-		ld hl,(here+3)		; HERE->hl
+		ld hl,(here+3)		; HERE -> hl
 		ld (hl),0xcd		; Z80 'call nn' opcode
-		inc hl			; 0xcd->[hl++]
-		jr comma_de		; append addr, check and set hl->HERE
+		inc hl			; 0xcd -> [hl++]
+		jr comma_de		; append addr, check and set hl -> HERE
 
 ; CFA:,		-- addr colon_sys
 ;		append cfa colon definition to dictionary;
@@ -4491,19 +4497,19 @@ comma_de:	ld (hl),e		;
 ;    : VALUE? DUP C@ $CD = SWAP 1+ @ ['] (VAL) = AND ;
 
 		CODE VALUE?,valueq
-		ld hl,doval		; (VAL)->hl
-xt_is_hl:	ex de,hl		; hl->de, xt->hl
+		ld hl,doval		; (VAL) -> hl
+xt_is_hl:	ex de,hl		; hl -> de, xt -> hl
 		ld a,0xcd		; Z80 'call nn' opcode
 		cp (hl)			; test if [hl] Z80 'call nn' opcode
 		jr nz,1$		; if [hl] Z80 'call nn' opcode then
 		inc hl			;
 		ld a,e			;
 		cp (hl)			;
-		jp nz,1$		;   if [++hl]=e then
+		jp nz,1$		;   if [++hl] = e then
 		inc hl			;
 		ld a,d			;
-		cp (hl)			;     test [++hl]=d
-1$:		ld a,0			; require a=0
+		cp (hl)			;     test [++hl] = d
+1$:		ld a,0			; require a = 0
 		jp true_if_z_next	; set new TOS to TRUE if xt matches else FALSE
 
 ; 2VALUE?	xt -- flag
@@ -4512,8 +4518,8 @@ xt_is_hl:	ex de,hl		; hl->de, xt->hl
 ;    : 2VALUE? DUP C@ $CD = SWAP 1+ @ ['] (2VAL) = AND ;
 
 		CODE 2VALUE?,twovalueq
-		ld hl,dotwoval		; (2VAL)->hl
-		jr xt_is_hl		; set new TOS to TRUE if xt=(2VAL)
+		ld hl,dotwoval		; (2VAL) -> hl
+		jr xt_is_hl		; set new TOS to TRUE if xt = (2VAL)
 
 ; DEFER?	xt -- flag
 ;		true if xt is a DEFER word
@@ -4521,8 +4527,8 @@ xt_is_hl:	ex de,hl		; hl->de, xt->hl
 ;    : DEFER? DUP C@ $CD = SWAP 1+ @ ['] (DEF) = AND ;
 
 		CODE DEFER?,deferq
-		ld hl,dodef		; (DEF)->hl
-		jr xt_is_hl		; set new TOS to TRUE if xt=(DEF)
+		ld hl,dodef		; (DEF) -> hl
+		jr xt_is_hl		; set new TOS to TRUE if xt = (DEF)
 
 ;-------------------------------------------------------------------------------
 ;
@@ -4536,7 +4542,7 @@ xt_is_hl:	ex de,hl		; hl->de, xt->hl
 ;		true if xt is a MARKER word
 
 		CODE MARKER?,markerq
-		ld hl,marker_does	; marker_does->hl
+		ld hl,marker_does	; marker_does -> hl
 		jr xt_is_hl		; set new TOS to TRUE if xt is a marker
 
 ;+ MARKER	"<spaces>name<space>" -- ; --
@@ -4705,12 +4711,12 @@ marker_does:	call dodoes
 ;		may throw -4 "stack underflow"
 
 		CODE ?STACK,qstack
-		ld hl,(sp1)	; 16	; -1-[sp0]->hl
-		add hl,sp	; 11	; test sp>sp0
-		jr c,1$		;  7	; if sp>[sp0] then throw -4
-		ld hl,(top)	; 16	; [top]->hl
-		sbc hl,sp	; 15	; test sp<=[top]
-		jr nc,2$	;  7	; if sp<=[top] then throw -3
+		ld hl,(sp1)	; 16	; -1 - [sp0] -> hl
+		add hl,sp	; 11	; test sp > sp0
+		jr c,1$		;  7	; if sp > [sp0] then throw -4
+		ld hl,(top)	; 16	; [top] -> hl
+		sbc hl,sp	; 15	; test sp <= [top]
+		jr nc,2$	;  7	; if sp <= [top] then throw -3
 		jp cont		; 10(82); continue with ON/BREAK check
 1$:		ld a,-4			; throw -4 "stack underflow"
 		jp throw_a
@@ -4718,29 +4724,29 @@ marker_does:	call dodoes
 		jp throw_a
 
 ; (UNTIL)	x --
-;		branch if x=0;
+;		branch if x = 0;
 ;		runtime of the UNTIL compile-only word
 
 		CODE (UNTIL),dountil
 		ld a,e		;  4	;
-		or d		;  4	; test if TOS=0
+		or d		;  4	; test if TOS = 0
 		pop de		; 10	; set new TOS
-		jr z,doagain	; 12/7	; (AGAIN) if TOS=0
+		jr z,doagain	; 12/7	; (AGAIN) if TOS = 0
 		inc bc		;    7	;
-		inc bc		;    7	; ip+2->ip skip over jump target address
+		inc bc		;    7	; ip + 2 -> ip skip over jump target address
 		jr qstack		; check stack and continue
 
 ; (IF)		x --
-;		branch if x=0;
+;		branch if x = 0;
 ;		runtime of the IF and WHILE compile-only words
 
 		CODE (IF),doif
 		ld a,e		;  4	;
-		or d		;  4	; test if TOS=0
+		or d		;  4	; test if TOS = 0
 		pop de		; 10	; set new TOS
-		jr z,doahead	; 12/7 	; (AHEAD) if TOS=0
+		jr z,doahead	; 12/7 	; (AHEAD) if TOS = 0
 skip_jp_next:	inc bc		;    7	;
-		inc bc		;    7	; ip+2->ip skip jump target address
+		inc bc		;    7	; ip + 2 -> ip skip jump target address
 		NEXT			; continue
 
 ; (AGAIN)	--
@@ -4752,7 +4758,7 @@ skip_jp_next:	inc bc		;    7	;
 		ld h,b		;  4	;
 		ld c,(hl)	;  7	;
 		inc hl		;  6	;
-		ld b,(hl)	;  7(28); [bc]->bc
+		ld b,(hl)	;  7(28); [bc] -> bc
 		jr qstack		; check stack and continue
 
 ; (AHEAD)	--
@@ -4764,22 +4770,22 @@ skip_jp_next:	inc bc		;    7	;
 		ld h,b		;  4	;
 		ld c,(hl)	;  7	;
 		inc hl		;  6	;
-		ld b,(hl)	;  7(28); [bc]->bc
+		ld b,(hl)	;  7(28); [bc] -> bc
 		NEXT			; continue
 
 ; (OF)		x1 x2 -- x1 or x1 x2 --
-;		branch if x1<>x2;
+;		branch if x1 <> x2;
 ;		runtime of the OF compile-only word
 
 		CODE (OF),doof
-		pop hl			; pop x1->hl
-		ex de,hl		; x2->hl,x1->de
-		or a			; 0->cf
-		sbc hl,de		; test x1=x2
-		jr nz,doahead		; AHEAD if x1<>x2
+		pop hl			; pop x1 -> hl
+		ex de,hl		; x2 -> hl, x1 -> de
+		or a			; 0 -> cf
+		sbc hl,de		; test x1 = x2
+		jr nz,doahead		; AHEAD if x1 <> x2
 		pop de			; pop new TOS
 		inc bc			;
-		inc bc			; ip+2->ip skip jump target address
+		inc bc			; ip + 2 -> ip skip jump target address
 		NEXT			; continue
 
 ; (LOOP)	--
@@ -4789,26 +4795,26 @@ skip_jp_next:	inc bc		;    7	;
 		CODE (LOOP),doloop
 		exx			; save bc with ip and de with TOS
 		ld bc,1			; step size is 1 by default
-loop_bc_step:	ld hl,(rp)		; [rp]->hl
+loop_bc_step:	ld hl,(rp)		; [rp] -> hl
 		ld e,(hl)		;
-		inc hl			; rp+1->hl
-		ld d,(hl)		; [rp]->de sliced loop counter
-		ex de,hl		; save [rp]->de, sliced loop counter in hl
-		or a			; 0->cf
-		adc hl,bc		; counter+step->hl set flags
-		ex de,hl		; restore de->[rp], counter+step->de
+		inc hl			; rp + 1 -> hl
+		ld d,(hl)		; [rp] -> de sliced loop counter (Laxen & Perry F83)
+		ex de,hl		; save [rp] -> de, sliced loop counter in hl
+		or a			; 0 -> cf
+		adc hl,bc		; counter + step -> hl set flags
+		ex de,hl		; restore de -> [rp], counter + step -> de
 		jp pe,1$		; if overflow then exit loop
 		ld (hl),d		;
-		dec hl			; [rp]->hl
-		ld (hl),e		; de->[rp] save updated counter
+		dec hl			; [rp] -> hl
+		ld (hl),e		; de -> [rp] save updated counter
 		exx			; restore bc with ip and de with TOS
 		jr doagain		; AGAIN
 1$:		ld bc,5			;
-		add hl,bc		; rp+1+5->hl
+		add hl,bc		; rp + 1 + 5 -> hl
 		ld (rp),hl		; discard the loop parameters
 		exx			; restore bc with ip and de with TOS
 		inc bc			;
-		inc bc			; ip+2->ip skip jump target address
+		inc bc			; ip + 2 -> ip skip jump target address
 		JP_NEXT			; continue
 		
 ; (+LOOP)	--
@@ -4818,9 +4824,9 @@ loop_bc_step:	ld hl,(rp)		; [rp]->hl
 		CODE (+LOOP),doplusloop
 		pop hl			; pop new TOS to hl
 		push de			; save old TOS with step size
-		ex de,hl		; new TOS->de
+		ex de,hl		; new TOS -> de
 		exx			; save bc with ip and de with new TOS
-		pop bc			; pop TOS->bc with step size
+		pop bc			; pop TOS -> bc with step size
 		jr loop_bc_step		; (LOOP) with step
 
 ; (?DO)		n1|u1 n2|u2 --
@@ -4830,10 +4836,10 @@ loop_bc_step:	ld hl,(rp)		; [rp]->hl
 
 		CODE (?DO),doqdo
 		pop hl			;
-		push hl			; 2OS->hl with loop limit
-		or a			; 0->cf
-		sbc hl,de		; test de=hl initial equals limit
-		jr nz,dodo		; if de<>hl then (DO)
+		push hl			; 2OS -> hl with loop limit
+		or a			; 0 -> cf
+		sbc hl,de		; test de = hl initial equals limit
+		jr nz,dodo		; if de <> hl then (DO)
 		pop hl			; discard 2OS
 		pop de			; set new TOS
 		jr doahead		; AHEAD
@@ -4849,8 +4855,8 @@ loop_bc_step:	ld hl,(rp)		; [rp]->hl
 		inc bc			;
 		ld a,(bc)		;
 		ld h,a			;
-		inc bc			; [ip++]->hl LEAVE address
-		ld ix,(rp)		; [rp]->ix
+		inc bc			; [ip++] -> hl LEAVE address
+		ld ix,(rp)		; [rp] -> ix
 		dec ix			;
 		ld (ix),h		;
 		dec ix			;
@@ -4858,20 +4864,20 @@ loop_bc_step:	ld hl,(rp)		; [rp]->hl
 		ex de,hl		; excahange de with TOS to hl
 		ex (sp),hl		; save TOS initial value
 		ex de,hl		; set de to loop limit
-		ld hl,0x8000		; slice the loop limit in de
-		or a			; 0->cf
-		sbc hl,de		; slice 0x8000-limit
+		ld hl,0x8000		; slice the loop limit in de (Laxen & Perry F83)
+		or a			; 0 -> cf
+		sbc hl,de		; slice 0x8000 - limit
 		dec ix			;
 		ld (ix),h		;
 		dec ix			; save the sliced loop limit on the return stack
 		ld (ix),l		;
 		pop de			; restore TOS initial value
-		add hl,de		; slice initial+0x8000-limit
+		add hl,de		; slice initial + 0x8000 - limit
 		dec ix			;
 		ld (ix),h		;
 		dec ix			; save the sliced initial value on the return stack
 		ld (ix),l		;
-		ld (rp),ix		; ix->rp
+		ld (rp),ix		; ix -> rp
 		pop de			; pop new TOS
 		JP_NEXT			; continue
 
@@ -4881,10 +4887,10 @@ loop_bc_step:	ld hl,(rp)		; [rp]->hl
 
 		CODE (UNLOOP),dounloop
 		exx			; save bc with ip
-		ld hl,(rp)		; [rp]->hl
+		ld hl,(rp)		; [rp] -> hl
 		ld bc,6			;
 		add hl,bc		;
-		ld (rp),hl		; rp+6->hl
+		ld (rp),hl		; rp + 6 -> hl
 		exx			; restore bc with ip
 		JP_NEXT			; continue
 
@@ -4897,12 +4903,12 @@ loop_bc_step:	ld hl,(rp)		; [rp]->hl
 		inc hl			;
 		inc hl			;
 		inc hl			;
-		inc hl			; rp+4->hl
+		inc hl			; rp + 4 -> hl
 		ld c,(hl)		;
 		inc hl			;
 		ld b,(hl)		;
-		inc hl			; [hl++]->ip
-		ld (rp),hl		; rp+6->rp
+		inc hl			; [hl++] -> ip
+		ld (rp),hl		; rp + 6 -> rp
 		JP_NEXT			; continue
 
 ; AHEAD		-- ; C: -- addr orig
@@ -4937,7 +4943,7 @@ loop_bc_step:	ld hl,(rp)		; [rp]->hl
 		.dw doret
 
 ; UNTIL		x -- ; C: addr dest --
-;		branch back to BEGIN if x=0;
+;		branch back to BEGIN if x = 0;
 ;		may throw -14 "interpreting a compile-only word";
 ;		may throw -22 "control structure mismatch"
 
@@ -4948,7 +4954,7 @@ loop_bc_step:	ld hl,(rp)		; [rp]->hl
 		.dw doret
 
 ; IF		x -- ; C: -- addr orig
-;		branch to closest ELSE or THEN if x=0;
+;		branch to closest ELSE or THEN if x = 0;
 ;		may throw -14 "interpreting a compile-only word"
 
 		COLON_IMM IF,if
@@ -4980,7 +4986,7 @@ loop_bc_step:	ld hl,(rp)		; [rp]->hl
 		.dw doret
 
 ; WHILE		x -- ; C: addr sys -- addr orig addr sys
-;		branch to exit REPEAT if x=0;
+;		branch to exit REPEAT if x = 0;
 ;		may throw -14 "interpreting a compile-only word"
 
 		COLON_IMM WHILE,while
@@ -5070,18 +5076,18 @@ loop_bc_step:	ld hl,(rp)		; [rp]->hl
 
 		CODE I,i
 		push de			; save TOS
-		ld hl,(rp)		; [rp]->hl
+		ld hl,(rp)		; [rp] -> hl
 loop_counter:	ld e,(hl)		;
 		inc hl			;
 		ld d,(hl)		;
-		inc hl			; [rp]->de with loop counter
+		inc hl			; [rp] -> de with loop counter
 		ld a,(hl)		;
 		inc hl			;
 		ld h,(hl)		;
-		ld l,a			; [rp+2]->hl with loop limit
-		ex de,hl		; exchange limit->de, counter->hl
-		or a			; 0->cf
-		sbc hl,de		; undo the do loop 'slice' counter-limit
+		ld l,a			; [rp+2] -> hl with loop limit
+		ex de,hl		; exchange limit -> de, counter -> hl
+		or a			; 0 -> cf
+		sbc hl,de		; undo the do loop 'slice' counter - limit
 		ex de,hl		; set new TOS to hl
 		JP_NEXT			; continue
 
@@ -5092,7 +5098,7 @@ loop_counter:	ld e,(hl)		;
 		push de			; save TOS
 		ld hl,(rp)		;
 		ld de,6			;
-		add hl,de		; rp+6->hl
+		add hl,de		; rp + 6 -> hl
 		jr loop_counter		; execute I with rp+6
 
 .if FULL
@@ -5104,7 +5110,7 @@ loop_counter:	ld e,(hl)		;
 		push de			; save TOS
 		ld hl,(rp)		;
 		ld de,12		;
-		add hl,de		; rp+12->hl
+		add hl,de		; rp + 12 -> hl
 		jr loop_counter		; execute I with rp+12
 
 .endif
@@ -5119,7 +5125,7 @@ loop_counter:	ld e,(hl)		;
 		.dw doret
 
 ; OF		x1 x2 -- x1 or x1 x2 -- ; C: n1 -- orig n2
-;		take CASE arm if x1=x2;
+;		take CASE arm if x1 = x2;
 ;		otherwise branch to next OF;
 ;		may throw -14 "interpreting a compile-only word"
 
@@ -5176,7 +5182,7 @@ loop_counter:	ld e,(hl)		;
 ;		execute execution token xt
 
 		CODE EXECUTE,execute
-		ex de,hl		; xt->hl
+		ex de,hl		; xt -> hl
 		pop de			; set new TOS
 		jp (hl)			; execute xt
 
@@ -5307,8 +5313,8 @@ loop_counter:	ld e,(hl)		;
 
 ; ERROR		n --
 ;		display exception n at the offending location in the input;
-;		n=-1 ABORT and n=-2 ABORT" clear the stack;
-;		n=-56 QUIT stays silent;
+;		n = -1 ABORT and n = -2 ABORT" clear the stack;
+;		n = -56 QUIT stays silent;
 ;		List of Forth850 errors:
 ;		
 ;		code | error

@@ -474,12 +474,12 @@ signed double product d1*n
 ### UM/MOD
 _ud u1 -- u2 u3_
 remainder and quotient ud/u1;
-the result is undefined when u1=0
+the result is undefined when u1 = 0
 
 ### SM/REM
 _d1 n1 -- n2 n3_
 symmetric signed remainder and quotient d1/n1;
-the result is undefined when n1=0
+the result is undefined when n1 = 0
 
     : SM/REM
       2DUP XOR >R
@@ -494,7 +494,7 @@ the result is undefined when n1=0
 ### FM/MOD
 _d1 n1 -- n2 n3_
 floored signed modulus and quotient d1/n1;
-the result is undefined when n1=0
+the result is undefined when n1 = 0
 
     : FM/MOD
       DUP>R
@@ -508,42 +508,42 @@ the result is undefined when n1=0
 ### /MOD
 _n1 n2 -- n3 n4_
 signed symmetric remainder and quotient n1/n2;
-the result is undefined when n2=0
+the result is undefined when n2 = 0
 
     : /MOD SWAP S>D ROT SM/REM ;
 
 ### MOD
 _n1 n2 -- n3_
 signed symmetric remainder of n1/n2;
-the result is undefined when n2=0
+the result is undefined when n2 = 0
 
     : / /MOD DROP ;
 
 ### /
 _n1 n2 -- n3_
 signed symmetric quotient n1/n2;
-the result is undefined when n2=0
+the result is undefined when n2 = 0
 
     : / /MOD NIP ;
 
 ### */MOD
 _n1 n2 n3 -- n4 n5_
 signed product symmetric remainder and quotient n1*n2/n3;
-the result is undefined when n3=0
+the result is undefined when n3 = 0
 
     : */MOD -ROT M* ROT SM/REM ;
 
 ### */
 _n1 n2 n3 -- n4_
 signed product symmetric quotient n1*n2/n3;
-the result is undefined when n3=0
+the result is undefined when n3 = 0
 
     : */ */MOD NIP ;
 
 ### M*/
 _d1 n1 n2 -- d2_
 signed double product symmetric quotient d1*n1/n2;
-the result is undefined when n2=0
+the result is undefined when n2 = 0
 
     : M*/ >R MD* R> SM/REM NIP ;
 
@@ -561,15 +561,15 @@ bitwise xor x1 with x2
 
 ### =
 _x1 x2 -- flag_
-true if x1=x2
+true if x1 = x2
 
 ### <>
 _x1 x2 -- flag_
-true if x1<>x2
+true if x1 <> x2
 
 ### <
 _n1 n2 -- flag_
-true if n1<n2 signed
+true if n1 < n2 signed
 
     : <
       2DUP XOR 0< IF
@@ -580,13 +580,13 @@ true if n1<n2 signed
 
 ### >
 _n1 n2 -- flag_
-true if n1>n2 signed
+true if n1 > n2 signed
 
     : > SWAP < ;
 
 ### U<
 _u1 u2 -- flag_
-true if u1<u2 unsigned
+true if u1 < u2 unsigned
 
     : U<
       2DUP XOR 0< IF
@@ -597,27 +597,27 @@ true if u1<u2 unsigned
 
 ### U>
 _u1 u2 -- flag_
-true if u1>u2 unsigned
+true if u1 > u2 unsigned
 
     : U> SWAP U< ;
 
 ### 0=
 _x -- flag_
-true if x=0
+true if x = 0
 
 ### 0<
 _n -- flag_
-true if n<0
+true if n < 0
 
 ### D0=
 _dx -- flag_
-true if dx=0
+true if dx = 0
 
     : D0= OR 0= ;
 
 ### D0<
 _d -- flag_
-true if d<0
+true if d < 0
 
     : D0< NIP 0< ;
 
@@ -698,11 +698,11 @@ absolute value |d1|
 
 ### LSHIFT
 _x1 u -- x2_
-logical shift left x1<<u
+logical shift left x1 << u
 
 ### RSHIFT
 _x1 u -- x2_
-logical shift right x1>>u
+logical shift right x1 >> u
 
 ### 1+
 _n1 -- n2_
@@ -730,13 +730,13 @@ decrement n1-2
 
 ### 2*
 _n1 -- n2_
-arithmetic shift left n1<<1
+arithmetic shift left n1 << 1
 
     : 2* 2 * ;
 
 ### 2/
 _n1 -- n2_
-arithmetic shift right n1>>1
+arithmetic shift right n1 >> 1
 
     : 2/ 2 / ;
 
@@ -748,7 +748,7 @@ convert counted string to string
 
 ### COMPARE
 _c-addr1 u1 c-addr2 u2 -- -1|0|1_
-compare strings, leaves -1=less or 0=equal or 1=greater
+compare strings, leaves -1 = less or 0 = equal or 1 = greater
 
 ### S=
 _c-addr1 u1 c-addr2 u2 -- flag_
@@ -811,17 +811,17 @@ fill memory with 0x20 (bl) chars
 _c-addr u1 char -- c-addr u2_
 truncate string up to matching char;
 leaves string if char not found;
-char=0x20 (bl) chops 0x00 to 0x20 (white space and control)
+char = 0x20 (bl) chops 0x00 to 0x20 (white space and control)
 
 ### TRIM
 _c-addr1 u1 char -- c-addr2 u2_
 trim initial chars;
-char=0x20 (bl) trims 0x00 to 0x20 (white space and control)
+char = 0x20 (bl) trims 0x00 to 0x20 (white space and control)
 
 ### -TRIM
 _c-addr u1 char -- c-addr u2_
 trim trailing chars;
-char=0x20 (bl) trims 0x00 to 0x20 (white space and control)
+char = 0x20 (bl) trims 0x00 to 0x20 (white space and control)
 
 ### -TRAILING
 _c-addr u1 -- c-addr u2_
@@ -975,7 +975,7 @@ hold all remaining digits
 
 ### SIGN
 _n --_
-hold minus sign if n<0
+hold minus sign if n < 0
 
     : SIGN 0< IF '- HOLD THEN ;
 
@@ -1054,7 +1054,7 @@ specify xy with AT-XY
 
 ### INKEY
 _-- x_
-check key, where 0x00=no key and 0x52=multiple keys
+check key, where 0x00 = no key and 0x52 = multiple keys
 
 ### GETKEY
 _-- char_
@@ -1079,7 +1079,7 @@ left    =$1d
 up      =$1e
 down    =$1f;
 calc keys and BASIC keys produce BASIC tokens as key code $fe:
-SIN     =$fe register B=$95 BASIC token for SIN (ignored)
+SIN     =$fe register B = $95 BASIC token for SIN (ignored)
 
 ### KEY
 _-- char_
@@ -1110,7 +1110,7 @@ variable with offset into input buffer (TIB)
 
 ### SOURCE-ID
 _-- 0|-1_
-value with 0=source input or -1=string input
+value with 0 = source input or -1 = string input
 
     0 VALUE SOURCE-ID
 
@@ -1258,7 +1258,7 @@ convert execution token to parameter field address
 ### FIND-WORD
 _c-addr u -- c-addr 0 | xt 1 | xt -1_
 search dictionary for matching word;
-leaves execution token and 1=immediate or -1=not immediate;
+leaves execution token and 1 = immediate or -1 = not immediate;
 leaves c-addr and 0 when not found
 
 ### '
@@ -1682,12 +1682,12 @@ may throw -4 "stack underflow"
 
 ### (UNTIL)
 _x --_
-branch if x=0;
+branch if x = 0;
 runtime of the UNTIL compile-only word
 
 ### (IF)
 _x --_
-branch if x=0;
+branch if x = 0;
 runtime of the IF and WHILE compile-only words
 
 ### (AGAIN)
@@ -1702,7 +1702,7 @@ runtime of the AHEAD, ELSE and ENDOF compile-only words
 
 ### (OF)
 _x1 x2 -- x1 or x1 x2 --_
-branch if x1<>x2;
+branch if x1 <> x2;
 runtime of the OF compile-only word
 
 ### (LOOP)
@@ -1755,13 +1755,13 @@ may throw -22 "control structure mismatch"
 
 ### UNTIL
 _x -- ; C: addr dest --_
-branch back to BEGIN if x=0;
+branch back to BEGIN if x = 0;
 may throw -14 "interpreting a compile-only word";
 may throw -22 "control structure mismatch"
 
 ### IF
 _x -- ; C: -- addr orig_
-branch to closest ELSE or THEN if x=0;
+branch to closest ELSE or THEN if x = 0;
 may throw -14 "interpreting a compile-only word"
 
 ### THEN
@@ -1778,7 +1778,7 @@ may throw -22 "control structure mismatch"
 
 ### WHILE
 _x -- ; C: addr sys -- addr orig addr sys_
-branch to exit REPEAT if x=0;
+branch to exit REPEAT if x = 0;
 may throw -14 "interpreting a compile-only word"
 
 ### REPEAT
@@ -1836,7 +1836,7 @@ may throw -14 "interpreting a compile-only word"
 
 ### OF
 _x1 x2 -- x1 or x1 x2 -- ; C: n1 -- orig n2_
-take CASE arm if x1=x2;
+take CASE arm if x1 = x2;
 otherwise branch to next OF;
 may throw -14 "interpreting a compile-only word"
 
@@ -1941,8 +1941,8 @@ clears the parameter stack unless caught with CATCH
 ### ERROR
 _n --_
 display exception n at the offending location in the input;
-n=-1 ABORT and n=-2 ABORT" clear the stack;
-n=-56 QUIT stays silent;
+n = -1 ABORT and n = -2 ABORT" clear the stack;
+n = -56 QUIT stays silent;
 List of Forth850 errors:
 
 code | error
@@ -2080,13 +2080,13 @@ signed and unsigned double product d1*d2
 
 ### D=
 _d1 d2 -- flag_
-true if d1=d2
+true if d1 = d2
 
     : D= D- D0= ;
 
 ### D<
 _d1 d2 -- flag_
-true if d1<d2
+true if d1 < d2
 
     : D<
       DUP 3 PICK XOR 0< IF
@@ -2097,7 +2097,7 @@ true if d1<d2
 
 ### DU<
 _du1 du2 -- flag_
-true if ud1<ud2
+true if ud1 < ud2
 
     : DU<
       DUP 3 PICK XOR 0< IF
@@ -2405,36 +2405,36 @@ Performance:
 
     compare:        push ix                 ; save c-addr1
                     push hl                 ; save u1
-                    xor a                   ; 0->a flags u1=u2, 0->cf
+                    xor a                   ; 0 -> a flags u1 = u2, 0 -> cf
                     sbc hl,bc               ;
-                    jr z,1$                 ; if u1<>u2 then
-                    inc a                   ;   1->a flags u1>u2
-                    jr nc,1$                ;   if u1<u2 then
-                    pop bc                  ;     pop u1->bc
+                    jr z,1$                 ; if u1 <> u2 then
+                    inc a                   ;   1 -> a flags u1 > u2
+                    jr nc,1$                ;   if u1 < u2 then
+                    pop bc                  ;     pop u1 -> bc
                     push bc                 ;     rebalance stack
-                    ld a,-1                 ;   -1->a flags u1<u2
+                    ld a,-1                 ;   -1 -> a flags u1 < u2
     1$:             pop hl                  ; pop to discard u1
-                    pop hl                  ; pop c-addr1->hl
+                    pop hl                  ; pop c-addr1 -> hl
                     ex af,af'               ; save a with -1|0|1 flag
                     ld a,c                  ;
                     or b                    ;
-                    jr z,3$                 ; if bc<>0 then
+                    jr z,3$                 ; if bc <> 0 then
     ;               compare chars
     2$:             ld a,(de)       ;  7    ;   loop
                     cpi             ; 16    ;     compare [hl++] to [de], --bc
                     jr nz,4$        ;  7    ;     while characters [hl] and [de] are equal
                     inc de          ;  6    ;     de++
-                    jp pe,2$        ; 10(46);   until bc=0
+                    jp pe,2$        ; 10(46);   until bc = 0
     ;               chars match, check lengths
     3$:             ex af,af'               ; restore a with -1|0|1 flag
                     ret                     ;
     ;               strings differ
     4$:             dec hl                  ; hl-- to correct cpi overshoot
                     cp (hl)                 ; test a<[hl]
-                    ccf                     ; complement cf, cf=1 if [hl]<a
-                    sbc a                   ; a=-1 if cf=1 else 0
-                    add a                   ; a=-2 if cf=1 else 0
-                    inc a                   ; a=-1 if cf=1 else 1
+                    ccf                     ; complement cf, cf = 1 if [hl]<a
+                    sbc a                   ; a = -1 if cf = 1 else 0
+                    add a                   ; a = -2 if cf = 1 else 0
+                    inc a                   ; a = -1 if cf = 1 else 1
                     ret                     ; done
 
 ### Fast string search
@@ -2457,31 +2457,31 @@ Performance:
 21 cycles per character to search the first or next character match and 46
 cycles per character comparison when characters match
 
-    search:         or a                    ; 0->cf
-                    sbc ix,bc               ; u1-u2->ix
-                    ret c                   ; if u2>u1 then impossible search, cf=1
+    search:         or a                    ; 0 -> cf
+                    sbc ix,bc               ; u1 - u2 -> ix
+                    ret c                   ; if u2>u1 then impossible search, cf = 1
                     ld a,c                  ;
                     or b                    ;
-                    ret z                   ; if u2=0 then done (found), cf=0
+                    ret z                   ; if u2 = 0 then done (found), cf = 0
                     push ix                 ;
                     push bc                 ;
-                    pop ix                  ; u2->ix
-                    pop bc                  ; u1-u2->bc
-                    inc bc                  ; u1-u2+1->bc correct for cpir
+                    pop ix                  ; u2 -> ix
+                    pop bc                  ; u1 - u2 -> bc
+                    inc bc                  ; u1 - u2 + 1 -> bc correct for cpir
                     push hl                 ; save c-addr1 on the stack
     ;               find char match
     1$:             push de                 ; loop, save de with c-addr2
-                    ld a,(de)               ;   [de]->a
-                    cpir            ; 21/16 ;   repeat until a=[hl++] or --bc=0
+                    ld a,(de)               ;   [de] -> a
+                    cpir            ; 21/16 ;   repeat until a = [hl++] or --bc = 0
                     jr nz,4$                ;   if no match then not found
                     pop de                  ;   restore de with c-addr2
                     push bc                 ;
                     push de                 ;
                     push hl                 ;   save bc,de,hl
                     push ix                 ;
-                    pop bc                  ;   u2->bc
+                    pop bc                  ;   u2 -> bc
     ;               compare substrings
-                    dec bc                  ;   u2-1->bc since u2>0
+                    dec bc                  ;   u2 - 1 -> bc since u2 > 0
                     ld a,c                  ;
                     or b                    ;
                     jr z,3$                 ;   if bc<> 0 then
@@ -2490,17 +2490,17 @@ cycles per character comparison when characters match
                     cpi             ; 16    ;       compare [hl++] to [de], --bc
                     jr nz,3$        ;  7    ;       while characters [hl] and [de] are equal
                     inc de          ;  6    ;       de++
-                    jp pe,2$        ; 10(46);     until bc=0
+                    jp pe,2$        ; 10(46);     until bc = 0
     3$:             pop hl                  ;
                     pop de                  ;
                     pop bc                  ;   restore bc,de,hl
                     jr nz,1$                ; repeat
     ;               substrings match
                     dec hl                  ; hl-- to correct cpir overshoot
-                    ret                     ; done, cf=0
+                    ret                     ; done, cf = 0
     ;               not found
-    4$:             scf                     ; 1->cf
-                    ret                     ; done, cf=1
+    4$:             scf                     ; 1 -> cf
+                    ret                     ; done, cf = 1
 
 ## Z80 Forth system routines
 
@@ -2542,7 +2542,7 @@ routine":
                     inc bc          ;  6    ;
                     ld a,(bc)       ;  7    ;
                     ld h,a          ;  4    ;
-                    inc bc          ;  6    ; [ip++]->hl with xt
+                    inc bc          ;  6    ; [ip++] -> hl with xt
                     jp (hl)         ;  4(38); jump to hl
     .endif
 
@@ -2566,12 +2566,12 @@ the return stack and pops the new instruction pointer from the parameter stack
 routine checks for ON/BREAK key and begins executing the colon definition with
 the "next routine":
 
-    docol:          ld hl,(rp)      ; 16    ; [rp]->hl
+    docol:          ld hl,(rp)      ; 16    ; [rp] -> hl
                     dec hl          ;  6    ;
                     ld (hl),b       ;  7    ;
                     dec hl          ;  6    ;
-                    ld (hl),c       ;  7    ; save bc->[--rp] with caller ip on the return stack
-                    ld (rp),hl      ; 16    ; ip-2->rp
+                    ld (hl),c       ;  7    ; save bc -> [--rp] with caller ip on the return stack
+                    ld (rp),hl      ; 16    ; ip - 2 -> rp
                     pop bc          ; 10(68); pop ip saved by call docol
     ;               continue with ON/BREAK key check
     cont:           in a,(0x1f)     ; 11    ; port 0x1f bit 7 is set if ON/BREAK is depressed
@@ -2583,19 +2583,19 @@ the "next routine":
                     inc bc          ;  6    ;
                     ld a,(bc)       ;  7    ;
                     ld h,a          ;  4    ;
-                    inc bc          ;  6    ; [bc++]->hl with xt
+                    inc bc          ;  6    ; [bc++] -> hl with xt
                     jp (hl)         ;  4(38); jump to hl
 
 A return from a colon definition with the `(;)` word pops the return
 instruction pointer off the return stack to continue executing the caller's
 next instruction.
 
-    doret:          ld hl,(rp)      ; 16    ; [rp]->hl
+    doret:          ld hl,(rp)      ; 16    ; [rp] -> hl
                     ld c,(hl)       ;  7    ;
                     inc hl          ;  6    ;
                     ld b,(hl)       ;  7    ;
                     inc hl          ;  6    ;
-                    ld (rp),hl      ; 16(58); restore [rp++]->bc with ip of the caller
+                    ld (rp),hl      ; 16(58); restore [rp++] -> bc with ip of the caller
                     NEXT            ; 38    ; continue
 
 A colon call takes 145 cycles (17 + 68 + 22 + 38 cycles) and a colon return
@@ -2626,7 +2626,7 @@ constant/value is then fetched:
                     push de         ; 11    ; save TOS
                     ld e,(hl)       ;  7    ;
                     inc hl          ;  6    ;
-                    ld d,(hl)       ;  7(41); set [hl]->de as new TOS
+                    ld d,(hl)       ;  7(41); set [hl] -> de as new TOS
                     NEXT            ; 38    ; continue
 
 Executing a word defined as a constant or value takes 96 cycles (17 + 41 + 38
@@ -2636,17 +2636,17 @@ cycles), which includes the "next routine" overhead.
 
 The `@` fetch and `!` store words make good use of `ex de,hl`:
 
-    fetch:          ex de,hl        ;  4    ; addr->hl
+    fetch:          ex de,hl        ;  4    ; addr -> hl
                     ld e,(hl)       ;  7    ;
                     inc hl          ;  6    ;
-                    ld d,(hl)       ;  7(24); set [hl]->de as new TOS
+                    ld d,(hl)       ;  7(24); set [hl] -> de as new TOS
                     NEXT            ; 38    ; continue
 
-    store:          pop hl          ; 10    ; pop addr->hl
-                    ex de,hl        ;  4    ; x->de, addr->hl
+    store:          pop hl          ; 10    ; pop addr -> hl
+                    ex de,hl        ;  4    ; x -> de, addr -> hl
                     ld (hl),e       ;  7    ;
                     inc hl          ;  6    ;
-                    ld (hl),d       ;  7    ; de->[hl] with x
+                    ld (hl),d       ;  7    ; de -> [hl] with x
                     pop de          ; 10(44); pop new TOS
                     NEXT            ; 38    ; continue
 
@@ -2656,19 +2656,19 @@ A Forth definer word that uses CREATE with DOES> to define new words is
 compiled to execute the `(;CODE)` token with label `doscode`, followed by a
 `call dodoes` to start interpreting the DOES> code:
 
-    doscode:        ld hl,(lastxt+3)        ; LASTXT->hl with last defined word xt
+    doscode:        ld hl,(lastxt+3)        ; LASTXT -> hl with last defined word xt
                     inc hl                  ;
                     ld (hl),c               ;
                     inc hl                  ;
-                    ld (hl),b               ; ip->[LASTXT+1] overwrite call address
+                    ld (hl),b               ; ip -> [LASTXT+1] overwrite call address
                     jr doret                ; (;) return to caller
 
-    dodoes:         ld hl,(rp)      ; 16    ; [rp]->hl
+    dodoes:         ld hl,(rp)      ; 16    ; [rp] -> hl
                     dec hl          ;  6    ;
                     ld (hl),b       ;  7    ;
                     dec hl          ;  6    ;
                     ld (hl),c       ;  7    ;
-                    ld (rp),hl      ; 16    ; save bc->[--rp] with old ip on the return stack
+                    ld (rp),hl      ; 16    ; save bc -> [--rp] with old ip on the return stack
                     pop bc          ; 10    ; pop bc with new ip of the DOES> routine saved by call dodoes
                     pop hl          ; 10    ; pop pfa addr
                     push de         ; 11    ; save TOS
@@ -2715,61 +2715,61 @@ Performance:
 21 cycles per character for non-BL char to chop, 40 cycles per character for BL
 to chop white space char, 33 cycles to trim non-BL char
 
-    chop:           ld a,e                  ; char->a
+    chop:           ld a,e                  ; char -> a
                     exx                     ; save bc with ip
                     ex af,af'               ; save a with char
-                    pop bc                  ; pop u1->bc
+                    pop bc                  ; pop u1 -> bc
                     ld e,c                  ;
-                    ld d,b                  ; u1->de
+                    ld d,b                  ; u1 -> de
                     ld a,c                  ;
-                    or b                    ; test bc=0, 0->cf
-                    jr z,2$                 ; if bc=0 then not found
+                    or b                    ; test bc = 0, 0 -> cf
+                    jr z,2$                 ; if bc = 0 then not found
                     pop hl                  ;
-                    push hl                 ; c-addr->hl
+                    push hl                 ; c-addr -> hl
                     ex af,af'               ; restore a with char
                     cp 0x20                 ;
-                    jr z,3$                 ; if a=0x20 then find white space
-                    or a                    ; 0->cf not found
+                    jr z,3$                 ; if a = 0x20 then find white space
+                    or a                    ; 0 -> cf not found
     ;               find char in string
-                    cpir            ; 21/16 ; repeat until a=[hl++] or --bc=0
+                    cpir            ; 21/16 ; repeat until a = [hl++] or --bc = 0
                     jr nz,2$                ; if match then 
     1$:             ccf                     ;   complement to correct cpi bc--
-    2$:             ex de,hl                ; u1->hl
-                    sbc hl,bc               ; u1-bc-cf->hl
+    2$:             ex de,hl                ; u1 -> hl
+                    sbc hl,bc               ; u1 - bc - cf -> hl
                     push hl                 ; save hl as TOS
                     exx                     ; restore bc with ip
                     pop de                  ; pop new TOS
                     JP_NEXT                 ; continue
     ;               find white space in string
     3$:             cp (hl)         ;  7    ; loop to compare a to [hl]
-                    cpi             ; 16    ;   hl++,bc--
+                    cpi             ; 16    ;   hl++, bc--
                     jr nc,1$        ;  7    ;   if [hl]<a then found
-                    jp pe,3$        ; 10    ; until bc=0
+                    jp pe,3$        ; 10    ; until bc = 0
                     jr 1$                   ; not found
 
-    trim:           ld a,e                  ; char->a
+    trim:           ld a,e                  ; char -> a
                     exx                     ; save bc with ip
-                    pop bc                  ; u1->bc
-                    pop hl                  ; c-addr1->hl
+                    pop bc                  ; u1 -> bc
+                    pop hl                  ; c-addr1 -> hl
     1$:             ex af,af'               ; save a
                     ld a,c                  ;
                     or b                    ;
-                    jr z,3$                 ; if bc<>0 then
+                    jr z,3$                 ; if bc <> 0 then
                     ex af,af'               ;   restore a
     2$:             cpi             ; 16    ;   loop
-                    jr nz,4$        ;  7    ;     while a=[hl++],--bc
-                    jp pe,2$        ; 10    ;   until b=0
+                    jr nz,4$        ;  7    ;     while a = [hl++], --bc
+                    jp pe,2$        ; 10    ;   until b = 0
     3$:             push hl                 ; save hl as 2OS
                     push bc                 ; save bc as TOS
                     exx                     ; restore bc with ip
                     pop de                  ; pop new TOS
                     JP_NEXT                 ; continue
     4$:             cp 0x20                 ;
-                    jr nz,5$                ; if char=0x20 then
+                    jr nz,5$                ; if char = 0x20 then
                     dec hl                  ;
                     cp (hl)                 ;
                     inc hl                  ;
-                    jr nc,1$                ;   if [hl-1]<=0x20 then keep trimming
+                    jr nc,1$                ;   if [hl-1] <= 0x20 then keep trimming
     5$:             inc bc                  ; correct bc++ for cpi match
                     dec hl                  ; correct hl-- for cpi match
                     jr 3$                   ; finalize trimming
@@ -2803,7 +2803,7 @@ Entry:
 - 2OS: address of the string to search c-addr
 
 Exit:
-- DE with TOS: 0=not found, 1=found immediate, -1=found (not immediate)
+- DE with TOS: 0 = not found, 1 = found immediate, -1 = found (not immediate)
 - 2OS: string address if not found or execution token when found
 
 Performance:
@@ -2811,16 +2811,16 @@ Performance:
 51 or 102 cycles per character comparison when characters match
 
     findword:       ld a,d                  ;
-                    or a                    ; test d=0 high order byte of u
+                    or a                    ; test d = 0 high order byte of u
                     jp nz,zero_next         ; if u is too large then set new TOS to 0
                     sla e                   ; shift u to compare w/o immediate bit
                     jp c,zero_next          ; if u is too large then set new TOS to 0
-                    jp z,zero_next          ; if u=0 then set new TOS to 0
+                    jp z,zero_next          ; if u = 0 then set new TOS to 0
                     push de                 ; save de with 2*u
                     exx                     ; save bc with ip
-                    pop bc                  ; pop 2*u->bc
-                    pop de                  ; pop c-addr->de
-                    ld hl,(context+3)       ; CONTEXT->hl
+                    pop bc                  ; pop 2 * u -> bc
+                    pop de                  ; pop c-addr -> de
+                    ld hl,(context+3)       ; CONTEXT -> hl
                     jr 3$                   ; start searching
     ;               loop over dictionary
     1$:             pop de                  ; restore de with c-addr
@@ -2828,24 +2828,24 @@ Performance:
     3$:             ld a,(hl)       ;  7    ;
                     inc hl          ;  6    ;
                     ld h,(hl)       ;  7    ;
-                    ld l,a          ;  4    ;   [hl]->hl follow link at hl=lfa
+                    ld l,a          ;  4    ;   [hl] -> hl follow link at hl = lfa
                     or h            ;  4    ;
-                    jr z,6$         ;  7    ;   if hl=0 then not found
+                    jr z,6$         ;  7    ;   if hl = 0 then not found
                     push hl         ; 11    ;   save hl with lfa
                     inc hl          ;  6    ;
-                    inc hl          ;  6    ;   hl+2->hl with nt (nfa)
+                    inc hl          ;  6    ;   hl + 2 -> hl with nt (nfa)
                     ld a,(hl)       ;  7    ;   word length
                     add a           ;  4    ;   shift away immediate bit
-                    cp c            ;  4    ;   test a=c word length match (both shifted)
+                    cp c            ;  4    ;   test a = c word length match (both shifted)
                     jr nz,2$        ; 12(95);   if lengths differ then continue searching
     ;               compare string to word
                     push de                 ;   save de with c-addr
                     inc hl                  ;   hl++ point to nfa chars
-                    ld b,c                  ;   2*u->b
-                    srl b                   ;   u->b word length (nonzero)
+                    ld b,c                  ;   2 * u -> b
+                    srl b                   ;   u -> b word length (nonzero)
     ;               loop over word chars
     4$:             ld a,(de)       ;  7    ;   loop
-                    cp (hl)         ;  7    ;     compare [de]=[hl]
+                    cp (hl)         ;  7    ;     compare [de] = [hl]
                     jr z,5$         ; 12/7  ;     if mismatch then
                     and 0xdf        ;    7  ;       make upper case
                     cp 'A           ;    7  ;
@@ -2853,16 +2853,16 @@ Performance:
                     cp 'Z+1         ;    7  ;
                     jr nc,1$        ;    7  ;       if a>'Z' then continue search
                     xor (hl)        ;    7  ;
-                    and 0xdf        ;    7  ;       case insensitive compare [de]=[hl]
+                    and 0xdf        ;    7  ;       case insensitive compare [de] = [hl]
                     jr nz,1$        ;    7  ;       if mismatch then continue search
     5$:             inc de          ;  6    ;     de++ point to next char of c-addr
                     inc hl          ;  6    ;     hl++ point to next char of word
-                    djnz 4$         ; 13(51/102);until --b=0
+                    djnz 4$         ; 13(51/102);until --b = 0
     ;               found a matching word
                     pop de                  ;   discard saved c-addr
                     ex (sp),hl              ;   save hl with xt as 2OS, restore hl with lfa
                     inc hl                  ;
-                    inc hl                  ;   hl+2->hl with nt (nfa)
+                    inc hl                  ;   hl + 2 -> hl with nt (nfa)
                     bit immediate_bit,(hl)  ;   test immediate bit of [hl] word length
                     exx                     ;   restore bc with ip
                     jp nz,one_next          ;   set new TOS to 1 if word is immediate
@@ -2890,24 +2890,24 @@ Exit:
 Perfomance:
 max 51 cycles x 16 iterations = 816 cycles, excluding entry/exit overhead
 
-    mult1616:       ld hl,0                 ; 0->hl
-                    ld a,c                  ; c->a low order byte of n1
-                    ld c,b                  ; b->c save high order byte of n1
-                    ld b,8                  ; 8->b loop counter
-    1$:             rra             ;  4    ; loop, a>>1->a set cf
-                    jr nc,2$        ;  7    ;   if cf=1 then
-                    add hl,de       ; 11    ;     hl+de->hl
+    mult1616:       ld hl,0                 ; 0 -> hl
+                    ld a,c                  ; c -> a low order byte of n1
+                    ld c,b                  ; b -> c save high order byte of n1
+                    ld b,8                  ; 8 -> b loop counter
+    1$:             rra             ;  4    ; loop, a >> 1 -> a set cf
+                    jr nc,2$        ;  7    ;   if cf = 1 then
+                    add hl,de       ; 11    ;     hl + de -> hl
     2$:             sla e           ;  8    ;
-                    rl d            ;  8    ;   de<<1->de
-                    djnz 1$         ; 13(51); until --b=0
-                    ld a,c                  ; c->a high order byte of n1
-                    ld b,8                  ; 8->b loop counter
-    3$:             rra             ;  4    ; loop, a>>1->a set cf
-                    jr nc,4$        ;  7    ;   if cf=1 then
-                    add hl,de       ; 11    ;     hl+de->hl
+                    rl d            ;  8    ;   de << 1 -> de
+                    djnz 1$         ; 13(51); until --b = 0
+                    ld a,c                  ; c -> a high order byte of n1
+                    ld b,8                  ; 8 -> b loop counter
+    3$:             rra             ;  4    ; loop, a >> 1 -> a set cf
+                    jr nc,4$        ;  7    ;   if cf = 1 then
+                    add hl,de       ; 11    ;     hl + de -> hl
     4$:             sla e           ;  8    ;
-                    rl d            ;  8    ;   de<<1->de
-                    djnz 3$         ; 13(51); until --b=0
+                    rl d            ;  8    ;   de << 1 -> de
+                    djnz 3$         ; 13(51); until --b = 0
 
 ### Fast unsigned 16x16->32 bit multiplication
 
@@ -2922,18 +2922,18 @@ Exit:
 Perfomance:
 max 64 cycles x 17 iterations = 1088 cycles, excluding entry/exit overhead
 
-    umult1632:      xor a                   ; 0->cf
+    umult1632:      xor a                   ; 0 -> cf
                     ld l,a                  ;
-                    ld h,a                  ; 0->hl
-                    ld a,17                 ; 17->a loop counter
+                    ld h,a                  ; 0 -> hl
+                    ld a,17                 ; 17 -> a loop counter
     1$:             rr h            ;  8    ; loop
                     rr l            ;  8    ;
                     rr d            ;  8    ;
-                    rr e            ;  8    ;   de,hl+cf>>1->de,hl
-                    jr nc,2$        ;  7    ;   if cf=1 then
-                    add hl,bc       ; 11    ;     hl+bc->hl
+                    rr e            ;  8    ;   hlde + cf >> 1 -> hlde
+                    jr nc,2$        ;  7    ;   if cf = 1 then
+                    add hl,bc       ; 11    ;     hl + bc -> hl
     2$:             dec a           ;  4    ;
-                    jp nz,1$        ; 10(64); until --b=0
+                    jp nz,1$        ; 10(64); until --a = 0
 
 ### Fast signed/unsigned 32x32->32 bit multiplication
 
@@ -2950,11 +2950,11 @@ Exit:
 Perfomance:
 max 98 cycles x 32 iterations = 3136 cycles, excluding entry/exit overhead
 
-    mult3232:       ld hl,0                 ; 0->hl high order d3, de with d2 high order
+    mult3232:       ld hl,0                 ; 0 -> hl high order d3, de with d2 high order
                     exx                     ; save bc with ip
-                    pop de                  ; d2->de' low order d2
-                    pop hl                  ; d1->hl' high order d1
-                    pop bc                  ; d1->bc' low order d1
+                    pop de                  ; d2 -> de' low order d2
+                    pop hl                  ; d1 -> hl' high order d1
+                    pop bc                  ; d1 -> bc' low order d1
                     ld a,h                  ;
                     push af                 ; save d1 high order byte 3
                     ld a,l                  ;
@@ -2963,56 +2963,92 @@ max 98 cycles x 32 iterations = 3136 cycles, excluding entry/exit overhead
                     push af                 ; save d1 low order byte 1
                     ld a,c                  ;
                     push af                 ; save d1 low order byte 0
-                    ld hl,0                 ; 0->hl' low order d3
-                    ld c,4                  ; 4->c outer loop counter
-    1$:             pop af                  ; loop, [sp++]->a next d1 byte
-                    ld b,8                  ;   8->b inner loop counter
-    2$:             rra             ;  4    ;   loop, a>>1->a set cf
-                    jr nc,3$        ;  7    ;     if cf=1 then
-                    add hl,de       ; 11    ;       hl'+de'->hl add low order
+                    ld hl,0                 ; 0 -> hl' low order d3
+                    ld c,4                  ; 4 -> c outer loop counter
+    1$:             pop af                  ; loop, [sp++] -> a next d1 byte
+                    ld b,8                  ;   8 -> b inner loop counter
+    2$:             rra             ;  4    ;   loop, a >> 1 -> a set cf
+                    jr nc,3$        ;  7    ;     if cf = 1 then
+                    add hl,de       ; 11    ;       hl' + de' -> hl add low order
                     exx             ;  4    ;
-                    adc hl,de       ; 15    ;       hl+de+cf->hl add high order
+                    adc hl,de       ; 15    ;       hl + de + cf -> hl add high order
                     exx             ;  4    ;
     3$:             sla e           ;  8    ;
-                    rl d            ;  8    ;     de'<<1->de' shift low order
+                    rl d            ;  8    ;     de' << 1 -> de' shift low order
                     exx             ;  4    ;
                     rl e            ;  8    ;
-                    rl d            ;  8    ;     de<<1+cf->de shift high order
+                    rl d            ;  8    ;     de << 1 + cf -> de shift high order
                     exx             ;  4    ;
-                    djnz 2$         ; 13(98);   until --b=0
+                    djnz 2$         ; 13(98);   until --b = 0
                     dec c                   ;
-                    jr nz,1$                ; until --c=0
+                    jr nz,1$                ; until --c = 0
 
-### Fast unsigned 32/16->16 bit division
+### Fast unsigned 32/16->16 bit division and remainder
+
+This implementation is used by all division and remainder (modulo) Forth words
+by calling `UM/MOD`.  As such, it is an important and versatile algorithm.
 
 Entry:
-- BC: divisor
-- DE: low order dividend
 - HL: high order dividend
+- BC: low order dividend
+- DE: divisor
 
 Exit:
-- DE: quotient
+- BC: quotient
 - HL: remainder
 
 Performance:
-max 88 cycles x 16 iterations = 1408 cycles, excluding entry/exit overhead
+max 85 cycles x 16 iterations = 1360 cycles, excluding entry/exit overhead
 
-    udiv3216:       ld a,16                 ; 16->a loop counter
+    udiv3216        xor a                   ;
+                    sub e                   ;
+                    ld e,a                  ;
+                    sbc a                   ;
+                    sub d                   ;
+                    ld d,a                  ; -de -> de with -u1
+                    ld a,b                  ; b -> a low order dividend in ac
+                    ld b,16                 ; 16 -> b loop counter
+                    sla c                   ;
+                    rla                     ; ac << 1 -> ac
+    1$:             adc hl,hl       ; 15    ; loop, hl << 1 + cf -> hl
+                    jr nc,2$        ; 12/ 7 ;   if cf = 1 then
+                    add hl,de       ;    11 ;     hl + -u1 -> hl
+                    scf             ;     4 ;     1 -> cf
+                    jr 3$           ;    12 ;   else
+    2$:             add hl,de       ; 11    ;     hl + -u1 -> hl
+                    jr c,3$         ; 12/ 7 ;     if cf = 0 then
+                    sbc hl,de       ;    15 ;       hl - -u1 -> hl to undo, no carry
+    3$:             rl c            ;  8    ;
+                    rla             ;  4    ;   ac << 1 + cf -> ac
+                    djnz 1$         ; 13(85); until --b = 0
+                    ld b,a                  ; a -> b quotient bc
+
+The algorithm negates the divisor first to speed up subtraction by adding the
+negative of the divisor instead.  Another benefit of using the negated divisor
+is that this produces the right carry value to shift into the quotient,
+otherwise the carry should be inverted or the resulting quotient must be
+inverted.
+
+By comparison, the CamelForth Z80 code is also fast, but slower than my
+implemenation with 90 cycles x 16 iterations = 1408 cycles, excluding
+entry/exit overhead:
+
+    udiv3216:       ld a,16                 ; 16 -> a loop counter
                     sla e                   ;
-                    rl d                    ; de<<1->de
-    1$:             adc hl,hl       ; 15    ; loop, hl<<1+cf->hl
-                    jr nc,2$        ; 12/ 7 ;   if cf=1 then
-                    or a            ;     4 ;     0->cf
-                    sbc hl,bc       ;    15 ;     hl-bc->hl
-                    or a            ;     4 ;     0->cf
+                    rl d                    ; de << 1 -> de
+    1$:             adc hl,hl       ; 15    ; loop, hl << 1 + cf -> hl
+                    jr nc,2$        ; 12/ 7 ;   if cf = 1 then
+                    or a            ;     4 ;     0 -> cf
+                    sbc hl,bc       ;    15 ;     hl - u1 -> hl
+                    or a            ;     4 ;     0 -> cf
                     jp 3$           ;    10 ;   else
-    2$:             sbc hl,bc       ; 15    ;     hl-bc->hl
-                    jr nc,3$        ; 12/ 7 ;     if cf=1 then
-                    add hl,bc       ;    11 ;       hl+bc->hl to undo sbc, sets cf
+    2$:             sbc hl,bc       ; 15    ;     hl - u1 -> hl
+                    jr nc,3$        ; 12/ 7 ;     if cf = 1 then
+                    add hl,bc       ;    11 ;       hl + u1 -> hl to undo sbc, sets cf
     3$:             rl e            ;  8    ; 
-                    rl d            ;  8    ;   de<<1+cf->de with inverse cf we'll need
+                    rl d            ;  8    ;   de << 1 + cf -> de with inverse cf we'll need
                     dec a           ;  4    ;
-                    jp nz,1$        ; 10(88); until --a=0
+                    jp nz,1$        ; 10(90); until --a = 0
                     ld a,e                  ;
                     cpl                     ;
                     ld e,a                  ;
