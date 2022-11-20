@@ -17,7 +17,7 @@ I've implemented Forth850 as efficiently as possible in direct threaded code
 routines when compared to other Z80 Forth implementations.  See the
 [technical implementation sections](#Implementation) why Forth850 is fast for a
 DTC implementation.  The [Forth850 source code](forth850.asm) is included and
-heavily documented.
+extensively documented.
 
 The [n-queens benchmark](https://www.hpmuseum.org/cgi-sys/cgiwrap/hpmuseum/articles.cgi?read=700)
 is solved in 0.865 seconds, the fastest Forth implementation of the benchmarks.
@@ -2910,6 +2910,9 @@ max 51 cycles x 16 iterations = 816 cycles, excluding entry/exit overhead
                     rl d            ;  8    ;   de << 1 -> de
                     djnz 3$         ; 13(51); until --b = 0
 
+Note: unrolling the loops improves speed at the cost of a significant code size
+increase, which is undesirable for small memory devices.
+
 ### Fast unsigned 16x16->32 bit multiplication
 
 Entry:
@@ -2935,6 +2938,9 @@ max 64 cycles x 17 iterations = 1088 cycles, excluding entry/exit overhead
                     add hl,bc       ; 11    ;     hl + bc -> hl
     2$:             dec a           ;  4    ;
                     jp nz,1$        ; 10(64); until --a = 0
+
+Note: unrolling the loop improves speed at the cost of a significant code size
+increase, which is undesirable for small memory devices.
 
 ### Fast signed/unsigned 32x32->32 bit multiplication
 
@@ -2984,19 +2990,22 @@ max 98 cycles x 32 iterations = 3136 cycles, excluding entry/exit overhead
                     dec c                   ;
                     jr nz,1$                ; until --c = 0
 
+Note: unrolling the inner loop improves speed at the cost of a significant code
+size increase, which is undesirable for small memory devices.
+
 ### Fast unsigned 32/16->16 bit division and remainder
 
 This implementation is used by all division and remainder (modulo) Forth words
 by calling `UM/MOD`.  As such, it is an important and versatile algorithm.
 
 Entry:
-- HL: high order dividend
-- BC: low order dividend
-- DE: divisor
+- HL: high order dividend ud
+- BC: low order dividend ud
+- DE: divisor u1
 
 Exit:
-- BC: quotient
-- HL: remainder
+- HL: remainder u2
+- BC: quotient u3
 
 Performance:
 max 85 cycles x 16 iterations = 1360 cycles, excluding entry/exit overhead
@@ -3056,6 +3065,9 @@ entry/exit overhead:
                     ld a,d                  ;
                     cpl                     ;
                     ld d,a                  ; complement de, faster than ccf in loop
+
+Note: unrolling the loop improves speed at the cost of a significant code size
+increase, which is undesirable for small memory devices.
 
 ## Sharp PC-G850(V)(S)
 

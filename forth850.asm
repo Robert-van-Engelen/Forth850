@@ -12,7 +12,7 @@
 ;
 ;
 ; Author:
-;   Dr. Robert van Engelen
+;   Dr. Robert van Engelen, Copyright 2022
 ;
 ;-------------------------------------------------------------------------------
 ;
@@ -2256,7 +2256,7 @@ cells		.equ twostar		; alias
 		exx			; restore bc with ip
 		jp true_next		; set new TOS to TRUE
 ;		impossible search
-5$:		add hl,bc		; u1 - u2 + u2 = u1 -> hl
+5$:		add hl,bc		; u1 - u2 + u2 -> hl = u1
 		push hl			; save hl with u1
 		exx			; restore bc with ip
 		jp false_next		; set new TOS to FALSE
@@ -2264,7 +2264,7 @@ cells		.equ twostar		; alias
 6$:		pop de			; pop to discard c-addr2
 		pop de			;
 		push de			; c-addr1 -> de, keep c-addr1 as 3OS
-		sbc hl,de		; c-addr1 + u1 - de = u1 -> hl, cf = 0 asserted
+		sbc hl,de		; c-addr1 + u1 - de -> hl = u1, cf = 0 asserted
 		push hl			; save hl with u1 as 2OS
 		exx			; restore bc with ip
 		jp false_next		; set new TOS to FALSE
