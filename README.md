@@ -76,12 +76,11 @@ about 200 bytes free dictionary space minus 40 bytes for the "hold area" to run
 Forth850.  The largest size is `USER75FF` which gives about 21K free dictionary
 space (but there won't be space left on the machine for files, BASIC or TEXT.)
 
-## Nice to have (work in progress)
+## Nice to have ("full version" work in progress)
 
-- an additional extended "full version" with additional Forth words
-- with an improved command line editor, like Forth500
-- with single precision floating point words
-- serial IO to communicate via RS232 and load source code
+- single precision floating point words
+- improved command line editor, like Forth500
+- serial IO to communicate via RS232 and load Forth source via serial
 - DONE: ability to [load Forth source code from the TEXT editor](examples/TEXT.FTH)
 - DONE: sound with [BEEP](examples/ASMDEMO1.FTH)
 

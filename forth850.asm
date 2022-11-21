@@ -326,11 +326,15 @@ bsp:		.dw 0			; saved BASIC stack pointer
 		ld (hl),c	;  7	; save bc -> [--rp] with caller ip on the return stack
 		ld (rp),hl	; 16	; ip - 2 -> [rp]
 		pop bc		; 10(68); pop ip saved by call docol
-;		continue with ON/BREAK key check
+
+		; continue with ON/BREAK key check
+
 cont:		in a,(0x1f)	; 11	; port 0x1f bit 7 is set if ON/BREAK is depressed
 		add a		;  4	; test ON/BREAK key
 		jr c,break	;  7(22); if ON/BREAK pressed then break
-;		next
+
+		; the next routine
+
 next:		ld a,(bc)	;  7	;
 		ld l,a		;  4	;
 		inc bc		;  6	;
@@ -338,7 +342,9 @@ next:		ld a,(bc)	;  7	;
 		ld h,a		;  4	;
 		inc bc		;  6	; [ip++] -> hl with xt
 		jp (hl)		;  4(38); jump to hl
-;		break
+
+		; break
+
 break:		call INKEY		; INKEY
 		jr c,break		; repeat INKEY while a key is depressed
 		ld a,-28		;
@@ -2166,13 +2172,17 @@ cells		.equ twostar		; alias
 		ld a,c			;
 		or b			;
 		jr z,3$			; if bc <> 0 then
-;		compare chars
+
+		; compare chars
+
 2$:		ld a,(de)	;  7	;   loop
 		cpi		; 16	;     compare [hl++] to [de], --bc
 		jr nz,5$	;  7	;     while characters [hl] and [de] are equal
 		inc de		;  6	;     de++
 		jp pe,2$	; 10(46);   until bc = 0
-;		chars match, check lengths
+
+		; chars match, check lengths
+
 3$:		ex af,af'		; restore a with -1|0|1 flag
 4$:		exx			; restore bc with ip
 		ld e,a			;
@@ -2180,7 +2190,9 @@ cells		.equ twostar		; alias
 		sbc a			; a = -1 if e < 0 else 0
 		ld d,a			; a -> de set sign extended TOS
 		JP_NEXT			; continue
-;		strings differ
+
+		; strings differ
+
 5$:		dec hl			; hl-- to correct cpi overshoot
 		cp (hl)			; test a < [hl]
 		ccf			; complement cf, cf = 1 if [hl] < a
@@ -2222,7 +2234,9 @@ cells		.equ twostar		; alias
 		inc bc			; u1 - u2 + 1 -> bc correct for cpir
 		pop hl			;
 		push hl			; c-addr1 -> hl, keep c-addr1 on the stack
-;		find char match
+
+		; find char match
+
 1$:		push de			; loop, save de with c-addr2
 		ld a,(de)		;   [de] -> a
 		cpir		; 21/16	;   repeat until a = [hl++] or --bc = 0
@@ -2233,7 +2247,9 @@ cells		.equ twostar		; alias
 		push hl			;   save bc,de,hl
 		push ix			;
 		pop bc			;   u2 -> bc
-;		compare substrings
+
+		; compare substrings
+
 		dec bc			;   u2 - 1 -> bc since u2 > 0
 		ld a,c			;
 		or b			;
@@ -2248,19 +2264,25 @@ cells		.equ twostar		; alias
 		pop de			;
 		pop bc			;   restore bc,de,hl
 		jr nz,1$		; repeat
-;		substrings match
+
+		; substrings match
+
 		dec hl			; hl-- to correct cpir overshoot
 		ex (sp),hl		; save hl with c-addr3, discard c-addr1
 		add ix,bc		; compute u3 = u2 + bc
 4$:		push ix			; save ix with u3 as new 2OS
 		exx			; restore bc with ip
 		jp true_next		; set new TOS to TRUE
-;		impossible search
+
+		; impossible search
+
 5$:		add hl,bc		; u1 - u2 + u2 -> hl = u1
 		push hl			; save hl with u1
 		exx			; restore bc with ip
 		jp false_next		; set new TOS to FALSE
-;		not found
+
+		; not found
+
 6$:		pop de			; pop to discard c-addr2
 		pop de			;
 		push de			; c-addr1 -> de, keep c-addr1 as 3OS
@@ -2397,7 +2419,9 @@ cells		.equ twostar		; alias
 		cp 0x20			;
 		jr z,3$			; if a = 0x20 then find white space
 		or a			; 0 -> cf for when cpir ends with nz
-;		find char in string
+
+		; find char in string
+
 		cpir		; 21/16	; repeat until a = [hl++] or --bc = 0
 		jr nz,2$		; if match then
 1$:		ccf			;   complement cf to correct cpi bc--
@@ -2407,7 +2431,9 @@ cells		.equ twostar		; alias
 		exx			; restore bc with ip
 		pop de			; pop new TOS
 		JP_NEXT			; continue
-;		find white space or control char in string
+
+		; find white space or control char in string
+
 3$:		cp (hl)		;  7	; loop to compare a to [hl]
 		cpi		; 16	;   hl++, bc--
 		jr nc,1$	;  7	;   if [hl] < a then found
@@ -2428,11 +2454,15 @@ cells		.equ twostar		; alias
 		or b			;
 		jr z,3$			; if bc <> 0 then
 		ex af,af'		;   restore a
-;		trim char from front of the string
+
+		; trim char from front of the string
+
 2$:		cpi		; 16	;   loop
 		jr nz,4$	;  7	;     while a = [hl++], --bc
 		jp pe,2$	; 10	;   until b = 0
-;		done trimming
+
+		; done trimming
+
 3$:		push hl			; save hl as 2OS
 		push bc			; save bc as TOS
 		exx			; restore bc with ip
@@ -2440,12 +2470,16 @@ cells		.equ twostar		; alias
 		JP_NEXT			; continue
 4$:		cp 0x20			;
 		jr nz,5$		; if char = 0x20 then
-;		trim white space and control char
+
+		; trim white space and control char
+
 		dec hl			;
 		cp (hl)			;
 		inc hl			;
 		jr nc,1$		;   if [hl-1] <= 0x20 then keep trimming
-;		stop trimming at mismatch
+
+		; stop trimming at mismatch
+
 5$:		inc bc			; correct bc++ for mismatch
 		dec hl			; correct hl-- for mismatch
 		jr 3$			; finalize trimming
@@ -2467,23 +2501,31 @@ cells		.equ twostar		; alias
 		or b			;
 		jr z,3$			; if bc <> 0 then
 		ex af,af'		;   restore a with char
-;		trim char from back of the string
+
+		; trim char from back of the string
+
 2$:		cpd		; 16	;   loop
 		jr nz,4$	;  7	;     while a = [hl--], --bc
 		jp pe,2$	; 10	;   until b = 0
-;		done trimming
+
+		; done trimming
+
 3$:		push bc			; save bc as TOS
 		exx			; restore bc with ip
 		pop de			; pop new TOS
 		JP_NEXT			; continue
 4$:		cp 0x20			;
 		jr nz,5$		; if char = 0x20 then
-;		trim white space and control char
+
+		; trim white space and control char
+
 		inc hl			;
 		cp (hl)			;
 		dec hl			;
 		jr nc,1$		;   if [hl+1] <= 0x20 then keep trimming
-;		stop trimming at mismatch
+
+		; stop trimming at mismatch
+
 5$:		inc bc			; correct bc++ for cpd bc-- mismatch
 		jr 3$			; finalize trimming
 
@@ -2615,7 +2657,9 @@ cursor_right:	ld a,(hl)		;
 		inc (hl)		; [x] + 1 -> [x]
 emit_exit:	pop de			; pop new TOS
 		JP_NEXT			; continue
-;		handle control chars
+
+		; handle control chars
+
 emit_check_bs:	cp 0x08			;
 		jr nz,emit_check_tab	; if BS then
 cursor_left:	dec (hl)		;   [x]--
@@ -3659,7 +3703,9 @@ edit_toxy:	call docol		; n -- x y	cursor pos n to xy
 		push bc			; save bc with ip
 		ld b,0			; 0 -> b for add hl,bc
 		ld hl,(context+3)	; CONTEXT -> hl
-;		loop over dictionary
+
+		; loop over dictionary
+
 1$:		ld a,(hl)	;  7	; loop
 		inc hl		;  6	;
 		ld h,(hl)	;  7	;
@@ -3679,13 +3725,17 @@ edit_toxy:	call docol		; n -- x y	cursor pos n to xy
 		sbc hl,de	; 15	;     test if hl = de with xt
 2$:		pop hl		; 10	;   restore hl with lfa
 		jr nz,1$	; 12	; until hl = xt matches
-;		found the matching word
+
+		; found the matching word
+
 		inc hl			;
 		inc hl			; hl + 2 - hl with nt (nfa)
 		pop bc			; restore bc with ip
 		ex de,hl		; set new TOS to hl
 		JP_NEXT			; continue
-;		not found
+
+		; not found
+
 3$:		ld a,-24		;
 		jp throw_a		; throw -24 "invalid numeric argument"
 
@@ -3714,7 +3764,9 @@ edit_toxy:	call docol		; n -- x y	cursor pos n to xy
 		pop de			; pop c-addr -> de
 		ld hl,(context+3)	; CONTEXT -> hl
 		jr 3$			; start searching
-;		loop over dictionary
+
+		; loop over dictionary
+
 1$:		pop de			; restore de with c-addr
 2$:		pop hl		; 10	; loop, restore hl with lfa
 3$:		ld a,(hl)	;  7	;
@@ -3730,12 +3782,16 @@ edit_toxy:	call docol		; n -- x y	cursor pos n to xy
 		add a		;  4	;   shift away immediate bit
 		cp c		;  4	;   test a = c word length match (both shifted)
 		jr nz,2$	; 12(95);   if lengths differ then continue searching
-;		compare string to word
+
+		; compare string to word
+
 		push de			;   save de with c-addr
 		inc hl			;   hl++ point to nfa chars
 		ld b,c			;   2 * u -> b
 		srl b			;   u -> b word length (nonzero)
-;		loop over word chars
+
+		; loop over word chars
+
 4$:		ld a,(de)	;  7	;   loop
 		cp (hl)		;  7	;     compare [de] = [hl]
 		jr z,5$		; 12/7	;     if mismatch then
@@ -3750,7 +3806,9 @@ edit_toxy:	call docol		; n -- x y	cursor pos n to xy
 5$:		inc de		;  6	;     de++ point to next char of c-addr
 		inc hl		;  6	;     hl++ point to next char of word
 		djnz 4$		; 13(51/102);until --b = 0
-;		found a matching word
+
+		; found a matching word
+
 		pop de			;   discard saved c-addr
 		ex (sp),hl		;   save hl with xt as 2OS, restore hl with lfa
 		inc hl			;
@@ -3759,7 +3817,9 @@ edit_toxy:	call docol		; n -- x y	cursor pos n to xy
 		exx			;   restore bc with ip
 		jp nz,one_next		;   set new TOS to 1 if word is immediate
 		jp mone_next		;   set new TOS to -1
-;		not found
+
+		; not found
+
 6$:		push de			; save de with c-addr as 2OS
 		exx			; restore bc with ip
 		jp zero_next		; set new TOS to 0
