@@ -17,7 +17,9 @@ I've implemented Forth850 as efficiently as possible in direct threaded code
 routines when compared to other Z80 Forth implementations.  See the
 [technical implementation sections](#Implementation) why Forth850 is fast for a
 DTC implementation.  The [Forth850 source code](forth850.asm) is included and
-extensively documented.
+extensively documented.  If you plan to use parts of Forth850 and/or the
+optimized Z80 code in a project that you plan to share or redistribute, then
+please give me credit for my work as per [BCD-3 license](license.txt).
 
 The [n-queens benchmark](https://www.hpmuseum.org/cgi-sys/cgiwrap/hpmuseum/articles.cgi?read=700)
 is solved in 0.865 seconds, the fastest Forth implementation of the benchmarks.
