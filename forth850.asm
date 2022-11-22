@@ -1306,9 +1306,12 @@ store_a_hl:	ld (hl),a		;
 .if FAST
 
 ;		new and faster Z80 method for signed 6x16->16 bit multiplication:
-;		51 cy/bit compared to Zilog's published 62 cy/bit
+;		at most 51 or 45 cy/bit compared to Zilog's published 62 cy/bit,
 ;		faster than other Z80 methods published in online resources,
-;		unless someone can point to a better method...
+;		unless someone can point me to a better method...
+;
+;		note: because of performance assymetry, <16-bit> <8-bit> *
+;		runs almost twice as fast as <8-bit> <16-bit> *
 
 		CODE *,star
 		push de			; save TOS
@@ -1325,15 +1328,14 @@ store_a_hl:	ld (hl),a		;
 2$:		sla e		;  8	;
 		rl d		;  8	;   de << 1 -> de
 		djnz 1$		; 13(51); until --b = 0
-		ld a,c			; c -> a high order byte of n1
-		ld b,8			; 8 -> b loop counter
-3$:		rra		;  4	; loop, a >> 1 -> a set cf
-		jr nc,4$	;  7	;   if cf = 1 then
-		add hl,de	; 11	;     hl + de -> hl
-4$:		sla e		;  8	;
-		rl d		;  8	;   de << 1 -> de
-		djnz 3$		; 13(51); until --b = 0
-		push de			; save de with product as TOS
+		jr 5$
+3$:		add hl,de	; 11	; loop, hl + de -> hl
+4$:		sla e		; 8	;
+		rl d		; 8	;   de << 1 -> de
+5$:		srl c		; 8	;   c >> 1 -> c set cf and z if no bits left
+		jp c,3$		; 10(45); until cf = 0 repeat with addition
+		jp nz,4$	; 10(44); until c = 0 repeat without addition
+		push hl			; save hl with product as TOS
 		exx			; restore bc with ip
 		pop de			; pop new TOS
 		JP_NEXT			; continue

@@ -2883,14 +2883,15 @@ by using tricks with CPU arithmetic and flags.
 ### Fast signed/unsigned 16x16->16 bit multiplication
 
 Entry:
-- BC: signed or unsigned multiplicand n1
-- DE: signed or unsigned multiplier n2
+- BC: signed or unsigned multiplier n1
+- DE: signed or unsigned multiplicand n2
 
 Exit:
-- DE: signed product or unsigned product n3
+- HL: signed product or unsigned product n3
 
 Perfomance:
-max 51 cycles x 16 iterations = 816 cycles, excluding entry/exit overhead
+max 51 cycles x 16 iterations = 816 cycles or
+max 51 cycles x 8 iterations + 45 x 8 = 768 cycles, excluding entry/exit overhead
 
     mult1616:       ld hl,0                 ; 0 -> hl
                     ld a,c                  ; c -> a low order byte of n1
@@ -2910,6 +2911,33 @@ max 51 cycles x 16 iterations = 816 cycles, excluding entry/exit overhead
     4$:             sla e           ;  8    ;
                     rl d            ;  8    ;   de << 1 -> de
                     djnz 3$         ; 13(51); until --b = 0
+
+We can make an additional speed improvement.  To calculate the high order byte
+we do not need to iterate over all 8 bits of the high order multiplier stored
+in register c, but only over the nonzero bits.  There are two advantages.
+Firstly, we can reduce the max loop iteration cycle time to 45.  Secondly, the
+loop only runs until the last bit of register c is shifted out.  If register c
+is zero, the loop does not execute thereby saving hundreds of cycles.  We also
+use jp instead of jr to improve and balance the cycle time per bit:
+
+
+    mult1616:       ld hl,0                 ; 0 -> hl
+                    ld a,c                  ; c -> a low order byte of n1
+                    ld c,b                  ; b -> c save high order byte of n1
+                    ld b,8                  ; 8 -> b loop counter
+    1$:             rra             ;  4    ; loop, a >> 1 -> a set cf
+                    jr nc,2$        ;  7    ;   if cf = 1 then
+                    add hl,de       ; 11    ;     hl + de -> hl
+    2$:             sla e           ;  8    ;
+                    rl d            ;  8    ;   de << 1 -> de
+                    djnz 1$         ; 13(51); until --b = 0
+                    jr 5$                   ; jump to shift c
+    3$:             add hl,de       ; 11    ; loop, hl + de -> hl
+    4$:             sla e           ; 8     ;
+                    rl d            ; 8     ;   de << 1 -> de
+    5$:             srl c           ; 8     ;   c >> 1 -> c set cf and z if no bits left
+                    jp c,3$         ; 10(45); until cf = 0 repeat with addition
+                    jp nz,4$        ; 10(44); until c = 0 repeat without addition
 
 Note: unrolling the loops improves speed at the cost of a significant code size
 increase, which is undesirable for small memory devices.

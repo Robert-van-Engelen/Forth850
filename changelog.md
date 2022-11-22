@@ -11,4 +11,5 @@
 - nov  7, 2022: Forth850 v0.8 alpha update
 - nov 10, 2022: Forth850 v0.9 beta fully tested
 - nov 11, 2022: Forth850 v0.9 fixed `<ERR-13>` regression issue and tested
-- nov 15, 2022: Forth850 v0.9 fixed `D-` typo
+- nov 15, 2022: Forth850 v0.9 fixed `D-` typo in code
+- nov 22, 2022: Forth850 v0.9 fixed `*` typo in code (hl not de register)
