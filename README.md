@@ -2914,13 +2914,12 @@ max 51 cycles x 8 iterations + 45 x 8 = 768 cycles, excluding entry/exit overhea
 
 We can make an additional speed improvement.  To calculate the high order byte
 we do not need to iterate over all 8 bits of the high order multiplier stored
-in register c, but only over the nonzero bits.  There are two advantages.
-Firstly, we can reduce the max loop iteration cycle time to 45.  Secondly, the
-second loop only runs until the last bit of register c is shifted out.  If
-register c is zero, the second loop does not execute thereby saving hundreds of
-cycles.  We also use jp instead of jr to improve and balance the cycle time per
-bit:
-
+in register c, but only over the nonzero bits.  We also can ignore the lower order
+result stored in register e.  This reduces the max loop iteration cycle time to
+32 and 33 per bit.  Furthermore, the second loop only runs until the last bit
+of register c is shifted out.  If register c is zero, the second loop does not
+execute thereby saving hundreds of cycles.  We also use jp instead of jr to
+improve and balance the cycle time per bit:
 
     mult1616:       ld hl,0                 ; 0 -> hl
                     ld a,c                  ; c -> a low order byte of n1
@@ -2932,13 +2931,13 @@ bit:
     2$:             sla e           ;  8    ;
                     rl d            ;  8    ;   de << 1 -> de
                     djnz 1$         ; 13(51); until --b = 0
-                    jr 5$                   ; jump to shift c
-    3$:             add hl,de       ; 11    ; loop, hl + de -> hl
-    4$:             sla e           ; 8     ;
-                    rl d            ; 8     ;   de << 1 -> de
-    5$:             srl c           ; 8     ;   c >> 1 -> c set cf and z if no bits left
-                    jp c,3$         ; 10(45); until cf = 0 repeat with addition
-                    jp nz,4$        ; 10(44); until c = 0 repeat without addition
+                    ld a,h                  ; h -> a do high order, low order is done
+                    jr 5$                   ; jump to shift c and loop
+    3$:             add e           ;  4    ; loop, a + e -> a
+    4$:             sla e           ;  8    ;   e << 1 -> e
+    5$:             srl c           ;  8    ;   c >> 1 -> c set cf and z if no bits left
+                    jr c,3$         ; 12/7(32); until cf = 0 repeat with addition
+                    jp nz,4$        ;   10(33); until c = 0 repeat without addition
 
 Note: unrolling the loops improves speed at the cost of a significant code size
 increase, which is undesirable for small memory devices.
