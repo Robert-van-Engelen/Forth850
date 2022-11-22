@@ -2916,9 +2916,10 @@ We can make an additional speed improvement.  To calculate the high order byte
 we do not need to iterate over all 8 bits of the high order multiplier stored
 in register c, but only over the nonzero bits.  There are two advantages.
 Firstly, we can reduce the max loop iteration cycle time to 45.  Secondly, the
-loop only runs until the last bit of register c is shifted out.  If register c
-is zero, the loop does not execute thereby saving hundreds of cycles.  We also
-use jp instead of jr to improve and balance the cycle time per bit:
+second loop only runs until the last bit of register c is shifted out.  If
+register c is zero, the second loop does not execute thereby saving hundreds of
+cycles.  We also use jp instead of jr to improve and balance the cycle time per
+bit:
 
 
     mult1616:       ld hl,0                 ; 0 -> hl
