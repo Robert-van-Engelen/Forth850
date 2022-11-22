@@ -2912,14 +2912,15 @@ max 51 cycles x 8 iterations + 45 x 8 = 768 cycles, excluding entry/exit overhea
                     rl d            ;  8    ;   de << 1 -> de
                     djnz 3$         ; 13(51); until --b = 0
 
-We can make an additional speed improvement.  To calculate the high order byte
-we do not need to iterate over all 8 bits of the high order multiplier stored
-in register c, but only over the nonzero bits.  We also can ignore the lower order
-result stored in register e.  This reduces the max loop iteration cycle time to
-32 and 33 per bit.  Furthermore, the second loop only runs until the last bit
-of register c is shifted out.  If register c is zero, the second loop does not
-execute thereby saving hundreds of cycles.  We also use jp instead of jr to
-improve and balance the cycle time per bit:
+We can make an additional speed improvement, which only costs us one more
+instruction byte.  To calculate the high order byte we do not need to iterate
+over all 8 bits of the high order multiplier stored in register c, but only
+over the nonzero bits.  We also can ignore the lower order result stored in
+register e.  This reduces the max loop iteration cycle time to 32 and 33 per
+bit.  Furthermore, the second loop only runs until the last bit of register c
+is shifted out.  If register c is zero, the second loop does not execute
+thereby saving hundreds of cycles.  We also use jp instead of jr to improve and
+balance the cycle time per bit:
 
     mult1616:       ld hl,0                 ; 0 -> hl
                     ld a,c                  ; c -> a low order byte of n1
@@ -2933,8 +2934,8 @@ improve and balance the cycle time per bit:
                     djnz 1$         ; 13(51); until --b = 0
                     ld a,h                  ; h -> a do high order, low order is done
                     jr 5$                   ; jump to shift c and loop
-    3$:             add e           ;  4    ; loop, a + e -> a
-    4$:             sla e           ;  8    ;   e << 1 -> e
+    3$:             add d           ;  4    ; loop, a + d -> d
+    4$:             sla d           ;  8    ;   d << 1 -> d
     5$:             srl c           ;  8    ;   c >> 1 -> c set cf and z if no bits left
                     jr c,3$         ; 12/7(32); until cf = 0 repeat with addition
                     jp nz,4$        ;   10(33); until c = 0 repeat without addition
@@ -2988,9 +2989,6 @@ max 98 cycles x 32 iterations = 3136 cycles, excluding entry/exit overhead
 
     mult3232:       ld hl,0                 ; 0 -> hl high order d3, de with d2 high order
                     exx                     ; save bc with ip
-                    pop de                  ; d2 -> de' low order d2
-                    pop hl                  ; d1 -> hl' high order d1
-                    pop bc                  ; d1 -> bc' low order d1
                     ld a,h                  ;
                     push af                 ; save d1 high order byte 3
                     ld a,l                  ;
@@ -3018,6 +3016,88 @@ max 98 cycles x 32 iterations = 3136 cycles, excluding entry/exit overhead
                     djnz 2$         ; 13(98);   until --b = 0
                     dec c                   ;
                     jr nz,1$                ; until --c = 0
+
+The same tricks as the 16x16->16 multiplication method can be used to reduce
+the cycle time, but at a cost of increased code size.  We also assign different
+registers to the low and high order parts:
+
+Entry:
+- BC': low order signed or unsigned multiplicand d1
+- DE: high order signed or unsigned multiplicand d1
+- HL': low order signed or unsigned multiplier d2
+- DE': high order signed or unsigned multiplier d2
+
+Exit:
+- HL: low order signed product or unsigned product d3
+- HL': high order signed product or unsigned product d3
+
+Perfomance:
+max 8 x (98+87+59+33) = 2216 cycles, excluding entry/exit overhead
+
+    mult3232:       ld hl,0                 ; 0 -> hl low order d3, de with d2 low order
+                    exx                     ; save bc with ip
+                    ld a,h                  ;
+                    push af                 ; save d1 high order byte 3
+                    ld a,l                  ;
+                    push af                 ; save d1 high order byte 2
+                    ld a,b                  ;
+                    push af                 ; save d1 low order byte 1
+                    ld a,c                  ;
+                    ld hl,0                 ; 0 -> hl' high order d3
+                    ld b,8                  ; 8 -> b inner loop counter
+    1$:             rra             ;  4    ; loop, a >> 1 -> a set cf
+                    jr nc,2$        ;  7    ;   if cf = 1 then
+                    exx             ;  4    ;
+                    add hl,de       ; 11    ;     hl + de -> hl add low order
+                    exx             ;  4    ;
+                    adc hl,de       ; 15    ;     hl' + de' + cf -> hl add high order
+    2$:             exx             ;  4    ;
+                    sla e           ;  8    ;
+                    rl d            ;  8    ;   de << 1 -> de shift low order
+                    exx             ;  4    ;
+                    rl e            ;  8    ;
+                    rl d            ;  8    ;   de' << 1 + cf -> de' shift high order
+                    djnz 1$         ; 13(98); until --b = 0
+                    pop af                  ;
+                    ld c,a                  ; d1 -> c low order byte1
+                    exx                     ;
+                    ld a,h                  ; h -> a low order d3
+                    exx                     ;
+                    ld b,8                  ; 8 -> b inner loop counter
+    3$:             rr c            ;  8    ; loop, c >> 1 -> c set cf
+                    jr nc,4$        ;  7    ;   if cf = 1 then
+                    exx             ;  4    ;
+                    add d           ;  4    ;     a + d -> a add low order
+                    exx             ;  4    ;
+                    adc hl,de       ; 15    ;     hl' + de' + cf -> hl add high order
+    4$:             exx             ;  4    ;
+                    sla d           ;  8    ;   d << 1 -> d shift low order
+                    exx             ;  4    ;
+                    rl e            ;  8    ;
+                    rl d            ;  8    ;   de' << 1 + cf -> de' shift high order
+                    djnz 3$         ; 13(87); until --b = 0
+                    exx                     ;
+                    ld h,a                  ; a -> h low order d3
+                    exx                     ;
+                    pop af                  ; d1 -> a high order byte 2
+                    ld b,8                  ; 8 -> b inner loop counter
+    5$:             rra             ;  8    ; loop, c >> 1 -> c set cf
+                    jr nc,6$        ;  7    ;   if cf = 1 then
+                    add hl,de       ; 15    ;     hl' + de' + cf -> hl add high order
+    6$:             rl e            ;  8    ;
+                    rl d            ;  8    ;   de' << 1 + cf -> de' shift high order
+                    djnz 5$         ; 13(59); until --b = 0
+                    pop af                  ;
+                    ld c,a                  ; d1 -> c high order byte 3
+                    ld a,h                  ; h -> a high order
+                    jr 9$                   ; jump to shift c and loop
+    7$:             add d           ;  4    ; loop, a + d -> a
+    8$:             sla d           ;  8    ;   d << 1 -> d
+    9$:             srl c           ;  8    ;   c >> 1 -> c set cf and z if no bits left
+                    jr c,7$         ; 12/7(32); until cf = 0 repeat with addition
+                    jp nz,8$        ;   10(33); until c = 0 repeat without addition
+                    ld h,a                  ; a -> h high order
+                    exx                     ;
 
 Note: unrolling the inner loop improves speed at the cost of a significant code
 size increase, which is undesirable for small memory devices.
