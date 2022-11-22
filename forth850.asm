@@ -1330,8 +1330,8 @@ store_a_hl:	ld (hl),a		;
 		djnz 1$		; 13(51); until --b = 0
 		ld a,h			; h -> a do high order, low order is done
 		jr 5$			; jump to shift c and loop
-3$:		add e		;  4	; loop, a + e -> a
-4$:		sla e		;  8	;   e << 1 -> e
+3$:		add d		;  4	; loop, a + d -> d
+4$:		sla d		;  8	;   d << 1 -> d
 5$:		srl c		;  8	;   c >> 1 -> c set cf and z if no bits left
 		jr c,3$		; 12/7(32); until cf = 0 repeat with addition
 		jp nz,4$	;   10(33); until c = 0 repeat without addition
