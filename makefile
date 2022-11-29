@@ -30,7 +30,7 @@ $(BIN): $(HEX)
 $(HEX): $(REL)
 	$(LNK) $(LNKFLAGS) $(REL)
 
-%.rel: %.asm
+%.rel: %.asm math.asm
 	$(ASM) $(ASMFLAGS) $<
 
 clean:

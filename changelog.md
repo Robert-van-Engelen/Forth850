@@ -13,3 +13,4 @@
 - nov 11, 2022: Forth850 v0.9 fixed `<ERR-13>` regression issue and tested
 - nov 15, 2022: Forth850 v0.9 fixed `D-` typo in code
 - nov 22, 2022: Forth850 v0.9 fixed `*` typo in code (hl not de register)
+- nov 29, 2022: Forth850 v0.9 add new Z80 IEEE 754 floating point routines

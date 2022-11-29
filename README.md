@@ -80,9 +80,9 @@ space (but there won't be space left on the machine for files, BASIC or TEXT.)
 
 ## Nice to have ("full version" work in progress)
 
-- single precision floating point words
 - improved command line editor, like Forth500
 - serial IO to communicate via RS232 and load Forth source via serial
+- DONE: single precision floating point words
 - DONE: ability to [load Forth source code from the TEXT editor](examples/TEXT.FTH)
 - DONE: sound with [BEEP](examples/ASMDEMO1.FTH)
 
@@ -625,11 +625,11 @@ true if d < 0
 
 ### S>D
 _n -- d_
-widen n to a double
+widen single to double
 
 ### D>S
 _d -- n_
-narrow d to a single;
+narrow double to single;
 may throw -11 "result out of range" valid range is -32768 to 65535
 
 ### MAX
@@ -870,16 +870,16 @@ set column x to u1 (0 to 23) and row y to u2 (0 to 5)
 _char --_
 emit char;
 supports the following control codes:
- 8 (BS)
- 9 (TAB)
-10 (LF)
-11 (VT scroll)
-12 (FF clear)
-13 (CR)
-28 (right)
-29 (left)
-30 (up)
-31 (down)
+ 8 (BS),
+ 9 (TAB),
+10 (LF),
+11 (VT scroll),
+12 (FF clear),
+13 (CR),
+28 (right),
+29 (left),
+30 (up),
+31 (down),
 
 ### TYPE
 _c-addr u --_
@@ -995,7 +995,7 @@ output signed double d right aligned in field of +n chars wide
 
 ### D.
 _d --_
-output signed double d with space
+output signed double d with a trailing space
 
     : D. 0 D.R SPACE ;
 
@@ -1007,7 +1007,7 @@ output unsigned u right aligned in field of +n chars wide
 
 ### U.
 _u --_
-output unsigned u with space
+output unsigned u with a trailing space
 
     : U. 0 D. ;
 
@@ -1019,7 +1019,7 @@ output signed n right aligned in field of +n chars wide
 
 ### .
 _n --_
-output signed n with space
+output signed n with a trailing space
 
     : . S>D D. ;
 
@@ -1062,23 +1062,23 @@ check key, where 0x00 = no key and 0x52 = multiple keys
 _-- char_
 wait and read key;
 leaves ASCII char or special key code:
-ON      =$05
-BS      =$08
-DEL     =$09
-CA      =$0b
-CLS     =$0c
-ENTER   =$0d
-DIGIT   =$0e
-F-E     =$0f
-INS     =$12
-ANS     =$15
-CONST   =$17
-RCM     =$19
-M+      =$1a
-M-      =$1b
-right   =$1c
-left    =$1d
-up      =$1e
+ON      =$05,
+BS      =$08,
+DEL     =$09,
+CA      =$0b,
+CLS     =$0c,
+ENTER   =$0d,
+DIGIT   =$0e,
+F-E     =$0f,
+INS     =$12,
+ANS     =$15,
+CONST   =$17,
+RCM     =$19,
+M+      =$1a,
+M-      =$1b,
+right   =$1c,
+left    =$1d,
+up      =$1e,
 down    =$1f;
 calc keys and BASIC keys produce BASIC tokens as key code $fe:
 SIN     =$fe register B = $95 BASIC token for SIN (ignored)
@@ -1233,7 +1233,7 @@ true if >DOUBLE or NUMBER produced a double
 ### >DOUBLE
 _c-addr u -- d true | false_
 convert string to signed double;
-leaves true if string is converted;
+leaves the double and true if string is converted;
 leaves false if string is unconvertable
 
 ### L>NAME
@@ -1966,6 +1966,9 @@ code | error
 -24  | invalid numeric argument
 -28  | user interrupt (BREAK was pressed)
 -32  | invalid name argument (invalid TO name)
+-42  | floating-point divide by zero
+-43  | floating-point result out of range
+-46  | floating-point invalid argument
 -56  | QUIT
 -256 | execution of an uninitialized deferred word
 
@@ -2301,6 +2304,117 @@ caveat: .( and ( in TEXT cannot span more than one line, they end at EOL
       REPEAT
       DROP ;
 
+
+## Floating point math words included with the full version
+
+Floating point values are doubles on the stack.  Double words, such as 2DUP,
+can be used to manipulate floats.  Floats can be stored in 2CONSTANT, 2VARIABLE
+and 2VALUE assignments with TO (but not with +TO.)
+
+Beware that HEX prevents inputting floats and garbles the output of floats.
+
+### F+
+_r1 r2 -- r3_
+sum r1+r2;
+may throw -43 "floating-point result out of range"
+
+### F-
+_r1 r2 -- r3_
+difference r1-r2;
+may throw -43 "floating-point result out of range"
+
+### F*
+_r1 r2 -- r3_
+product r1*r2;
+may throw -43 "floating-point result out of range"
+
+### F/
+_r1 r2 -- r3_
+quotient r1/r2
+may throw -42 "floating-point divide by zero";
+may throw -43 "floating-point result out of range"
+
+### FNEGATE
+_r1 -- r2_
+negate float
+
+### FABS
+_r1 -- r2_
+absolute value |r1|
+
+    : FABS 2DUP F0< IF FNEGATE THEN ;
+
+### F=
+_r1 r2 -- flag_
+true if r1 = r2
+
+    : F= D= ; ( IEEE 754 standard )
+
+### F<
+_r1 r2 -- flag_
+true if r1 < r2
+
+    : F< D< ; ( IEEE 754 standard )
+
+### F0=
+_r -- flag_
+true if r = 0.0e0
+
+    : F0= D0= ; ( IEEE 754 standard )
+
+### F0<
+_r -- flag_
+true if r < 0.0e0
+
+    : F0< D0< ; ( IEEE 754 standard )
+
+### D>F
+_d -- r_
+widen signed double to float
+
+### F>D
+_r -- d_
+narrow float to a signed double;
+may throw -11 "result out of range"
+
+### >FLOAT
+_c-addr u -- r true | false_
+convert string to float;
+leaves the float and true if string is converted;
+leaves false if string is unconvertable
+
+### REPRESENT
+_r c-addr u -- n flag true_
+convert float to string;
+store decimal digits of the float in the non-empty buffer c-addr u;
+leaves decimal exponent n+1 and flag = true if negative
+
+### PRECISION
+_7 VALUE PRECISION_
+floating point output precision, the number of decimal digits displayed
+
+### F.
+_r --_
+output float with a trailing space;
+output fixed notation when 1e-1 <= |r| < 1e+7, otherwise output scientific notation
+
+    : F.
+      HERE PRECISION REPRESENT DROP IF
+        '- EMIT
+      THEN
+      DUP 0 PRECISION 1+ WITHIN IF
+        HERE OVER TYPE
+        '. EMIT
+        HERE OVER +
+        PRECISION ROT - '0 -TRIM TYPE SPACE
+        EXIT
+      THEN
+      HERE C@ EMIT
+      '. HERE C!
+      HERE PRECISION '0 -TRIM TYPE
+      'E EMIT
+      1- . ;
+
 ## Dictionary structure
 
 The Forth850 dictionary is organized as follows:
@@ -2378,131 +2492,11 @@ should never be revealed.
 ## Implementation
 
 The following sections explain parts of the technical implementation of
-Forth850.
+Forth850.  I will explain the new Forth system routines, the new Z80 math
+routines and the string routines.
 
 Forth850 is built with the [asz80](https://shop-pdp.net/ashtml/asz80.htm)
 assembler and aslink linker.
-
-## Z80 string routines
-
-I've written the following Z80 string routines.  My objective was to make them
-as efficient as possible, such as by making the obvious choice to use the `cpi`
-and `cpir` Z80 instructions to minimize cycle count.  The second objective was
-to keep the code size small by using tricks with CPU arithmetic and flags.
-
-### Fast string comparison
-
-Entry:
-- IX: address of the first string c-addr1
-- HL: size of the first string u1
-- DE: address of the second string c-addr2
-- BC: size of the second string u2
-
-Exit:
-- A: -1 (less), 0 (equal), 1 (greater)
-- F: zero flag set when equal, sign flag set when less
-
-Performance:
-46 cycles per character comparison when characters match
-
-    compare:        push ix                 ; save c-addr1
-                    push hl                 ; save u1
-                    xor a                   ; 0 -> a flags u1 = u2, 0 -> cf
-                    sbc hl,bc               ;
-                    jr z,1$                 ; if u1 <> u2 then
-                    inc a                   ;   1 -> a flags u1 > u2
-                    jr nc,1$                ;   if u1 < u2 then
-                    pop bc                  ;     pop u1 -> bc
-                    push bc                 ;     rebalance stack
-                    ld a,-1                 ;   -1 -> a flags u1 < u2
-    1$:             pop hl                  ; pop to discard u1
-                    pop hl                  ; pop c-addr1 -> hl
-                    ex af,af'               ; save a with -1|0|1 flag
-                    ld a,c                  ;
-                    or b                    ;
-                    jr z,3$                 ; if bc <> 0 then
-    ;               compare chars
-    2$:             ld a,(de)       ;  7    ;   loop
-                    cpi             ; 16    ;     compare [hl++] to [de], --bc
-                    jr nz,4$        ;  7    ;     while characters [hl] and [de] are equal
-                    inc de          ;  6    ;     de++
-                    jp pe,2$        ; 10(46);   until bc = 0
-    ;               chars match, check lengths
-    3$:             ex af,af'               ; restore a with -1|0|1 flag
-                    ret                     ;
-    ;               strings differ
-    4$:             dec hl                  ; hl-- to correct cpi overshoot
-                    cp (hl)                 ; test a<[hl]
-                    ccf                     ; complement cf, cf = 1 if [hl]<a
-                    sbc a                   ; a = -1 if cf = 1 else 0
-                    add a                   ; a = -2 if cf = 1 else 0
-                    inc a                   ; a = -1 if cf = 1 else 1
-                    ret                     ; done
-
-### Fast string search
-
-Naive string search, i.e. not Knuth-Morris-Pratt which is faster but would
-require a table and more code.
-
-Entry:
-- HL: address of the string searched c-addr1
-- IX: size of the string searched u1
-- DE: address of the string to search c-addr2
-- BC: size of the string to search u2
-
-Exit:
--  F: carry set when no match found
-- HL: address of the string position found c-addr3
-- BC: size of the remaining characters after the match
-
-Performance:
-21 cycles per character to search the first or next character match and 46
-cycles per character comparison when characters match
-
-    search:         or a                    ; 0 -> cf
-                    sbc ix,bc               ; u1 - u2 -> ix
-                    ret c                   ; if u2>u1 then impossible search, cf = 1
-                    ld a,c                  ;
-                    or b                    ;
-                    ret z                   ; if u2 = 0 then done (found), cf = 0
-                    push ix                 ;
-                    push bc                 ;
-                    pop ix                  ; u2 -> ix
-                    pop bc                  ; u1 - u2 -> bc
-                    inc bc                  ; u1 - u2 + 1 -> bc correct for cpir
-                    push hl                 ; save c-addr1 on the stack
-    ;               find char match
-    1$:             push de                 ; loop, save de with c-addr2
-                    ld a,(de)               ;   [de] -> a
-                    cpir            ; 21/16 ;   repeat until a = [hl++] or --bc = 0
-                    jr nz,4$                ;   if no match then not found
-                    pop de                  ;   restore de with c-addr2
-                    push bc                 ;
-                    push de                 ;
-                    push hl                 ;   save bc,de,hl
-                    push ix                 ;
-                    pop bc                  ;   u2 -> bc
-    ;               compare substrings
-                    dec bc                  ;   u2 - 1 -> bc since u2 > 0
-                    ld a,c                  ;
-                    or b                    ;
-                    jr z,3$                 ;   if bc<> 0 then
-                    inc de                  ;     de++ to start matching at c-addr2+1
-    2$:             ld a,(de)       ;  7    ;     loop
-                    cpi             ; 16    ;       compare [hl++] to [de], --bc
-                    jr nz,3$        ;  7    ;       while characters [hl] and [de] are equal
-                    inc de          ;  6    ;       de++
-                    jp pe,2$        ; 10(46);     until bc = 0
-    3$:             pop hl                  ;
-                    pop de                  ;
-                    pop bc                  ;   restore bc,de,hl
-                    jr nz,1$                ; repeat
-    ;               substrings match
-                    dec hl                  ; hl-- to correct cpir overshoot
-                    ret                     ; done, cf = 0
-    ;               not found
-    4$:             scf                     ; 1 -> cf
-                    ret                     ; done, cf = 1
 
 ## Z80 Forth system routines
 
@@ -3042,9 +3036,9 @@ max 8 x (98+87+59+33) = 2216 cycles, excluding entry/exit overhead
                     push af                 ; save d1 high order byte 2
                     ld a,b                  ;
                     push af                 ; save d1 low order byte 1
-                    ld a,c                  ;
+                    ld a,c                  ; d1 -> a low order byte 0
                     ld hl,0                 ; 0 -> hl' high order d3
-                    ld b,8                  ; 8 -> b inner loop counter
+                    ld b,8                  ; 8 -> b loop counter
     1$:             rra             ;  4    ; loop, a >> 1 -> a set cf
                     jr nc,2$        ;  7    ;   if cf = 1 then
                     exx             ;  4    ;
@@ -3063,7 +3057,7 @@ max 8 x (98+87+59+33) = 2216 cycles, excluding entry/exit overhead
                     exx                     ;
                     ld a,h                  ; h -> a low order d3
                     exx                     ;
-                    ld b,8                  ; 8 -> b inner loop counter
+                    ld b,8                  ; 8 -> b loop counter
     3$:             rr c            ;  8    ; loop, c >> 1 -> c set cf
                     jr nc,4$        ;  7    ;   if cf = 1 then
                     exx             ;  4    ;
@@ -3080,7 +3074,7 @@ max 8 x (98+87+59+33) = 2216 cycles, excluding entry/exit overhead
                     ld h,a                  ; a -> h low order d3
                     exx                     ;
                     pop af                  ; d1 -> a high order byte 2
-                    ld b,8                  ; 8 -> b inner loop counter
+                    ld b,8                  ; 8 -> b loop counter
     5$:             rra             ;  8    ; loop, c >> 1 -> c set cf
                     jr nc,6$        ;  7    ;   if cf = 1 then
                     add hl,de       ; 15    ;     hl' + de' + cf -> hl add high order
@@ -3177,6 +3171,127 @@ entry/exit overhead:
 
 Note: unrolling the loop improves speed at the cost of a significant code size
 increase, which is undesirable for small memory devices.
+
+## Z80 string routines
+
+I've written the following Z80 string routines.  My objective was to make them
+as efficient as possible, such as by making the obvious choice to use the `cpi`
+and `cpir` Z80 instructions to minimize cycle count.  The second objective was
+to keep the code size small by using tricks with CPU arithmetic and flags.
+
+### Fast string comparison
+
+Entry:
+- IX: address of the first string c-addr1
+- HL: size of the first string u1
+- DE: address of the second string c-addr2
+- BC: size of the second string u2
+
+Exit:
+- A: -1 (less), 0 (equal), 1 (greater)
+- F: zero flag set when equal, sign flag set when less
+
+Performance:
+46 cycles per character comparison when characters match
+
+    compare:        push ix                 ; save c-addr1
+                    push hl                 ; save u1
+                    xor a                   ; 0 -> a flags u1 = u2, 0 -> cf
+                    sbc hl,bc               ;
+                    jr z,1$                 ; if u1 <> u2 then
+                    inc a                   ;   1 -> a flags u1 > u2
+                    jr nc,1$                ;   if u1 < u2 then
+                    pop bc                  ;     pop u1 -> bc
+                    push bc                 ;     rebalance stack
+                    ld a,-1                 ;   -1 -> a flags u1 < u2
+    1$:             pop hl                  ; pop to discard u1
+                    pop hl                  ; pop c-addr1 -> hl
+                    ex af,af'               ; save a with -1|0|1 flag
+                    ld a,c                  ;
+                    or b                    ;
+                    jr z,3$                 ; if bc <> 0 then
+    ;               compare chars
+    2$:             ld a,(de)       ;  7    ;   loop
+                    cpi             ; 16    ;     compare [hl++] to [de], --bc
+                    jr nz,4$        ;  7    ;     while characters [hl] and [de] are equal
+                    inc de          ;  6    ;     de++
+                    jp pe,2$        ; 10(46);   until bc = 0
+    ;               chars match, check lengths
+    3$:             ex af,af'               ; restore a with -1|0|1 flag
+                    ret                     ;
+    ;               strings differ
+    4$:             dec hl                  ; hl-- to correct cpi overshoot
+                    cp (hl)                 ; test a<[hl]
+                    ccf                     ; complement cf, cf = 1 if [hl]<a
+                    sbc a                   ; a = -1 if cf = 1 else 0
+                    add a                   ; a = -2 if cf = 1 else 0
+                    inc a                   ; a = -1 if cf = 1 else 1
+                    ret                     ; done
+
+### Fast string search
+
+Naive string search, i.e. not Knuth-Morris-Pratt which is faster but would
+require a table and more code.
+
+Entry:
+- HL: address of the string searched c-addr1
+- IX: size of the string searched u1
+- DE: address of the string to search c-addr2
+- BC: size of the string to search u2
+
+Exit:
+-  F: carry set when no match found
+- HL: address of the string position found c-addr3
+- BC: size of the remaining characters after the match
+
+Performance:
+21 cycles per character to search the first or next character match and 46
+cycles per character comparison when characters match
+
+    search:         or a                    ; 0 -> cf
+                    sbc ix,bc               ; u1 - u2 -> ix
+                    ret c                   ; if u2>u1 then impossible search, cf = 1
+                    ld a,c                  ;
+                    or b                    ;
+                    ret z                   ; if u2 = 0 then done (found), cf = 0
+                    push ix                 ;
+                    push bc                 ;
+                    pop ix                  ; u2 -> ix
+                    pop bc                  ; u1 - u2 -> bc
+                    inc bc                  ; u1 - u2 + 1 -> bc correct for cpir
+                    push hl                 ; save c-addr1 on the stack
+    ;               find char match
+    1$:             push de                 ; loop, save de with c-addr2
+                    ld a,(de)               ;   [de] -> a
+                    cpir            ; 21/16 ;   repeat until a = [hl++] or --bc = 0
+                    jr nz,4$                ;   if no match then not found
+                    pop de                  ;   restore de with c-addr2
+                    push bc                 ;
+                    push de                 ;
+                    push hl                 ;   save bc,de,hl
+                    push ix                 ;
+                    pop bc                  ;   u2 -> bc
+    ;               compare substrings
+                    dec bc                  ;   u2 - 1 -> bc since u2 > 0
+                    ld a,c                  ;
+                    or b                    ;
+                    jr z,3$                 ;   if bc<> 0 then
+                    inc de                  ;     de++ to start matching at c-addr2+1
+    2$:             ld a,(de)       ;  7    ;     loop
+                    cpi             ; 16    ;       compare [hl++] to [de], --bc
+                    jr nz,3$        ;  7    ;       while characters [hl] and [de] are equal
+                    inc de          ;  6    ;       de++
+                    jp pe,2$        ; 10(46);     until bc = 0
+    3$:             pop hl                  ;
+                    pop de                  ;
+                    pop bc                  ;   restore bc,de,hl
+                    jr nz,1$                ; repeat
+    ;               substrings match
+                    dec hl                  ; hl-- to correct cpir overshoot
+                    ret                     ; done, cf = 0
+    ;               not found
+    4$:             scf                     ; 1 -> cf
+                    ret                     ; done, cf = 1
 
 ## Sharp PC-G850(V)(S)
 

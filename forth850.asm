@@ -74,6 +74,7 @@
 
 FAST = 1	; fast (1) or compact (0)
 FULL = 0	; include additional words
+MATH = 0	; include floating point math words
 TEST = 0	; include tests.asm
 
 ;-------------------------------------------------------------------------------
@@ -1764,7 +1765,7 @@ true_if_c_next:	sbc a			; -cf -> a
 		jr true_if_c_next	; set new TOS to TRUE if cf = 1 else FALSE
 
 ; S>D		n -- d
-;		widen n to a double
+;		widen single to double
 
 		CODE S>D,stod
 		push de			; save TOS
@@ -1772,7 +1773,7 @@ true_if_c_next:	sbc a			; -cf -> a
 		jr true_if_c_next	; set new TOS to -1 if cf = 1 else 0
 
 ; D>S		d -- n
-;		narrow d to a single;
+;		narrow double to single;
 ;		may throw -11 "result out of range" valid range is -32768 to 65535
 
 		CODE D>S,dtos
@@ -2132,6 +2133,274 @@ true_if_c_next:	sbc a			; -cf -> a
 
 cellplus	.equ twoplus		; alias
 cells		.equ twostar		; alias
+
+.endif
+
+;-------------------------------------------------------------------------------
+;
+;		FLOATING POINT MATH
+;
+;-------------------------------------------------------------------------------
+
+.if MATH
+
+.include "math.asm"
+
+		; floating point dyadic operation driver
+		; may throw -43 "floating-point result out of range"
+
+fopix:		pop hl			; pop hl with 2OS
+		exx			;
+		pop bc			; pop bc' with 3OS
+		pop de			; pop de' with 4OS
+		exx			;
+		push bc			; save bc with ip
+		ld b,d			;
+		ld c,e			; de -> bc
+		ex de,hl		; hl -> de
+		call jpix		; bcde (op) bcde' -> bcde
+		ld a,-43		;
+		jp c,throw_a		; if error then throw -43
+		ex de,hl		; de -> hl
+		ld d,b			;
+		ld e,c			; set bc -> de as new TOS
+		pop bc			; rewstore bc with ip
+		push hl			; save hl as new 2OS
+		JP_NEXT			; continue
+jpix:		jp (ix)			;
+
+;= F+		r1 r2 -- r3
+;		sum r1+r2;
+;		may throw -43 "floating-point result out of range"
+
+		CODE F+,fplus
+		ld ix,fadd		; fadd execution vec -> ix
+		jr fopix		;
+
+;= F-		r1 r2 -- r3
+;		difference r1-r2;
+;		may throw -43 "floating-point result out of range"
+
+		CODE F-,fminus
+		ld ix,fsuby		; fsuby execution vec -> ix
+		jr fopix		;
+
+;= F*		r1 r2 -- r3
+;		product r1*r2;
+;		may throw -43 "floating-point result out of range"
+
+		CODE F*,fstar
+		ld ix,fmul		; fmul execution vec -> ix
+		jr fopix		;
+
+;= F/		r1 r2 -- r3
+;		quotient r1/r2
+;		may throw -42 "floating-point divide by zero";
+;		may throw -43 "floating-point result out of range"
+
+		CODE F/,fslash
+		ld a,d			;
+		or e			; test TOS de with high order float word
+		ld a,-42		;
+		jp z,throw_a		; if TOS = 0 then throw -42
+		ld ix,fdivy		; fdivy execution vec -> ix
+		jr fopix		;
+
+;= FNEGATE	r1 -- r2
+;		negate float
+
+		CODE FNEGATE,fnegate
+		ld a,d			;
+		xor 0x80		; flip the sign bit 7
+		ld d,a			;
+		JP_NEXT			;
+
+;= FABS		r1 -- r2
+;		absolute value |r1|
+;
+;    : FABS 2DUP F0< IF FNEGATE THEN ;
+
+		COLON FABS,fabs
+		.dw twodup,fzeroless,doif,1$
+		.dw   fnegate
+1$:		.dw doret
+
+;= F=		r1 r2 -- flag
+;		true if r1 = r2
+;
+;    : F= D= ; ( IEEE 754 standard )
+
+		CODE F=,fequal
+		jp dequal		; IEEE 754 float are comparable as integer
+
+;= F<		r1 r2 -- flag
+;		true if r1 < r2
+;
+;    : F< D< ; ( IEEE 754 standard )
+
+		CODE F<,fless
+		jp dless		; IEEE 754 float are comparable as integer
+
+;= F0=		r -- flag
+;		true if r = 0.0e0
+;
+;    : F0= D0= ; ( IEEE 754 standard )
+
+		CODE F0=,fzeroequal
+		jp dzeroequal		; IEEE 754 float are comparable as integer
+
+;= F0<		r -- flag
+;		true if r < 0.0e0
+;
+;    : F0< D0< ; ( IEEE 754 standard )
+
+		CODE F0<,fzeroless
+		jp dzeroless		; IEEE 754 float are comparable as integer
+
+;= D>F		d -- r
+;		widen signed double to float
+
+		CODE D>F,dtof
+		push de			; save TOS
+		exx			;
+		pop bc			; pop bc with TOS
+		pop de			; pop de with 2OS
+		call itof		; integer bcde -> float bcde
+		push de			; save de as new 2OS
+		push bc			; save bc as new TOS
+		exx			;
+		pop de			; pop new TOS
+		JP_NEXT			; continue
+
+;= F>D		r -- d
+;		narrow float to a signed double;
+;		may throw -11 "result out of range"
+
+		CODE F>D,ftod
+		push de			; save TOS
+		exx			;
+		pop bc			; pop bc with TOS
+		pop de			; pop de with 2OS
+		call ftoi		; float bcde -> integer bcde
+		push de			; save de as new 2OS
+		push bc			; save bc as new TOS
+		exx			;
+		ld a,-11		;
+		jp c,throw_a		; if conversion failed then throw -11
+		pop de			; pop new TOS
+		JP_NEXT			; continue
+
+;= >FLOAT	c-addr u -- r true | false
+;		convert string to float;
+;		leaves the float and true if string is converted;
+;		leaves false if string is unconvertable
+
+		CODE >FLOAT,tofloat
+		pop hl			; pop hl with c-addr
+		ld a,e			; e -> a with string length u (8 bits, ignore high byte)
+		push bc			; save bc with ip
+		call stof		; [hl..hl+b-1] -> bcde
+		ld h,b			;
+		ld l,c			; bc -> hl
+		pop bc			; restore bc with ip
+		jp c,false_next		; if error then leave FALSE and continue
+		push de			; save de with new 3OS
+		push hl			; save hl with new 2OS
+		jp true_next		; set new TOS to TRUE and continue
+
+;= REPRESENT	r c-addr u -- n flag true
+;		convert float to string;
+;		store decimal digits of the float in the non-empty buffer c-addr u;
+;		leaves decimal exponent n+1 and flag = true if negative
+
+		CODE REPRESENT,represent
+		pop hl			; pop hl with c-addr
+		ld a,e			; e -> a with buffer size u (ignore high byte)
+		pop ix			; pop ix with 3OS
+		pop de			; pop de with 4OS
+		push bc			; save bc with ip
+		push ix			;
+		pop bc			; ix -> bc with 3OS 
+		call ftos		; bcde -> [hl...hl+a-1 digits] exponent e and sign d bit 7
+		pop bc			; restore bc with ip
+		rl d			;
+		sbc a			;
+		ld h,a			;
+		ld l,a			; TRUE -> hl if d bit 7 else FALSE -> hl
+		inc e			; decimal exponent + 1 returned by REPRESENT
+		ld a,e			;
+		rla			;
+		sbc a			;
+		ld d,a			; sign extend e to de
+		push de			; set new 3OS to de with n
+		push hl			; set new 2OS hl with flag
+		jp true_next		; set new TOS to TRUE and continue
+
+;= PRECISION	7 VALUE PRECISION
+;		floating point output precision, the number of decimal digits displayed
+
+		VALUE PRECISION,precision
+		.dw 7
+
+;- FS.		r --
+;		output float in scientific notation with a trailing space
+;
+;    : FS.
+;      HERE PRECISION REPRESENT DROP IF
+;        '- EMIT
+;      THEN
+;      HERE C@ EMIT
+;      '. HERE C!
+;      HERE PRECISION '0 -TRIM TYPE
+;      'E EMIT
+;      1- . ;
+;
+;		COLON FS.,fsdot
+;		.dw here,precision,represent,drop,doif,1$
+;		.dw   dolit,'-,emit
+;1$:		.dw here,cfetch,emit
+;		.dw dolit,'.,here,cstore
+;		.dw here,precision,dolit,'0,mtrim,type
+;		.dw dolit,'E,emit
+;		.dw oneminus,dot
+;		.dw doret
+
+;= F.		r --
+;		output float with a trailing space;
+;		output fixed notation when 1e-1 <= |r| < 1e+7, otherwise output scientific notation
+;
+;    : F.
+;      HERE PRECISION REPRESENT DROP IF
+;        '- EMIT
+;      THEN
+;      DUP 0 PRECISION 1+ WITHIN IF
+;        HERE OVER TYPE
+;        '. EMIT
+;        HERE OVER +
+;        PRECISION ROT - '0 -TRIM TYPE SPACE
+;        EXIT
+;      THEN
+;      HERE C@ EMIT
+;      '. HERE C!
+;      HERE PRECISION '0 -TRIM TYPE
+;      'E EMIT
+;      1- . ;
+
+		COLON F.,fdot
+		.dw here,precision,represent,drop,doif,1$
+		.dw   dolit,'-,emit
+1$:		.dw dup,zero,precision,oneplus,within,doif,2$
+		.dw   here,over,type
+		.dw   dolit,'.,emit
+		.dw   here,over,plus
+		.dw   precision,rot,minus,dolit,'0,mtrim,type,space
+		.dw   doexit
+2$:		.dw here,cfetch,emit
+		.dw dolit,'.,here,cstore
+		.dw here,precision,dolit,'0,mtrim,type
+		.dw dolit,'E,emit
+		.dw oneminus,dot
+		.dw doret
 
 .endif
 
@@ -2634,16 +2903,16 @@ y:		.db 0			; cursor row 0 to win_rows - 1
 ; EMIT		char --
 ;		emit char;
 ;		supports the following control codes:
-;		 8 (BS)
-;		 9 (TAB)
-;		10 (LF)
-;		11 (VT scroll)
-;		12 (FF clear)
-;		13 (CR)
-;		28 (right)
-;		29 (left)
-;		30 (up)
-;		31 (down)
+;		 8 (BS),
+;		 9 (TAB),
+;		10 (LF),
+;		11 (VT scroll),
+;		12 (FF clear),
+;		13 (CR),
+;		28 (right),
+;		29 (left),
+;		30 (up),
+;		31 (down),
 
 		CODE EMIT,emit
 		ld hl,xy		; xy -> hl
@@ -2961,7 +3230,7 @@ set_base:	ld (base+3),hl		; 10 -> [base]
 		.dw doret
 
 ; D.		d --
-;		output signed double d with space
+;		output signed double d with a trailing space
 ;
 ;    : D. 0 D.R SPACE ;
 
@@ -2979,7 +3248,7 @@ set_base:	ld (base+3),hl		; 10 -> [base]
 		.dw doret
 
 ; U.		u --
-;		output unsigned u with space
+;		output unsigned u with a trailing space
 ;
 ;    : U. 0 D. ;
 
@@ -2997,7 +3266,7 @@ set_base:	ld (base+3),hl		; 10 -> [base]
 		.dw doret
 
 ; .		n --
-;		output signed n with space
+;		output signed n with a trailing space
 ;
 ;    : . S>D D. ;
 
@@ -3192,23 +3461,23 @@ set_base:	ld (base+3),hl		; 10 -> [base]
 ; GETKEY	-- char
 ;		wait and read key;
 ;		leaves ASCII char or special key code:
-;		ON      =$05
-;		BS      =$08
-;		DEL     =$09
-;		CA      =$0b
-;		CLS     =$0c
-;		ENTER   =$0d
-;		DIGIT   =$0e
-;		F-E     =$0f
-;		INS     =$12
-;		ANS     =$15
-;		CONST   =$17
-;		RCM     =$19
-;		M+      =$1a
-;		M-      =$1b
-;		right   =$1c
-;		left    =$1d
-;		up      =$1e
+;		ON      =$05,
+;		BS      =$08,
+;		DEL     =$09,
+;		CA      =$0b,
+;		CLS     =$0c,
+;		ENTER   =$0d,
+;		DIGIT   =$0e,
+;		F-E     =$0f,
+;		INS     =$12,
+;		ANS     =$15,
+;		CONST   =$17,
+;		RCM     =$19,
+;		M+      =$1a,
+;		M-      =$1b,
+;		right   =$1c,
+;		left    =$1d,
+;		up      =$1e,
 ;		down    =$1f;
 ;		calc keys and BASIC keys produce BASIC tokens as key code $fe:
 ;		SIN     =$fe register B = $95 BASIC token for SIN (ignored)
@@ -3606,7 +3875,7 @@ edit_toxy:	call docol		; n -- x y	cursor pos n to xy
 
 ; >DOUBLE	c-addr u -- d true | false
 ;		convert string to signed double;
-;		leaves true if string is converted;
+;		leaves the double and true if string is converted;
 ;		leaves false if string is unconvertable
 
 		COLON >DOUBLE,todouble
@@ -5399,6 +5668,9 @@ loop_counter:	ld e,(hl)		;
 ;		-24  | invalid numeric argument
 ;		-28  | user interrupt (BREAK was pressed)
 ;		-32  | invalid name argument (invalid TO name)
+;		-42  | floating-point divide by zero
+;		-43  | floating-point result out of range
+;		-46  | floating-point invalid argument
 ;		-56  | QUIT
 ;		-256 | execution of an uninitialized deferred word
 
@@ -5431,6 +5703,29 @@ loop_counter:	ld e,(hl)		;
 ;		value DBL is set to -1 when the number is a double;
 ;		may throw -13 "undefined word" when string is not numeric
 
+.if MATH
+
+		COLON NUMBER,number
+		.dw twodup
+		.dw todouble,doif,4$
+		.dw   twoswap,twodrop
+		.dw   dbl,invert,doif,1$
+		.dw     dtos
+1$:		.dw   state,fetch,doif,3$
+		.dw     dbl,doif,2$
+		.dw       twoliteral
+		.dw       doexit
+2$:		.dw     literal
+3$:		.dw   doexit
+4$:		.dw tofloat,doif,6$
+		.dw   state,fetch,doif,5$
+		.dw     twoliteral
+5$:		.dw   doexit
+6$:		.dw dolit,-13,throw
+		.dw doret
+
+.else
+
 		COLON NUMBER,number
 		.dw todouble,doif,4$
 		.dw   dbl,invert,doif,1$
@@ -5443,6 +5738,8 @@ loop_counter:	ld e,(hl)		;
 3$:		.dw   doexit
 4$:		.dw dolit,-13,throw
 		.dw doret
+
+.endif
 
 ; INTERPRET	--
 ;		interpret input while input is available
