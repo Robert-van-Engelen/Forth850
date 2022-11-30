@@ -2868,7 +2868,7 @@ Performance:
                     exx                     ; restore bc with ip
                     jp zero_next            ; set new TOS to 0
 
-## Z80 math routines
+## Z80 integer math routines
 
 I've written the following Z80 math routines.  My objective was to make them
 as efficient as possible.  The second objective was to keep the code size small
@@ -3171,6 +3171,32 @@ entry/exit overhead:
 
 Note: unrolling the loop improves speed at the cost of a significant code size
 increase, which is undesirable for small memory devices.
+
+## Z80 floating point math routines
+
+I've written a collection of Z80 IEEE 754 single precision floating point math
+routines, see [math.asm](math.asm).  My objective was to make them as efficient
+as possible, such as by using the shadow registers instead of memory.  No
+memory is used, except at most one push-pop pair to move a value between the
+(shadow) registers.  The second objective was to keep the code size small by
+using tricks with CPU arithmetic and flags.  The floating point library is
+under 1KB.
+
+Single precision floating point values are stored in registers BC (high order)
+and DE (low order) to form a 32 bit float `bcde` and shadow float `bcde`'.
+
+- `fadd`: float `bcde` + `bcde'` -> `bcde`; cf set on overflow
+- `fsubx`: float `bcde` - `bcde'` -> `bcde`; cf set on overflow
+- `fsuby`: float `bcde'` - `bcde` -> `bcde`; cf set on overflow
+- `fneg`: float - `bcde` -> `bcde`; no errors (cf reset)
+- `fmul`: float `bcde` * `bcde'` -> `bcde`; cf set on overflow
+- `fdivx`: float `bcde` / `bcde'` -> `bcde`; cf set on overflow or when dividing by zero
+- `fdivy`: float `bcde'` / `bcde` -> `bcde`; cf set on overflow or when dividing by zero
+- `ftoi`: float `bcde` -> signed 32 bit integer `bcde` truncated towards zero; cf set when out of range
+- `itof`: signed 32 bit integer `bcde` -> float `bcde`; no errors (cf reset)
+- `fpow10`: 10^`a` * `bcde` -> `bcde` for -128 <= `a` < 39; cf set on overflow
+- `stof`: string [`hl`..`hl`+`a`-1] -> float `bcde`; cf set on parsing error and `hl` points after the char
+- `ftos`: float `bcde` -> [`hl`...`hl`+`a`-1] digits, exponent `e` and sign `d` bit 7; no errors (flags undefined)
 
 ## Z80 string routines
 
