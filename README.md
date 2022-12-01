@@ -29,6 +29,12 @@ PC-G850VS.
 Forth850 includes stack under/overflow checks, dictionary overflow checks and
 can be interrupted by pressing BREAK.
 
+A larger "full version" forth850-full.wav is included with
+[additional words](#additional-words-included-with-the-full-version),
+including single precision floating point math words implemented with a new and
+efficient [Z80 floating point math](#z80-floating-point-math-routines) library
+I wrote for Forth850.
+
 Discuss: [HP Forum](https://www.hpmuseum.org/forum/thread-19085.html) and [reddit](https://www.reddit.com/r/Forth/comments/ytat79/a_fast_forth_for_vintage_sharp_pcg850_pocket)
 
 ## Installation
