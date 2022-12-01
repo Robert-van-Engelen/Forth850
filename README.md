@@ -12,6 +12,12 @@ explanation how this works.
 You can write Forth source code in the built-in TEXT editor and read it back
 into Forth850 with the [TEXT](examples/TEXT.FTH) word.
 
+A larger "full version" forth850-full.wav is included with
+[additional words](#additional-words-included-with-the-full-version),
+including single precision floating point math words implemented with a new and
+efficient [Z80 floating point math](#z80-floating-point-math-routines) library
+I wrote for Forth850.
+
 I've implemented Forth850 as efficiently as possible in direct threaded code
 (DTC) with new Z80 code written from scratch, including faster Z80 math
 routines when compared to other Z80 Forth implementations.  See the
@@ -28,12 +34,6 @@ PC-G850VS.
 
 Forth850 includes stack under/overflow checks, dictionary overflow checks and
 can be interrupted by pressing BREAK.
-
-A larger "full version" forth850-full.wav is included with
-[additional words](#additional-words-included-with-the-full-version),
-including single precision floating point math words implemented with a new and
-efficient [Z80 floating point math](#z80-floating-point-math-routines) library
-I wrote for Forth850.
 
 Discuss: [HP Forum](https://www.hpmuseum.org/forum/thread-19085.html) and [reddit](https://www.reddit.com/r/Forth/comments/ytat79/a_fast_forth_for_vintage_sharp_pcg850_pocket)
 
