@@ -237,9 +237,16 @@ shiftoncarry:	ex de,hl		; hl -> de result mantissa ade
 		rr d			;
 		rr e			; shift right result mantissa ade
 
-		; finalize bade to return bcde using sign' l' bit 7
+finalize:	; finalize bade to return bcde using sign' l' bit 7
 
-finalize:	add a			; shift left man2 a to assign man2 bit 7 below
+.if bias - 128	; check overflow when bias = 127, for bias = 128 the result exponent <= bias + 127 = 255
+		inc b			; check if result exponent overflowed
+		scf			; set cf
+		ret z			; if result exponent overflowed then return error (cf set)
+		dec b			;
+.endif
+
+		add a			; shift left man2 a to assign man2 bit 7 below
 		exx			;
 		rl l			; set cf to the sign' l' bit 7
 		exx			;
@@ -249,17 +256,17 @@ finalize:	add a			; shift left man2 a to assign man2 bit 7 below
 done:		xor a			; 0 -> a, reset cf, reset v, set z
 		ret			; return bcde (cf reset)
 
-		; redo subtract mantissa cde from cde' to produce result mantissa ade
+resubtract:	; redo subtract mantissa cde from cde' to produce result mantissa ade
 
-resubtract:	exx			;
+		exx			;
 		ld a,l			; sign l -> a
 		exx			;
 		cpl			; complement a with sign bit 7
 		ld l,a			; restore sign' l' bit 7 to the complement of sign l bit 7
 
-		; subtract mantissa cde from cde' to produce result mantissa ade
+subtract:	; subtract mantissa cde from cde' to produce result mantissa ade
 
-subtract:	ld a,c			; c' -> a
+		ld a,c			; c' -> a
 		push de			; push de'
 		exx			; activate bcdehl
 		pop hl			; pop hl with de'
@@ -270,9 +277,9 @@ subtract:	ld a,c			; c' -> a
 		ex de,hl		; hl -> de with result mantissa ade
 		jp m,finalize		; if man2 a bit 7 is set then finalize bade.cf to return bcde
 
-		; normalize bade with cf when shifting to return bcde using sign' l' bit 7
+normalize:	; normalize bade with cf when shifting to return bcde using sign' l' bit 7
 
-normalize:	ld c,a			; save a -> c
+		ld c,a			; save a -> c
 		or d			;
 		or e			;
 		jr z,underflow		; if ade = 0 then underflow
@@ -286,11 +293,11 @@ normalize:	ld c,a			; save a -> c
 		ex de,hl		; hl -> de
 		jr finalize		; finalize
 
-		; underflow to zero, no denormal forms
+underflow:	; underflow to zero, no denormal forms
 
-underflow:	; zero result bcde
+fzero:		; zero result bcde
 
-fzero:		xor a			; 0 -> a and reset cf
+		xor a			; 0 -> a and reset cf
 		ld b,a			;
 		ld c,a			;
 		ld d,a			; 0 -> bcde
@@ -328,7 +335,7 @@ fmul:		EXP			;
 		; save biased result exponent and sign
 
 1$:		add bias		; bias the result exponent
-                jr z,underflow          ; if result exponent = 0 then underflow
+		jr z,underflow		; if result exponent = 0 then underflow
 		ex af,af'		; save result biased exponent to a'
 		ld a,b			; b -> a with sign bit 7
 		set 7,c			; set bit 7 of man2 c
@@ -398,7 +405,7 @@ fdivy:		EXP			;
 		; save biased result exponent to b' and result sign to l'
 
 1$:		add bias		; bias the result exponent
-                jr z,underflow          ; if result exponent = 0 then underflow
+		jr z,underflow		; if result exponent = 0 then underflow
 		ex af,af'		; save a with result exponent
 		ld a,b			; b -> a' with sign bit 7
 		exx			; activate bcdehl'
@@ -512,9 +519,9 @@ ftoi:		EXP			;
 		rl l			; test l bit 7
 		ret nc			; return positive bcde (cf reset)
 
-		; negate integer bcde
+inegate:	; negate integer bcde
 
-inegate:	xor a			;
+		xor a			;
 		sub e			;
 		ld e,a			;
 		ld a,0			;
@@ -615,9 +622,9 @@ fpow10:		or a			; test a and reset cf
 		ret c			; if 10**a overflows then return error (cf set)
 		jp fmul			; 10*a * bcde -> bcde
 
-		; return float bcde = 10**a for 0 < a < 39
+pow10:		; return float bcde = 10**a for 0 < a < 39
 
-pow10:		cp 39			;
+		cp 39			;
 		ccf			;
 		ret c			; if a > 38 return error (cf set)
 		ld hl,powers - 4	; power - 4 -> hl minus 4 since indexed from 1
@@ -635,9 +642,9 @@ pow10:		cp 39			;
 		ld d,(hl)		; [hl] -> bcde
 		ret			; return (cf reset)
 
-		; table of powers of 10
+powers:		; table of powers of 10
 
-powers:		.dw 0x4120,0x0000	; = 10**1
+		.dw 0x4120,0x0000	; = 10**1
 		.dw 0x42c8,0x0000	; = 10**2
 		.dw 0x447a,0x0000	; = 10**3
 		.dw 0x461c,0x4000	; = 10**4
@@ -731,12 +738,14 @@ stof:		ld b,a			; a -> b string length
 		scf			;
 		ret z			; if remaining length b = 0 then error (cf set)
 
-		; loop to parse float
+parse_float:	; loop to parse float
 
-parse_float:	ld a,(hl)		;
+		ld a,(hl)		;
 		inc hl			; [hl++] -> a next char
 
-compare_char:	cp '.			;
+compare_char:	; compare next character in a
+
+		cp '.			;
 		jr nz,1$		; if char is '. then
 		bit 6,c			;
 		scf			;
@@ -807,14 +816,14 @@ compare_char:	cp '.			;
 4$:		ld c,1			; 1 -> c' mark that a digit was parsed
 		exx			;
 
-		; parse next char
+parse_next:	; parse next char
 
-parse_next:	djnz parse_float	; until --b = 0 keep parsing if remaining length <> 0
+		djnz parse_float	; until --b = 0 keep parsing if remaining length <> 0
 		ld e,b			; 0 -> e no decimal exponent part
 
-		; parsing done
+parse_done:	; parsing done
 
-parse_done:	exx			;
+		exx			;
 		dec c			; decrement c' to test if any digits were parsed
 		scf			; set cf
 		ret nz			; if no digit parsed then return error (cf set)
@@ -858,9 +867,9 @@ parse_done:	exx			;
 		sra a			; a >> 1 -> a (arithmetic)
 		jp fpow10		; scale bcde by 10**a
 
-		; parse the decimal exponent part into e with sign d
+parse_exponent:	; parse the decimal exponent part into e with sign d
 
-parse_exponent:	ld de,0			; clear decimal exponent, sign in d and value in e
+		ld de,0			; clear decimal exponent, sign in d and value in e
 
 		; check for and get next char
 
