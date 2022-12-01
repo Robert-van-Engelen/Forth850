@@ -44,12 +44,12 @@
   1.5707962E0 F*
   \ Taylor series
   2DUP 2DUP 2DUP F* FNEGATE
-  2ROT 2ROT
+  2ROT 2ROT \ -- -x*x x x
   11 2 DO
-    5 PICK 5 PICK
-    F* I I 1+ *
-    S>D D>F F/
-    2DUP 2ROT F+ 2SWAP
+    5 PICK 5 PICK \ -- -x*x sum term -x*x 
+    F* I I 1+ * \ -- -x*x sum -x*x*term i*(i+1)
+    S>D D>F F/ \ -- -x*x sum -x*x*term/i*(i+1)
+    2DUP 2ROT F+ 2SWAP \ -x*x sum-x*x*term/i*(i+1) -x*x*term/i*(i+1) 
   2 +LOOP
   2DROP 2SWAP 2DROP ;
 

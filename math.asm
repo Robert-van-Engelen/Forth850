@@ -16,7 +16,7 @@
 ; Sacrifices:
 ;   - no INF/NAN values; routines return error condition (cf set)
 ;   - truncated 24 bit mantissa instead of IEEE 754 unbiased "banker's rounding"
-;     (floating point string parsing and output use rounding)
+;     (floating point string parsing and output do apply rounding though)
 ;
 ;-------------------------------------------------------------------------------
 ;
@@ -358,9 +358,9 @@ fmul:		EXP			;
 
 		; restore result exponent b and normalize bahl to return result bcde
 
-		ex af,af'		; restore result exponent a'
+		ex af,af'		; restore result exponent a', save a and flags
 		ld b,a			; a' -> b with result exponent
-		ex af,af'		; restore a
+		ex af,af'		; restore a and flags
 		jp shiftoncarry		; normalize bahl to return result bcde
 
 ;-------------------------------------------------------------------------------
@@ -397,6 +397,7 @@ fdivy:		EXP			;
 		; save biased result exponent to b' and result sign to l'
 
 1$:		add bias		; bias the result exponent
+                jr z,underflow          ; if result exponent = 0 then underflow
 		ex af,af'		; save a with result exponent
 		ld a,b			; b -> a' with sign bit 7
 		exx			; activate bcdehl'
@@ -441,9 +442,9 @@ fdivy:		EXP			;
 4$:		exx			; activate bcdehl'
 		bit 7,c			; test c' bit 7
 		jr nz,5$		; if zero then
-		dec b			;   decrement exponent b'
+		dec b			;   decrement result exponent b'
 		exx			;
-		jp z,underflow		;   if exponent = 0 then underflow
+		jp z,underflow		;   if result exponent = 0 then underflow
 		inc b			;   1 -> b loop counter
 		jr nc,2$		;   loop without rla carry for final mantissa bit
 		jr 3$			;   loop with rla carry for final mantissa bit
