@@ -137,7 +137,7 @@ bias		.equ 127		; exponent bias 127 IEEE 754 or 128
 ;
 ;		fneg:	- bcde -> bcde
 ;			no errors (cf reset)
-;			a modified
+;			a,b modified
 ;
 ;-------------------------------------------------------------------------------
 
@@ -927,7 +927,7 @@ parse_exponent:	ld de,0			; clear decimal exponent, sign in d and value in e
 ;
 ;		CONVERT FLOAT TO STRING
 ;
-;		ftos:	bcde -> [hl...hl+a-1 digits] exponent e and sign d bit 7
+;		ftos:	bcde -> [hl...hl+a-1] digits, exponent e and sign d bit 7
 ;			no errors (flags undefined)
 ;			a,b,c,d,e,h,l,a',b',c',d',e',h',l' modified
 ;			 a  nonzero buffer size

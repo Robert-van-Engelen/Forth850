@@ -2309,7 +2309,7 @@ caveat: .( and ( in TEXT cannot span more than one line, they end at EOL
 
 Floating point values are doubles on the stack.  Double words, such as 2DUP,
 can be used to manipulate floats.  Floats can be stored in 2CONSTANT, 2VARIABLE
-and 2VALUE assignments with TO (but not with +TO.)
+and 2VALUE assigned with TO (but not with +TO.)
 
 Beware that HEX prevents inputting floats and garbles the output of floats.
 
@@ -2390,8 +2390,10 @@ store decimal digits of the float in the non-empty buffer c-addr u;
 leaves decimal exponent n+1 and flag = true if negative
 
 ### PRECISION
-_7 VALUE PRECISION_
-floating point output precision, the number of decimal digits displayed
+_-- +n_
+floating point output precision, the number of decimal digits displayed is 7 by default
+
+    7 VALUE PRECISION
 
 ### F.
 _r --_
@@ -2502,7 +2504,8 @@ assembler and aslink linker.
 
 Forth850 uses direct threaded code (DTC).  Faster would be to use subroutine
 threaded code (STC), but this would significantly increase the overall code
-size, which is less desirable with a small Z80-based system.
+size and Forth compilation complexity, which are less desirable for a small
+Z80-based system.
 
 The following Z80 Forth routines are inspired by the article
 [Moving Forth](https://www.bradrodriguez.com/papers/moving1.htm).  However,
@@ -2543,7 +2546,7 @@ routine":
     .endif
 
 The "next routine" cycles contribute to the overhead of DTC, which cannot be
-further reduced to speed up execution.  To improve speed by 10% on average, the
+removed to speed up DTC execution.  To improve speed by 10% on average, the
 fetch and execute routine is inlined with the `NEXT` macro for
 performance-critical words.  When performance is not critical, a `JP_NEXT`
 macro is used, which simply expands into `jp (iy)` with the IY register
