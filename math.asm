@@ -328,6 +328,7 @@ fmul:		EXP			;
 		; save biased result exponent and sign
 
 1$:		add bias		; bias the result exponent
+                jr z,underflow          ; if result exponent = 0 then underflow
 		ex af,af'		; save result biased exponent to a'
 		ld a,b			; b -> a with sign bit 7
 		set 7,c			; set bit 7 of man2 c
