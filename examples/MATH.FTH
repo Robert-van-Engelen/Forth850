@@ -80,9 +80,6 @@
     F* \ -- x sum x^(n+1)
     2DUP I S>D D>F F/ \ -- x sum x^(n+1) x^(n+1)/(n+1)
     2ROT F+ 2SWAP \ -- x sum+x^(n+1)/(n+1) x^(n+1)
-      \ 2ROT 2SWAP 2OVER F+ 2SWAP
-      \ 2OVER F= IF LEAVE THEN
-      \ 2SWAP
   LOOP
   2DROP 2SWAP 2DROP FNEGATE
   ROT S>D D>F 0.6931467E0 F* F+ ; \ plus n*ln(2) = n*0.69314718055995
