@@ -71,19 +71,23 @@
 ;		exponent zero:	indicates zero floating point value
 ;		mantissa bits:	24 (including implicit msb of 1)
 ;		infinity/nan:	no (errors are indicated with cf set)
-;		range:		2^-126 to 2^+128 assuming bias = 127
+;		range:		2^-126 to 2^+127 assuming bias = 127
 ;				2^-127 to 2^+127 assuming bias = 128
 ;
 ;		examples with exponent bias = 127:
 ;
-;		 0 = 00 00 00 00
-;		 1 = 3f 80 00 00
-;		 2 = 40 00 00 00
-;		 3 = 40 40 00 00
-;		-0 = 80 00 00 00
-;		-1 = bf 80 00 00
-;		-2 = c0 00 00 00
-;		-3 = c0 40 00 00
+;		   0 = 00 00 00 00
+;		   1 = 3f 80 00 00
+;		   2 = 40 00 00 00
+;		   3 = 40 40 00 00
+;		  -0 = 80 00 00 00
+;		  -1 = bf 80 00 00
+;		  -2 = c0 00 00 00
+;		  -3 = c0 40 00 00
+;		 inf = 7f 80 00 00   n/a (invalid value)
+;		-inf = ff 80 00 00   n/a (invalid value)
+;		 nan = s 11111111 xxxxxxx xxxxxxxx xxxxxxxx at least one x is 1
+;		                     n/a (invalid value)
 ;
 ;		IEEE 754 binary floating point allows floating point values to
 ;		be compared as if comparing 32 bit signed integers:
