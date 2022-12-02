@@ -2361,7 +2361,10 @@ true if r1 = r2
 _r1 r2 -- flag_
 true if r1 < r2
 
-    : F< D< ; ( IEEE 754 standard )
+    : F<
+      DUP 3 PICK AND 0< IF
+        2SWAP
+      D< ;
 
 ### F0=
 _r -- flag_
