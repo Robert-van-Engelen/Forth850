@@ -1,14 +1,21 @@
 \ MATH.FTH collection of math functions
+\ Author: Dr. Robert van Engelen
 
-: FTRUNC        ( r1 -- r2 ) 2DUP ['] F>D CATCH 0= IF D>F 2SWAP THEN 2DROP ;
+: FMAX      ( r1 r2 -- r3 ) 2OVER 2OVER F< IF 2SWAP THEN 2DROP ;
 
-: FLOOR         ( r1 -- r2 ) 2DUP F0< IF $3F7FFFFF. ( = .99999... ) F- THEN FTRUNC ;
+: FMIN      ( r1 r2 -- r3 ) 2OVER 2OVER F< INVERT IF 2SWAP THEN 2DROP ;
 
-: FROUND        ( r1 -- r2 ) .5E0 F+ FLOOR ;
+\ Truncation and rounding
+
+: FTRUNC    ( r1 -- r2 ) 2DUP ['] F>D CATCH 0= IF D>F 2SWAP THEN 2DROP ;
+
+: FLOOR     ( r1 -- r2 ) 2DUP F0< IF $3F7FFFFF. ( = .99999... ) F- THEN FTRUNC ;
+
+: FROUND    ( r1 -- r2 ) .5E0 F+ FLOOR ;
 
 \ Factorial of an integer returns float
 
-: FACT          ( u -- r )
+: FACT      ( u -- r )
   1E0 ROT 1+ 1 ?DO
     I S>D D>F F*
   LOOP ;
@@ -16,23 +23,23 @@
 \ Square root using IEEE 754 binary representation to compute
 \ sqrt(x*2^n) = sqrt(x*2^(n%2))*2^(n/2) with Newton Raphson
 
-: FSQRT         ( r1 -- r2 )
+: FSQRT     ( r1 -- r2 )
   2DUP F0< IF -46 THROW THEN
   2DUP F0= IF EXIT THEN
-  DUP 8 RSHIFT $3f - \ 2^(n/2) = exponent/2 - bias/2
-  -ROT $ff AND $3f00 + \ remove exponent 2^(n/2)
+  DUP 8 RSHIFT $3f - -ROT \ 2^(n/2) = 2^(exponent/2 - bias/2)
+  $ff AND $3f00 + \ remove exponent 2^(n/2)
+  \ Newton Raphson
   2DUP \ initial estimate
   5 0 DO
     2OVER 2OVER F/ F+ .5E0 F* \ Newton Raphson
   LOOP
   2SWAP 2DROP
-  ROT $7f + 7 LSHIFT 0 SWAP \ 2^(n/2)
-  F* ;
+  ROT $7f + 7 LSHIFT 0 SWAP F* ; \ times 2^(n/2)
 
 \ Trig words based on Jupiter ACE "FORTH Programming" p.93
 \ improved to cover a wider range of angles and for speed (fewer terms to sum)
 
-: FSIN          ( r1 -- r2 )
+: FSIN      ( r1 -- r2 )
   \ map r1 to [0,pi/2)
   1.5707962E0 F/
   2DUP F0< IF FABS 2E0 F+ THEN \ -r1 = pi+r1
@@ -42,7 +49,7 @@
   R@ 1 AND IF 1E0 2SWAP F- THEN \ quadrant 1 and 3
   R> 2 AND IF FNEGATE THEN \ quadrant 0 and 2
   1.5707962E0 F*
-  \ Taylor series
+  \ Maclaurin series sin(x) = x - x^3/3! + x^5/5! - x^7/7! + ...
   2DUP 2DUP 2DUP F* FNEGATE
   2ROT 2ROT \ -- -x*x x x
   11 2 DO
@@ -53,6 +60,77 @@
   2 +LOOP
   2DROP 2SWAP 2DROP ;
 
-: FCOS          ( r1 -- r2 ) 1.5707962E0 2SWAP F- FSIN ;
+: FCOS      ( r1 -- r2 ) 1.5707962E0 2SWAP F- FSIN ;
 
-: FTAN          ( r1 -- r2 ) 2DUP FSIN 2SWAP FCOS F/ ;
+: FTAN      ( r1 -- r2 ) 2DUP FSIN 2SWAP FCOS F/ ;
+
+\ Log and antilog
+
+: FLN       ( r1 -- r2 )
+  2DUP F0< IF -46 THROW THEN
+  2DUP F0= IF -46 THROW THEN
+  \ map r1 to [0.5,1) using ln(x*2^n) = ln(x) + ln(2^n) = ln(x) + n*ln(2)
+  DUP 7 RSHIFT $7e - -ROT \ 2^(n+1) = 2^(exponent - bias + 1)
+  $7f AND $3f00 + \ remove exponent 2^(n+1)
+  1E0 2SWAP F-
+  \ Maclaurin series -ln(1-x) = x + x^2/2 + x^3/3 + ... with x in (0,0.5]
+  2DUP 2DUP \ -- x x x
+  20 2 DO
+    5 PICK 5 PICK \ -- x sum x^n x
+    F* \ -- x sum x^(n+1)
+    2DUP I S>D D>F F/ \ -- x sum x^(n+1) x^(n+1)/(n+1)
+    2ROT F+ 2SWAP \ -- x sum+x^(n+1)/(n+1) x^(n+1)
+      \ 2ROT 2SWAP 2OVER F+ 2SWAP
+      \ 2OVER F= IF LEAVE THEN
+      \ 2SWAP
+  LOOP
+  2DROP 2SWAP 2DROP FNEGATE
+  ROT S>D D>F 0.6931467E0 F* F+ ; \ plus n*ln(2) = n*0.69314718055995
+
+: FLOG      ( r1 -- r2 ) FLN 0.4342948E0 F* ; \ log(x) = ln(x)/ln(10) = ln(x)*0.43429448190325
+
+: FEXP      ( r1 -- r2 )
+  2DUP F0< -ROT
+  FABS
+  \ map |r1| to [0,0.5) using exp(x*2^n) = exp(x)^(2^n)
+  DUP 7 RSHIFT $7e - \ 2^(n+1) = 2^(exponent - bias + 1)
+  DUP 0< IF
+    DROP 0 -ROT \ n+1<0 in exponent 2^(n+1)
+  ELSE
+    -ROT 
+    $7f AND $3f00 + \ remove exponent 2^(n+1)
+  THEN
+  \ Maclaurin series exp(x) = 1 + x + x^2/2! + x^3/3! + ...
+  1E0 2DUP \ x 1 1
+  9 1 DO
+    5 PICK 5 PICK \ -- x sum term x 
+    F* I S>D D>F F/ \ -- x sum x*term/i
+    2DUP 2ROT F+ 2SWAP \ x sum+x*term/i x*term/i
+  LOOP
+  2DROP 2SWAP 2DROP
+  \ square exp(x) n+1 times when n+1>0 in exponent 2^(n+1)
+  ROT 0 ?DO
+    2DUP F*
+  LOOP
+  \ return reciprocal for negative r1
+  ROT IF
+    1E0 2SWAP F/
+  THEN ;
+
+: FALOG     ( r1 -- r2 ) 2.3025851E0 F* FEXP ;
+
+: F**       ( r1 r2 -- r3 ) 2SWAP FLN F* FEXP ;
+
+\ Hyperbolics
+
+: FCOSH     ( r1 -- r2 ) FEXP 2DUP 1E0 2SWAP F/ F+ 2E0 F/ ;
+
+: FSINH     ( r1 -- r2 ) FEXP 2DUP 1E0 2SWAP F/ F- 2E0 F/ ;
+
+: FTANH     ( r1 -- r2 ) 2DUP F+ FEXP 2DUP 1E0 F- 2SWAP 1E0 F+ F/ ;
+
+: FACOSH    ( r1 -- r2 ) 2DUP 2DUP F* 1E0 F- FSQRT F+ FLN ;
+
+: FASINH    ( r1 -- r2 ) 2DUP 2DUP F* 1E0 F+ FSQRT F+ FLN ;
+
+: FATANH    ( r1 -- r2 ) 2DUP 1E0 F+ 2SWAP 1E0 2SWAP F- F/ FLN 2E0 F/ ;
