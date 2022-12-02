@@ -782,15 +782,12 @@ compare_char:	; compare next character in a
 
 2$:		exx			;
 		ex af,af'		; save a
-
 		ld a,d			; d' -> a
 		and 0xf0		;
 		jr z,3$			; if dehl' upper nibble is nonzero then
-		bit 6,c			;
-		jr nz,4$		;   if digit not placed after dp then
-		dec c			;     decrement c digit counter
-		jr 4$			; else
-
+                exx                     ;
+		dec c			;   decrement c digit counter
+		jr parse_next		; else
 3$:		add hl,hl	; 11	;
 		rl e		;  4	;
 		rl d		;  8	;
@@ -810,14 +807,14 @@ compare_char:	; compare next character in a
 		ld e,a		;  4	;
 		ld a,d		;  4	;
 		adc b		;  4	;
-		ld d,a		;  4	; 10 * dehl' -> dehl'
+		ld d,a		;  4	;   10 * dehl' -> dehl'
 
 		; add decimal digit to mantissa accumulator dehl'
 
-		ex af,af'		; restore a with decimal digit
+		ex af,af'		;   restore a with decimal digit
 		add l			;
-		ld l,a			; dehl' + a -> dehl'
-4$:		ld c,1			; 1 -> c' mark that a digit was parsed
+		ld l,a			;   dehl' + a -> dehl'
+		ld c,1			;   1 -> c' mark that a digit was parsed
 		exx			;
 
 parse_next:	; parse next char
