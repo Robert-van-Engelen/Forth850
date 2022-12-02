@@ -102,7 +102,7 @@
   THEN
   \ Maclaurin series exp(x) = 1 + x + x^2/2! + x^3/3! + ...
   1E0 2DUP \ x 1 1
-  9 1 DO
+  10 1 DO
     5 PICK 5 PICK \ -- x sum term x 
     F* I S>D D>F F/ \ -- x sum x*term/i
     2DUP 2ROT F+ 2SWAP \ x sum+x*term/i x*term/i
