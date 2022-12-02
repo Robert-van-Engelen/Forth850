@@ -16,7 +16,8 @@ A larger "full version" forth850-full.wav is included with
 [additional words](#additional-words-included-with-the-full-version),
 including single precision floating point math words implemented with a new and
 efficient [Z80 floating point math](#z80-floating-point-math-routines) library
-I wrote for Forth850.
+I wrote for Forth850.  More floating point math functions that use this library
+are defined in Forth in [examples/MATH.FTH](examples/MATH.FTH).
 
 I've implemented Forth850 as efficiently as possible in direct threaded code
 (DTC) with new Z80 code written from scratch, including faster Z80 math
@@ -88,7 +89,7 @@ space (but there won't be space left on the machine for files, BASIC or TEXT.)
 
 - improved command line editor, like Forth500
 - serial IO to communicate via RS232 and load Forth source via serial
-- DONE: single precision floating point words
+- DONE: [single precision floating point words](#floating-point-math-words-included-with-the-full-version)
 - DONE: ability to [load Forth source code from the TEXT editor](examples/TEXT.FTH)
 - DONE: sound with [BEEP](examples/ASMDEMO1.FTH)
 
