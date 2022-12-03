@@ -73,8 +73,8 @@
 .org		0x0100
 
 FAST = 1	; fast (1) or compact (0)
-FULL = 0	; include additional words
-MATH = 0	; include floating point math words
+FULL = 1	; include additional words
+MATH = 1	; include floating point math words
 TEST = 0	; include tests.asm
 
 ;-------------------------------------------------------------------------------
@@ -2236,10 +2236,16 @@ jpix:		jp (ix)			;
 ;= F<		r1 r2 -- flag
 ;		true if r1 < r2
 ;
-;    : F< D< ; ( IEEE 754 standard )
+;    : F<
+;      DUP 3 PICK AND 0< IF
+;        2SWAP
+;      D< ;
 
-		CODE F<,fless
-		jp dless		; IEEE 754 float are comparable as integer
+		COLON F<,fless
+		.dw dup,dolit,3,pick,and,zeroless,doif,1$
+		.dw   twoswap
+1$:		.dw dless
+		.dw doret
 
 ;= F0=		r -- flag
 ;		true if r = 0.0e0
@@ -2336,8 +2342,10 @@ jpix:		jp (ix)			;
 		push hl			; set new 2OS hl with flag
 		jp true_next		; set new TOS to TRUE and continue
 
-;= PRECISION	7 VALUE PRECISION
-;		floating point output precision, the number of decimal digits displayed
+;= PRECISION	-- +n
+;		floating point output precision, the number of decimal digits displayed is 7 by default
+;
+;    7 VALUE PRECISION
 
 		VALUE PRECISION,precision
 		.dw 7
