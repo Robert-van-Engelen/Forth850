@@ -117,7 +117,33 @@
 
 : FALOG     ( r1 -- r2 ) 2.3025851E0 F* FEXP ;
 
+\ Exponentiation (simple version)
+
 : F**       ( r1 r2 -- r3 ) 2SWAP FLN F* FEXP ;
+
+\ A more powerful F** using exponentiation by squaring when r2 is integer
+
+: F**       ( r1 r2 -- r3 )
+  \ r1 and r2 cannot be both zero
+  2DUP F0= IF 2OVER F0= IF -46 THROW THEN THEN
+  2DUP 2DUP FTRUNC F= IF
+    \ exponentiation by squaring
+    2DUP F0< >R \ r2 is negative
+    FABS F>D 1E0 2SWAP \ -- r1 1 ud
+    IF -46 THROW THEN \ exponent d exceeds 16 bits
+    >R
+    BEGIN
+      R@ 1 AND IF 2OVER F* THEN
+      R> 1 RSHIFT \ -- r1^n product u>>1
+    DUP WHILE
+      >R
+      2SWAP 2DUP F* 2SWAP \ -- r1^n^2 product u>>1
+    REPEAT
+    DROP 2SWAP 2DROP \ -- product
+    R> IF 1E0 2SWAP F/ THEN \ r2 was negative
+  ELSE
+    2SWAP FLN F* FEXP
+  THEN ;
 
 \ Hyperbolics
 
