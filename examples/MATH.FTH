@@ -26,6 +26,7 @@
 : FSQRT     ( r1 -- r2 )
   2DUP F0< IF -46 THROW THEN
   2DUP F0= IF EXIT THEN
+  \ map r1 to [0.5,2) using sqrt(x*2^n) = sqrt(x*2^(n%2))*2^(n/2)
   DUP 8 RSHIFT $3f - -ROT \ 2^(n/2) = 2^(exponent/2 - bias/2)
   $ff AND $3f00 + \ remove exponent 2^(n/2)
   \ Newton Raphson
@@ -40,11 +41,11 @@
 \ improved to cover a wider range of angles and for speed (fewer terms to sum)
 
 : FSIN      ( r1 -- r2 )
-  \ map r1 to [0,pi/2)
+  \ map r1 to [0,pi/2) and adjust for the quadrant 0, 1, 2, 3
   1.5707962E0 F/
   2DUP F0< IF FABS 2E0 F+ THEN \ -r1 = pi+r1
   2DUP F>D \ truncate
-  OVER >R \ to test four quadrants
+  OVER >R \ save to test four quadrants
   D>F F- \ frac(r1/(pi/2))
   R@ 1 AND IF 1E0 2SWAP F- THEN \ quadrant 1 and 3
   R> 2 AND IF FNEGATE THEN \ quadrant 0 and 2
@@ -98,8 +99,8 @@
     $7f AND $3f00 + \ remove exponent 2^(n+1)
   THEN
   \ Maclaurin series exp(x) = 1 + x + x^2/2! + x^3/3! + ...
-  1E0 2DUP \ x 1 1
-  10 1 DO
+  2DUP 1E0 F+ 2OVER \ x 1+x x
+  11 2 DO
     5 PICK 5 PICK \ -- x sum term x 
     F* I S>D D>F F/ \ -- x sum x*term/i
     2DUP 2ROT F+ 2SWAP \ x sum+x*term/i x*term/i
