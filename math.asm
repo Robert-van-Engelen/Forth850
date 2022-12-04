@@ -297,7 +297,7 @@ normalize:	; normalize bade with cf when shifting to return bcde using sign' l' 
 		ex de,hl		; hl -> de
 		jr finalize		; finalize
 
-underflow:	; underflow to zero, no denormal forms
+underflow:	; underflow to zero, no subnormal forms
 
 fzero:		; zero result bcde
 
@@ -494,15 +494,15 @@ ftoi:		EXP			;
 		sub bias		; subtract exponent bias
 		jp c,fzero		; if exponent is negative then return zero
 		ld l,b			; save sign bit 7 to l
-		ld h,a			;
-		ld a,31			;
-		sub h			; 31 - unbiased exponent -> a
+		ld h,a			; unbiased exponent -> h
+		ld a,30			;
+		sub h			; 30 - unbiased exponent -> a
 		ret c			; if cf = 1 then out of range (cf set)
 		set 7,c			; set bit 7 of man2 c
 
 		; shift mantissa to remove fractional part
 
-		jr z,2$			; if a <> 0 then
+		inc a			;
 		ld b,a			; loop counter = 31 - unbiased exponent
 		xor a			; 0 -> a low order byte of the integer result
 1$:		srl c			; loop
@@ -520,7 +520,7 @@ ftoi:		EXP			;
 
 		; return positive integer bcde if float is positive
 
-		rl l			; test l bit 7
+3$:		rl l			; test l bit 7
 		ret nc			; return positive bcde (cf reset)
 
 inegate:	; negate integer bcde
@@ -539,20 +539,6 @@ inegate:	; negate integer bcde
 		ld b,a			;
 		or a			; reset cf
 		ret			; return negated integer bcde (cf reset)
-
-		; same but shorter using hl as temporary:
-		;xor a
-		;ld h,a
-		;ld l,a
-		;sbc hl,de
-		;ex de,hl
-		;sbc c
-		;ld c,a
-		;sbc a
-		;sub b
-		;ld b,a
-		;or a
-		;ret
 
 ;-------------------------------------------------------------------------------
 ;
@@ -720,7 +706,7 @@ stof:		ld b,a			; a -> b string length
 		ld h,d			;
 		ld l,e			; 0 -> dehl' clear mantissa accumulator
 		ld c,e			; 0 -> c no digit parsed yet
-		exx			; so that we can check if any digits were parsed (no if denorm)
+		exx			; so that we can check if any digits were parsed (no if subnormal)
 
 		; begin parsing
 
@@ -785,7 +771,7 @@ compare_char:	; compare next character in a
 		ld a,d			; d' -> a
 		and 0xf0		;
 		jr z,3$			; if dehl' upper nibble is nonzero then
-                exx                     ;
+		exx			;
 		dec c			;   decrement c digit counter
 		jr parse_next		; else
 3$:		add hl,hl	; 11	;
@@ -837,15 +823,17 @@ parse_done:	; parsing done
 		; normalize dehl' into mantissa cde' with corresponding biased exponent b'
 
 		ld b,bias+31		; initialize exponent b
-		ld a,d			;
-1$:		dec b		;  4	; decrement biased exponent b'
+		ld a,d			; d' -> a
+		or a			;
+		jp m,2$			; if d' bit 7 is zero then
+1$:		dec b		;  4	;   decrement biased exponent b' (cannot underflow)
 		add hl,hl	; 11	;
 		rl e		;  8	;
-		adc a		;  4	;
+		adc a		;  4	;   aehl' << 1 -> aehl'
 		jp p,1$		; 10(37);
-		ld c,a			;
+2$:		ld c,a			;
 		ld d,e			;
-		ld e,h			; mantissa cde'
+		ld e,h			; save result mantissa aeh' -> cde'
 		exx			;
 
 		; adjust decimal exponent e down by c (biased) places after dp

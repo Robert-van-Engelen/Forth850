@@ -1937,9 +1937,10 @@ true_if_c_next:	sbc a			; -cf -> a
 		.dw doret
 
 ; INVERT	x1 -- x2
-;		one's complement ~x
+;		one's complement ~x1
 ;
 ;    : INVERT 1+ NEGATE ;
+;    : INVERT -1 XOR ;
 
 .if FAST
 
@@ -1962,7 +1963,10 @@ true_if_c_next:	sbc a			; -cf -> a
 	
 
 ; NEGATE	n1 -- n2
-;		two's complement -n
+;		two's complement -n1
+;
+;    : NEGATE 0 SWAP - ;
+;    : NEGATE INVERT 1+ ;
 
 		CODE NEGATE,negate
 		xor a			; 0 -> a
