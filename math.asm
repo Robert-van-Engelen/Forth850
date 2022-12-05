@@ -219,7 +219,7 @@ fadd:		EXP			;
 
 		ld a,l			; sign -> a
 		exx			; activate bcdehl'
-		xor l			; sign xor sign' -> a
+		xor l			; sign xor sign' -> a, reset cf
 		jp m,subtract		; if signs differ then subtract
 
 		; add mantissa cde to cde' to produce result mantissa ade
@@ -228,20 +228,19 @@ fadd:		EXP			;
 		push de			; push de'
 		exx			; activate bcdehl
 		pop hl			; pop hl with de'
-		add hl,de		; de' + de -> hl
-		adc c			; c' + c -> a with result man2
-shiftoncarry:	ex de,hl		; hl -> de result mantissa ade
+		add hl,de		;
+		adc c			; cde' + cde -> ahl with result mantissa
+
+shiftoncarry:	; shift mantissa ahl right if carry after addition
+
 		jr nc,finalize		; if no carry then finalize
-
-		; shift mantissa ade right if carry after addition
-
 		inc b			; increment result exponent b
 		ret z			; if exponent = 0 then return overflow error (cf set)
-	        srl a			;
-		rr d			;
-		rr e			; shift right result mantissa ade
+	        rra			;
+		rr h			;
+		rr l			; shift right result mantissa ahl
 
-finalize:	; finalize bade to return bcde using sign' l' bit 7
+finalize:	; finalize bahl to return bcde using sign' l' bit 7
 
 .if bias - 128	; check overflow when bias = 127, for bias = 128 the result exponent <= bias + 127 = 255
 		inc b			; check if result exponent overflowed
@@ -256,46 +255,43 @@ finalize:	; finalize bade to return bcde using sign' l' bit 7
 		exx			;
 		rr b			; rotate right result exponent b and assign sign' bit
 		rra			; rotate right result man2 a and assign exponent bit
-		ld c,a			; a -> c to set result man2
+		ld c,a			;
+		ex de,hl		; ahl -> cde set result mantissa
 done:		xor a			; 0 -> a, reset cf, reset v, set z
 		ret			; return bcde (cf reset)
 
-resubtract:	; redo subtract mantissa cde from cde' to produce result mantissa ade
+resubtract:	; redo subtract mantissa cde from cde' to produce result bcde
 
 		exx			;
-		ld a,l			; sign l -> a
+		sbc a                   ; 0xff -> a because cf is set
+                sub l                   ; complement l -> a
 		exx			;
-		cpl			; complement a with sign bit 7
 		ld l,a			; restore sign' l' bit 7 to the complement of sign l bit 7
 
-subtract:	; subtract mantissa cde from cde' to produce result mantissa ade
+subtract:	; subtract mantissa cde from cde' to produce ahl and nornalized result bcde
 
 		ld a,c			; c' -> a
 		push de			; push de'
 		exx			; activate bcdehl
 		pop hl			; pop hl with de'
-		or a			; reset cf
-		sbc hl,de		; de' - de -> hl
+		sbc hl,de		; de' - de -> hl (cf was reset)
 		sbc c			; c' - c -> a
 		jr c,resubtract		; if cde' < cde then swap cde with cde' and redo subtract
-		ex de,hl		; hl -> de with result mantissa ade
-		jp m,finalize		; if man2 a bit 7 is set then finalize bade.cf to return bcde
+		jp m,finalize		; if man2 a bit 7 is set then finalize bahl to return bcde
 
-normalize:	; normalize bade with cf when shifting to return bcde using sign' l' bit 7
+normalize:	; normalize bahl with cf when shifting to return bcde using sign' l' bit 7
 
 		ld c,a			; save a -> c
-		or d			;
-		or e			;
-		jr z,underflow		; if ade = 0 then underflow
+		or h			;
+		or l			;
+		jr z,underflow		; if ahl = 0 then underflow
 		ld a,c			; restore c -> a
-		ex de,hl		; de -> hl
 1$:		dec b		;  4	; decrement result exponent b
 		jr z,underflow	;  7	; if exponent = 0 then underflow
 		add hl,hl	; 11	;
 		adc a		;  4	; ahl << 1 + cf -> ahl to normalize mantissa, cf is reset
 		jp p,1$		; 10(36); if man2 bit 7 not set yet then loop
-		ex de,hl		; hl -> de
-		jr finalize		; finalize
+		jr finalize		; finalize bahl to return bcde
 
 underflow:	; underflow to zero, no subnormal forms
 
@@ -467,11 +463,10 @@ fdivy:		EXP			;
 		ex af,af'		; restore a' with result sign
 		ld l,a			; a -> l with result sign bit 7
 		exx			; now make bchl' with sign l the active bchl with sign l'
-		ex de,hl		; hl -> de
 		ld a,c			; c -> a
-		jp finalize		; finalize bade to return result bcde
+		jp finalize		; finalize bahl to return bcde
 
-		; when cf.ahl > cde then add -cde and shift a one into chl'
+		; when cf.ahl > cde then add -cde and shift 1 into chl'
 
 6$:		add hl,de	; 11	;
 		adc c		;  4	;   ahl + -cde -> ahl
