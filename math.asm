@@ -217,9 +217,9 @@ fadd:		EXP			;
 
 		; compare signs
 
-		ld a,l			; sign -> a
+		ld a,l			; sign' l bit 7 -> a
 		exx			; activate bcdehl'
-		xor l			; sign xor sign' -> a, reset cf
+		xor l			; sign' xor sign -> a, reset cf
 		jp m,subtract		; if signs differ then subtract
 
 		; add mantissa cde to cde' to produce result mantissa ahl
@@ -289,7 +289,7 @@ normalize:	; normalize bahl with cf when shifting to return bcde using sign' l' 
 1$:		dec b		;  4	; decrement result exponent b
 		jr z,underflow	;  7	; if exponent = 0 then underflow
 		add hl,hl	; 11	;
-		adc a		;  4	; ahl << 1 + cf -> ahl to normalize mantissa, cf is reset
+		adc a		;  4	; ahl.cf << 1 -> ahl to normalize mantissa, cf is reset
 		jp p,1$		; 10(36); if man2 bit 7 not set yet then loop
 		jr finalize		; finalize bahl to return bcde
 
@@ -357,7 +357,7 @@ fmul:		EXP			;
 		exx		;  4	;
 		rr c		;  8	;
 		rr d		;  8	;
-		rr e		;  8	;   cf + ahl.cde' >> 1 -> ahl.cde'
+		rr e		;  8	;   cf.ahl.cde' >> 1 -> ahl.cde'.cf
 		exx		;  4	;
 		jr nc,3$	; 12/7	;   if carry then
 		add hl,de	;   11	;
@@ -438,7 +438,7 @@ fdivy:		EXP			;
 		sbc c		;    4	;     ahl - -cde -> ahl undo add, no carry
 3$:		exx		;  4	;
 		adc hl,hl	; 15	;
-		rl c		;  8	;   chl' << 1 + cf -> chl' shift in carry
+		rl c		;  8	;   chl'.cf << 1 -> chl' shift in carry
 		exx		;  4	;
 		add hl,hl	; 11	;
 		rla		;  4	;   ahl << 1 -> ahl where rla carry means cf.ahl > cde
@@ -793,9 +793,12 @@ compare_char:	; compare next character in a
 		; add decimal digit to mantissa accumulator dehl'
 
 		ex af,af'		;   restore a with decimal digit
-		add l			;
-		ld l,a			;   dehl' + a -> dehl'
-		ld c,1			;   1 -> c' mark that a digit was parsed
+		ld b,0			;
+		ld c,a			;
+		add hl,bc		;
+		jr nc,4$		;
+		inc de			;   dehl' + a -> dehl'
+4$:		ld c,1			;   1 -> c' mark that a digit was parsed
 		exx			;
 
 parse_next:	; parse next char
@@ -847,7 +850,7 @@ parse_done:	; parsing done
 		rl c			; c << 1 -> c clear bit 7
 		rla			; a << 1 -> a sign bit to cf
 		rr b			; set sign b bit 7 with a bit 7
-		rr c			; cf + c >> 1 -> c pick up lsb exponent bit
+		rr c			; cf.c >> 1 -> c pick up lsb exponent bit
 		sra a			; a >> 1 -> a (arithmetic)
 		jp fpow10		; scale bcde by 10**a
 
