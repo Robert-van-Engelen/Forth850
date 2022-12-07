@@ -222,7 +222,7 @@ fadd:		EXP			;
 		xor l			; sign xor sign' -> a, reset cf
 		jp m,subtract		; if signs differ then subtract
 
-		; add mantissa cde to cde' to produce result mantissa ade
+		; add mantissa cde to cde' to produce result mantissa ahl
 
 		ld a,c			; c' -> a
 		push de			; push de'
@@ -264,7 +264,7 @@ resubtract:	; redo subtract mantissa cde from cde' to produce result bcde
 
 		exx			;
 		sbc a                   ; 0xff -> a because cf is set
-                sub l                   ; complement l -> a
+                sub l                   ; complement l -> a, reset cf
 		exx			;
 		ld l,a			; restore sign' l' bit 7 to the complement of sign l bit 7
 

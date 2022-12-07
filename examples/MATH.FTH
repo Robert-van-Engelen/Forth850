@@ -48,7 +48,7 @@
   OVER >R \ save to test four quadrants
   D>F F- \ frac(r1/(pi/2))
   R@ 1 AND IF 1E0 2SWAP F- THEN \ quadrant 1 and 3
-  R> 2 AND IF FNEGATE THEN \ quadrant 0 and 2
+  R> 2 AND IF FNEGATE THEN \ quadrant 2 and 3
   1.5707962E0 F*
   \ Maclaurin series sin(x) = x - x^3/3! + x^5/5! - x^7/7! + ...
   2DUP 2DUP 2DUP F* FNEGATE

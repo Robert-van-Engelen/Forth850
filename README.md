@@ -12,7 +12,7 @@ explanation how this works.
 You can write Forth source code in the built-in TEXT editor and read it back
 into Forth850 with the [TEXT](examples/TEXT.FTH) word.
 
-A larger "full version" forth850-full.wav is included with
+A larger "full version" (work in progress) forth850-full.wav is included with
 [additional words](#additional-words-included-with-the-full-version),
 including single precision floating point math words implemented with a new and
 efficient [Z80 floating point math](#z80-floating-point-math-routines) library
