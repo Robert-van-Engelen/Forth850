@@ -7,16 +7,17 @@
 ;
 ; Features:
 ;   - IEEE 754 single precision floating point:
-;     addition, subtraction, negation, multiplication, division,
-;     integer <-> float conversion, string <-> float conversion
+;     addition, subtraction, multiplication, division, negation, absolute,
+;     truncation, flooring, rounding, integer to/from float conversion,
+;     string to/from float conversion
+;   - choice of three IEEE 754 rounding modes: round to nearest - ties to even,
+;     round to nearest - ties to away, and round to zero (truncate)
 ;   - "memoryless" using registers only (+shadow), at most one push+pop per flop
 ;   - optimized for speed and reduced code size (no loop unrolling)
 ;   - extensively tested
 ;
 ; Sacrifices:
 ;   - no INF/NAN values; routines return error condition (cf set)
-;   - truncated 24 bit mantissa instead of IEEE 754 unbiased "banker's rounding"
-;     (floating point string parsing and output do apply rounding though)
 ;
 ;-------------------------------------------------------------------------------
 ;
@@ -90,7 +91,7 @@
 ;		                     n/a (invalid value)
 ;
 ;		IEEE 754 binary floating point allows floating point values to
-;		be compared as if comparing 32 bit signed integers with 'i<':
+;		be compared as if comparing 32 bit signed integers with 'i<'.
 ;
 ;		For positive, zero and opposite signs:
 ;		   zero:  0 = 00 00 00 00 (although -0 = 80 00 00 00)
@@ -100,6 +101,20 @@
 ;		-2 < -1: -2 = c0 00 00 00 i> -1 = bf 80 00 00
 ;
 ;-------------------------------------------------------------------------------
+
+;-------------------------------------------------------------------------------
+;
+;		CONFIGURATION
+;
+;-------------------------------------------------------------------------------
+
+; Round to nearest, ties away (1) ties to even (2) and truncate (0) modes
+
+SUMROUND = 2	; fadd and fsub rounding mode
+MULROUND = 2	; fmul rounding mode (also applies to itof, stof and fpow10)
+DIVROUND = 2	; fdiv rounding mode (also applies to stof and fpow10)
+
+ROUND = SUMROUND+MULROUND+DIVROUND	; nonzero if rounding is requested
 
 ;-------------------------------------------------------------------------------
 ;
@@ -142,7 +157,7 @@ bias		.equ 127		; exponent bias 127 IEEE 754 or 128
 ;
 ;		FLOATING POINT NEGATION
 ;
-;		fneg:	- bcde -> bcde
+;		fneg:	-bcde -> bcde
 ;			no errors (cf reset)
 ;			a,b modified
 ;
@@ -152,6 +167,21 @@ fneg:		ld a,b			; sign bit 7 and exponent
 		xor 0x80		; invert sign bit 7
 		ld b,a			; set new sign bit 7
 		ret			; return bcde (cf reset)
+
+;-------------------------------------------------------------------------------
+;
+;		FLOATING POINT ABSOLUTE VALUE
+;
+;		fabs:	|bcde| -> bcde
+;			no errors (cf reset)
+;			a,b modified
+;
+;-------------------------------------------------------------------------------
+
+fabs:		ld a,b
+		and 0x7f
+		ld b,a
+		ret
 
 ;-------------------------------------------------------------------------------
 ;
@@ -165,8 +195,8 @@ fneg:		ld a,b			; sign bit 7 and exponent
 ;-------------------------------------------------------------------------------
 
 fsubx:		exx			; swap bcde with bcde'
-fsuby:		call fneg		; - bcde -> bcde
-		; FALL through		; - bcde + bcde' -> bcde
+fsuby:		call fneg		; -bcde -> bcde
+		; FALL through		; -bcde + bcde' -> bcde
 
 ;-------------------------------------------------------------------------------
 ;
@@ -179,11 +209,11 @@ fsuby:		call fneg		; - bcde -> bcde
 ;-------------------------------------------------------------------------------
 
 fadd:		EXP			;
-		ld h,a			; exponent -> h
+		ld h,a			; biased exponent -> h
 		exx			; activate bcdehl'
 		jr z,done		; if bcde is zero then return bcde'
 		EXP			;
-		ld h,a			; exponent' -> h'
+		ld h,a			; biased exponent' -> h'
 		exx			; activate bcdehl
 		jr z,done		; if bcde' is zero then return bcde
 
@@ -193,60 +223,122 @@ fadd:		EXP			;
 		jr nc,1$		; if exponent' < exponent then
 		neg			;   exponent - exponent' -> a
 		exx			;   swap bcdehl with bcdehl' (commutative symmetry)
-1$:		exx			; activate bcdehl' (symmetry allows ignoring the swap)
+1$:		exx			; activate bcdehl' (symmetry allows ignoring the swap above)
+.if SUMROUND
+		cp 25			; if exponent' - exponent >= 25 then
+.else
 		cp 24			; if exponent' - exponent >= 24 then
+.endif
 		ret nc			;   return bcde' (cf reset)
 
-		; save signs and set mantissas high bits
+		; save signs
 
 		ld l,b			; save sign' b' bit 7 to l'
-		ld b,h			; save h' -> b' exponent'
-		set 7,c			; set bit 7 of man2' c'
 		exx			; activate bcdehl
 		ld l,b			; save sign b bit 7 to l
-		set 7,c			; set bit 7 of man2 c
+		set 7,c			; set c bit 7 of man2
 
 		; align mantissa cde to cde' and set result exponent b = exponent'
 
 		or a			;
-		jr z,3$			; if exponent' <> exponent then
-		ld b,a			;   exponent' - exponent -> b loop counter
-2$:		srl c		;  8	;   loop
+		jr z,aligned		; if exponent' = exponent then add or subtract the aligned mantissas
+
+		; shift cde' left by one bit to remove implicit msb and clear lsb for rounding
+
+		exx			;
+		sla e			;
+		rl d			;
+		rl c			; cde' << 1 -> 1.cde'
+		exx			;
+
+		; shift cde right by exponent' - exponent - 1 bits to realign mantissas
+
+		ld b,a			; loop counter exponent' - exponent -> b
+		jr 3$			;
+2$:		srl c		;  8	; loop exponent' - exponent - 1 times
 		rr d		;  8	;
-		rr e		;  8	;     cde >> 1 -> cde
-		djnz 2$		; 13(37);   repeat exponent' - exponent times
-3$:		add h			;
+		rr e		;  8	;   cde >> 1 -> cde
+3$:		djnz 2$		; 13(37); until --b = 0
+		add h			;
 		ld b,a			; exponent' - exponent + exponent -> b = exponent'
 
 		; compare signs
 
+		ld a,l			; sign -> a
+		exx			; activate bcdehl'
+		xor l			; sign xor sign' -> a
+		ld a,c			; c' -> a
+		push de			; push de'
+		exx			; activate bcdehl
+		pop hl			; pop hl with de'
+		jp m,subtract		; if signs differ then subtract aligned mantissas
+
+add:		; add realigned mantissa 0.cde to 1.cde' to produce result mantissa ahl
+
+		add hl,de		;
+		adc c			; 1.cde' + 0.cde -> 1+cf.ahl with result mantissa, cf is complemented
+		ccf			; complement cf
+		jr c,shiftrightmant	; if carry then shift right result mantissa 1.ahl
+		rra			;
+		rr h			;
+		rr l			; 10.ahl >> 1 -> 1.ahl shift right
+		scf			; set cf
+		jr shiftright		; shift right again result mantissa 1.ahl and increment exponent b
+
+subtract:	; subtract realigned mantissa 0.cde from 1.cde' to produce result mantissa ahl
+
+		sbc hl,de		;
+		sbc c			; 1.cde' - 0.cde -> 1-cf.ahl with result mantissa, cf is complemented
+		ccf			; complement cf
+		jr c,shiftrightmant	; if carry then shift right result mantissa 1.ahl
+		dec b			; decrement exponent
+		jr z,underflow		; if exponent = 0 then return underflow
+		jr normalize		; normalize result mantissa 0.ahl to return inexact result bcde
+
+aligned:	; add or subtract aligned mantissas cde and cde' after comparing signs
+
+		ld b,h			; save h -> b result exponent
 		ld a,l			; sign' l bit 7 -> a
 		exx			; activate bcdehl'
+		set 7,c			; set c' bit 7 of man2' (c bit 7 of man2 already set)
+		ld b,h			; save h' -> b' result exponent' = b result exponent
 		xor l			; sign' xor sign -> a, reset cf
-		jp m,subtract		; if signs differ then subtract
+		jp m,subaligned		; if signs differ then subtract aligned mantissas
 
-		; add mantissa cde to cde' to produce result mantissa ahl
+addaligned:	; add aligned mantissa cde to cde' to produce result mantissa 1.ahl
 
 		ld a,c			; c' -> a
 		push de			; push de'
 		exx			; activate bcdehl
 		pop hl			; pop hl with de'
 		add hl,de		;
-		adc c			; cde' + cde -> ahl with result mantissa
+		adc c			; cde' + cde -> 1.ahl with result mantissa, cf is set
 
-shiftoncarry:	; shift mantissa ahl right if carry after addition
+		; shift right result mantissa cf.ahl and increment exponent b
 
-		jr nc,finalize		; if no carry then finalize
-		inc b			; increment result exponent b
-		ret z			; if exponent = 0 then return overflow error (cf set)
-	        rra			;
+shiftright:	inc b			; increment result exponent
+		ret z			; if result exponent = 0 then overflow (cf set)
+
+shiftrightmant:	; shift right result mantissa cf.ahl
+
+		rra			;
 		rr h			;
-		rr l			; shift right result mantissa ahl
+		rr l			; cf.ahl >> 1 -> ahl.cf
+
+finalizer:	; finalize bahl.cf with cf for rounding to return bcde using sign' l' bit 7
+
+.if SUMROUND
+.if SUMROUND - 1
+		call c,roundtoeven	; if carry then round result mantissa ahl.cf
+.else
+		call c,roundtoaway	; if carry then round result mantissa ahl.cf
+.endif
+.endif
 
 finalize:	; finalize bahl to return bcde using sign' l' bit 7
 
 .if bias - 128	; check overflow when bias = 127, for bias = 128 the result exponent <= bias + 127 = 255
-		inc b			; check if result exponent overflowed
+		inc b			; check if result exponent overflowed (+/- infinity)
 		scf			; set cf
 		ret z			; if result exponent overflowed then return error (cf set)
 		dec b			;
@@ -263,15 +355,32 @@ finalize:	; finalize bahl to return bcde using sign' l' bit 7
 done:		xor a			; 0 -> a, reset cf, reset v, set z
 		ret			; return bcde (cf reset)
 
-resubtract:	; redo subtract mantissa cde from cde' to produce result bcde
+.if ROUND	; round bahl.1
+
+roundtoeven:	bit 0,l			; round to nearest, ties to even
+		ret z			;
+roundtoaway:	inc l			; round to nearest, ties to away
+		ret nz			;
+		inc h			;
+		ret nz			;
+		inc a			;
+		ret nz			;
+		inc b			;
+		ret nz			; if biased exponent > 255 then
+		pop hl			;   pop and discard return address
+		scf			;   set cf
+		ret			;   return error (cf set)
+.endif
+
+resubtract:	; redo subtract mantissa cde' from cde after swap to produce result mantissa ahl
 
 		exx			;
-		sbc a                   ; 0xff -> a because cf is set
-                sub l                   ; complement l -> a, reset cf
+		sbc a			; 0xff -> a because cf is set
+		sub l			; complement l -> a, reset cf
 		exx			;
 		ld l,a			; restore sign' l' bit 7 to the complement of sign l bit 7
 
-subtract:	; subtract mantissa cde from cde' to produce ahl and nornalized result bcde
+subaligned:	; subtract aligned mantissa cde from cde' to produce result mantissa cf.ahl
 
 		ld a,c			; c' -> a
 		push de			; push de'
@@ -280,21 +389,19 @@ subtract:	; subtract mantissa cde from cde' to produce ahl and nornalized result
 		sbc hl,de		; de' - de -> hl (cf was reset)
 		sbc c			; c' - c -> a
 		jr c,resubtract		; if cde' < cde then swap cde with cde' and redo subtract
-		jp m,finalize		; if man2 a bit 7 is set then finalize bahl to return bcde
 
-normalize:	; normalize bahl with cf when shifting to return bcde using sign' l' bit 7
+normalize:	; normalize bahl to return inexact result bcde using sign' l' bit 7
 
 		ld c,a			; save a -> c
 		or h			;
 		or l			;
 		jr z,underflow		; if ahl = 0 then underflow
 		ld a,c			; restore c -> a
-1$:		dec b		;  4	; decrement result exponent b
-		jr z,underflow	;  7	; if exponent = 0 then underflow
+		or a			;
+1$:		jp m,finalize	; 10	; loop while a bit 7 is clear
 		add hl,hl	; 11	;
-		adc a		;  4	; ahl.cf << 1 -> ahl to normalize mantissa, cf is reset
-		jp p,1$		; 10(36); if man2 bit 7 not set yet then loop
-		jr finalize		; finalize bahl to return bcde
+		adc a		;  4	;   ahl << 1 -> ahl
+		djnz 1$		; 13(38); until --b = 0
 
 underflow:	; underflow to zero, no subnormal forms
 
@@ -335,9 +442,9 @@ fmul:		EXP			;
 		jr nc,underflow		;   if incorrect positive then underflow
 		ret			;   return with overflow error (cf set)
 
-		; save biased result exponent and sign
+1$:		; save biased result exponent and sign
 
-1$:		add bias		; bias the result exponent
+		add bias		; bias the result exponent
 		jr z,underflow		; if result exponent = 0 then underflow
 		ex af,af'		; save result biased exponent to a'
 		ld a,b			; b -> a with sign bit 7
@@ -367,12 +474,51 @@ fmul:		EXP			;
 		adc c		;    4	;     ahl + cde -> ahl
 3$:		djnz 2$		; 13(87); until --b = 0
 
-		; restore result exponent b and normalize bahl to return result bcde
+		; restore result exponent b
 
 		ex af,af'		; restore result exponent a', save a and flags
 		ld b,a			; a' -> b with result exponent
 		ex af,af'		; restore a and flags
-		jp shiftoncarry		; normalize bahl to return result bcde
+
+		; shift right on carry
+
+.if SUMROUND - MULROUND
+		jr nc,4$		; if carry then
+		inc b			;   increment result exponent
+		ret z			;   if result exponent = 0 then overflow (cf set)
+		rra			;
+		rr h			;
+		rr l			;   cf.ahl >> 1 -> ahl.cf
+		jr 5$			;
+.else
+		jp c,shiftright		; if carry then shift right mantissa cf.ahl, increment exponent, return bcde
+.endif
+
+4$:		; otherwise test c' bit 7 to round mantissa ahl.cde'
+
+.if MULROUND
+		exx			;
+		rl c			; c' << 1 to produce cf to round result mantissa ahl.cde'
+		exx			;
+.endif
+
+5$:		; finalize and round bahl.c' to return result bcde
+
+.if MULROUND
+.if SUMROUND - MULROUND
+.if MULROUND - 1
+		call c,roundtoeven	; if carry then round result mantissa ahl.cf
+		jp finalize		; finalize bahl.cf to return result bcde
+.else
+		call c,roundtoaway	; if carry then round result mantissa ahl.cf
+		jp finalize		; finalize bahl.cf to return result bcde
+.endif
+.else
+		jp finalizer		; finalize and round bahl.cf to return result bcde
+.endif
+.else
+		jp finalize		; finalize bahl.cf to return result bcde
+.endif
 
 ;-------------------------------------------------------------------------------
 ;
@@ -405,9 +551,9 @@ fdivy:		EXP			;
 		jr nc,underflow		;   if incorrectly positive then underflow
 		ret			;   return with overflow error (cf set)
 
-		; save biased result exponent to b' and result sign to l'
+1$:		; save biased result exponent to b' and result sign to l'
 
-1$:		add bias		; bias the result exponent
+		add bias		; bias the result exponent
 		jr z,underflow		; if result exponent = 0 then underflow
 		ex af,af'		; save a with result exponent
 		ld a,b			; b -> a' with sign bit 7
@@ -435,8 +581,8 @@ fdivy:		EXP			;
 		pop hl			; restore de' -> hl
 		ld b,24			; 24 -> b loop counter
 2$:		add hl,de	; 11	; loop
-		adc c		;  4	;   ahl + -cde -> ahl
-		jr c,3$		; 12/7	;   if cf = 0 then
+		adc c		;  4	;   ahl + -cde -> cf.ahl
+		jr c,3$		; 12/7	;   if no carry then
 		sbc hl,de	;   15	;
 		sbc c		;    4	;     ahl - -cde -> ahl undo add, no carry
 3$:		exx		;  4	;
@@ -445,33 +591,59 @@ fdivy:		EXP			;
 		exx		;  4	;
 		add hl,hl	; 11	;
 		rla		;  4	;   ahl << 1 -> ahl where rla carry means cf.ahl > cde
-		jr c,6$		;  7/12	;   if cf = 1 then force add, shift carry, and loop again
+		jr c,7$		;  7/12	;   if carry then force add, shift carry, and loop again
 		djnz 2$		; 13(107); until --b = 0
 
-		; normalize result mantissa chl'
+4$:		; normalize result mantissa chl'
 
-4$:		exx			; activate bcdehl'
+		exx			; activate bcdehl'
 		bit 7,c			; test c' bit 7
 		jr nz,5$		; if zero then
 		dec b			;   decrement result exponent b'
-		exx			;
+		exx			;   activate bcdehl
 		jp z,underflow		;   if result exponent = 0 then underflow
 		inc b			;   1 -> b loop counter
-		jr nc,2$		;   loop without rla carry for final mantissa bit
-		jr 3$			;   loop with rla carry for final mantissa bit
+		jr nc,2$		;   loop once when no final rla carry for mantissa lsb
+		jr 3$			;   loop once when final rla carry for mantissa lsb
 
-		; finalize bchl' to return bcde using sign a' bit 7
+5$:		; test to set cf for rounding
 
-5$:		exx			; activate bcdehl
-		ex af,af'		; restore a' with result sign
+		exx			; activate bcdehl
+.if DIVROUND
+		jr c,6$			; if no final rla carry then
+		add hl,de		;
+		adc c			;   ahl + -cde -> cf.ahl test to set cf
+.endif
+
+6$:		; restore sign l' bit 7
+
+		ex af,af'		; restore a' with result sign, safe flags
 		ld l,a			; a -> l with result sign bit 7
+		ex af,af'		; restore flags
 		exx			; now make bchl' with sign l the active bchl with sign l'
 		ld a,c			; c -> a
-		jp finalize		; finalize bahl to return bcde
 
-		; when cf.ahl > cde then add -cde and shift 1 into chl'
+		; finalize and round bahl'.cf to return bcde using sign a' bit 7
 
-6$:		add hl,de	; 11	;
+.if DIVROUND
+.if SUMROUND - DIVROUND
+.if DIVROUND - 1
+		call c,roundtoeven	; if carry then round result mantissa ahl.cf
+		jp finalize		; finalize bahl.cf to return result bcde
+.else
+		call c,roundtoaway	; if carry then round result mantissa ahl.cf
+		jp finalize		; finalize bahl.cf to return result bcde
+.endif
+.else
+		jp finalizer		; finalize and round bahl.cf to return result bcde
+.endif
+.else
+		jp finalize		; finalize bahl.cf to return result bcde
+.endif
+
+7$:		; when cf.ahl > cde then add -cde and shift a one into chl'
+
+		add hl,de	; 11	;
 		adc c		;  4	;   ahl + -cde -> ahl
 		scf		;  4	;   1 -> cf
 		djnz 3$		; 13	; until --b = 0
@@ -495,7 +667,7 @@ ftoi:		EXP			;
 		ld h,a			; unbiased exponent -> h
 		ld a,30			;
 		sub h			; 30 - unbiased exponent -> a
-		ret c			; if cf = 1 then out of range (cf set)
+		ret c			; if carry then out of range (cf set)
 		set 7,c			; set bit 7 of man2 c
 
 		; shift mantissa to remove fractional part
@@ -509,16 +681,16 @@ ftoi:		EXP			;
 		rra			;   cdea >> 1 -> cdea
 		djnz 1$			; until --b = 0
 
-		; rearrange cdea to the result integer bcde
+2$:		; rearrange cdea to the result integer bcde
 
-2$:		ld b,c			;
+		ld b,c			;
 		ld c,d			;
 		ld d,e			;
 		ld e,a			;
 
-		; return positive integer bcde if float is positive
+3$:		; return positive integer bcde if float is positive
 
-3$:		rl l			; test l bit 7
+		rl l			; test l bit 7
 		ret nc			; return positive bcde (cf reset)
 
 inegate:	; negate integer bcde
@@ -544,7 +716,7 @@ inegate:	; negate integer bcde
 ;
 ;		itof:	float(bcde) -> bcde
 ;			no errors (cf reset)
-;			a,b,c,d,e,h,l modified
+;			a,b,c,d,e,h,l,l' modified
 ;
 ;-------------------------------------------------------------------------------
 
@@ -554,39 +726,125 @@ itof:		ld a,b			;
 		or e			;
 		ret z			; return if bcde is zero (cf reset)
 
-		; save sign to l and negate integer bcde when negative
+		; save sign to l' and negate integer bcde when negative
 
-		ld l,b			; save sign b bit 7 to l
-		bit 7,b			; if sign is negative then
-		call nz,inegate		;   negate integer bcde
+		ld a,b			;
+		exx			;
+		ld l,a			; save sign b bit 7 to l'
+		exx			;
+		or a			; if sign is negative then
+		call m,inegate		;   negate integer bcde
 
-		; rearrange nonzero integer bcde to mantissa cde.a
+		; rearrange integer bcde to mantissa ahl.e
 
-		ld a,e			;
-		ld e,d			;
-		ld d,c			;
-		ld c,b			;
+		ld a,b			;
+		ld h,c			;
+		ld l,d			;
 
-		; set exponent b and normalize nonzero mantissa cde.a
+		; set result exponent b and normalize nonzero mantissa ahl.e
 
 		ld b,bias + 31		; set exponent b
-		bit 7,c			;
-		jr nz,2$		; if c bit 7 not set then
-1$:		dec b			;   loop, decrement exponent b
-		add a			;
-		rl e			;
-		rl d			;
-		rl c			;     cde.a << 1 -> cde.a
-		jp p,1$			;   until c bit 7 set
+		or a
+		jp m,2$			; if c bit 7 not set then
+1$:		dec b		;  4	;   loop, decrement exponent b (cannot underflow)
+		sla e		;  8	;
+		adc hl,hl	; 15	;
+		adc a		;  4	;     ahl.e << 1 -> ahl.e
+		jp p,1$		; 10(51);   until a bit 7 set
 
-		; finalize bcde with sign l bit 7
-		
-2$:		rl c			; shift left man2 c to assign man2 bit 7 below
-		rl l			; set cf to the sign l bit 7
-		rr b			; rotate right result exponent b and assign sign bit
-		rr c			; rotate right result man2 c and assign exponent bit
+2$:		; round
+
+.if MULROUND
+		rl e			; set cf to e bit 7
+.if SUMROUND - MULROUND
+.if MULROUND - 1
+		call c,roundtoeven	; if carry then round result mantissa ahl.cf
+		jp finalize		; finalize bahl to return bcde using sign' l' bit 7
+.else
+		call c,roundtoaway	; if carry then round result mantissa ahl.cf
+		jp finalize		; finalize bahl to return bcde using sign' l' bit 7
+.endif
+.else
+		jp finalizer		; finalize and round bahl to return bcde using sign' l' bit 7
+.endif
+.else
+		jp finalize		; finalize bahl to return bcde using sign' l' bit 7
+.endif
+
+;-------------------------------------------------------------------------------
+;
+;		TRUNCATION
+;
+;		ftrunc:	trunc(bcde) -> bcde round towards zero
+;			no errors (cf reset)
+;			a,b,c,d,e,h,l modified
+;
+;		trunc(-bcde) = -trunc(bcde)
+;		frac(bcde) = bcde - trunc(bcde)
+;
+;-------------------------------------------------------------------------------
+
+ftrunc:		push bc			;
+		push de			; save bcde
+		call ftoi		; convert to integer if possible
+		jr c,1$			; if converted then
+		pop af			;
+		pop af			;   discard old bcde
+		jp itof			;   convert back to float and return
+1$:		pop de			;
+		pop bc			; restore old bcde
 		or a			; reset cf
-		ret			; return float bcde (cf reset)
+		ret			; return
+
+;-------------------------------------------------------------------------------
+;
+;		FLOORING
+;
+;		ffloor:	floor(bcde) -> bcde round towards -infinity
+;			cf set on overflow
+;			a,b,c,d,e,h,l,a',b',c',d',e',h',l' modified
+;
+;		floor(|bcde|) = trunc(|bcde|)
+;		ceil(bcde) = -floor(-bcde)
+;
+;-------------------------------------------------------------------------------
+
+ffloor:		push bc			;
+		push de			; save bcde
+		call ftrunc		; trunc(bcde) -> bcde
+		exx			;
+		pop de			;
+		pop bc			; pop old bcde -> bcde'
+		exx			;
+		push bc			; save trunc(bcde)
+		push de			;
+		call fsuby		; bcde' - trunc(bcde) -> frac(bcde)
+		ISPOSZ			; test if frac(bcde) >= 0
+		pop de			;
+		pop bc			; restore trunc(bcde)
+		ret z			; if frac(bcde) >= 0 then return trunc(bcde)
+		exx			;
+		ld bc,bias + 0x100 << 7	;
+		ld de,0x0000		; -1.0e0 -> bcde'
+		jp fadd			; return trunc(bcde) - 1.0e0
+
+;-------------------------------------------------------------------------------
+;
+;		ROUNDING
+;
+;		fround:	round(bcde) -> bcde round to nearest, ties to away
+;			cf set on overflow
+;			a,b,c,d,e,h,l,a',b',c',d',e',h',l' modified
+;
+;		round(bcde) = floor(bcde + 0.5e0)
+;
+;-------------------------------------------------------------------------------
+
+fround:		exx			;
+		ld bc,bias - 1 << 7	;
+		ld de,0x0000		; 0.5e0 -> bcde'
+		call fadd		; bcde + 0.5e0 -> bcde (cannot overflow)
+		jr ffloor		; return floor(bcde)
 
 ;-------------------------------------------------------------------------------
 ;
@@ -718,9 +976,9 @@ stof:		ld b,a			; a -> b string length
 		set 7,c			;   set sign c bit 7 (negative)
 		jr 2$			;   jump into parsing the next character
 
-		; check for a leading plus sign
+1$:		; check for a leading plus sign
 
-1$:		cp '+			;
+		cp '+			;
 		jr nz,compare_char	;
 2$:		dec b			; decrement length and check if zero
 		scf			;
@@ -741,9 +999,9 @@ compare_char:	; compare next character in a
 		set 6,c			;   set c bit 6 to mark dp parsed
 		jr parse_next		;   parse next char
 
-		; check for the E and e signs
+1$:		; check for the E and e signs
 
-1$:		cp 'E			;
+		cp 'E			;
 		jr z,parse_exponent	; if char is 'E then parse exponent
 		cp 'e			;
 		jr z,parse_exponent	; if char is 'e then parse exponent
@@ -762,9 +1020,9 @@ compare_char:	; compare next character in a
 		jr z,2$			; if digit placed after dp then
 		inc c			;   increment c digit counter
 
-		; multiply mantissa accumulator dehl' by 10
+2$:		; multiply mantissa accumulator dehl' by 10
 
-2$:		exx			;
+		exx			;
 		ex af,af'		; save a
 		ld a,d			; d' -> a
 		and 0xf0		;
@@ -832,9 +1090,25 @@ parse_done:	; parsing done
 		rl e		;  8	;
 		adc a		;  4	;   aehl' << 1 -> aehl'
 		jp p,1$		; 10(37);
-2$:		ld c,a			;
+
+2$:		; round and rearrange aeh'.l' to cde'
+
+.if MULROUND
+		rl l			; set cf to l bit 7
+		ld l,h			;
+		ld h,e			; aeh' -> ahl'
+.if MULROUND - 1
+		call c,roundtoeven	; if carry then round result mantissa ahl.cf
+.else
+		call c,roundtoaway	; if carry then round result mantissa ahl.cf
+.endif
+		ld c,a			;
+		ex de,hl		; save result mantissa ahl' -> cde'
+.else
+		ld c,a			;
 		ld d,e			;
 		ld e,h			; save result mantissa aeh' -> cde'
+.endif
 		exx			;
 
 		; adjust decimal exponent e down by c (biased) places after dp
@@ -876,20 +1150,20 @@ parse_exponent:	; parse the decimal exponent part into e with sign d
 		inc d			;   1 -> d marks negative decimal exponent
 		jr 2$			;   get next char
 
-		; check for decimal exponent plus sign
+1$:		; check for decimal exponent plus sign
 
-1$:		cp '+			;
+		cp '+			;
 		jr nz,4$		; if char is not '+ then jump into loop to parse digit
 
-		; check and get next char after +/- sign
+2$:		; check and get next char after +/- sign
 
-2$:		dec b			; decrement remaining length b
+		dec b			; decrement remaining length b
 		scf			;
 		ret z			; if b = 0 then return error (cf set)
 
-		; loop to parse and accumulate decimal digits of the decimal exponent
+3$:		; loop to parse and accumulate decimal digits of the decimal exponent
 
-3$:		ld a,(hl)		; loop
+		ld a,(hl)		; loop
 		inc hl			;   [hl++] -> a next char
 		ex af,af'		;   save char
 		ld a,e			;
@@ -901,9 +1175,9 @@ parse_exponent:	; parse the decimal exponent part into e with sign d
 		ld e,a			;   10 * e -> e
 		ex af,af'		;   restore char
 
-		; convert digit and add to decimal exponent
+4$:		; convert digit and add to decimal exponent
 
-4$:		sub '0			;   convert a to digit
+		sub '0			;   convert a to digit
 		ret c			;   if digit < 0 then return error (cf set)
 		cp '9-'0+1		;
 		ccf			;
@@ -1013,9 +1287,9 @@ ftos:		push hl			; save buffer address hl
 		djnz 2$		; 13(36); until --b' = 0
 		jr 7$			;
 
-		; return buffer with 0s
+3$:		; return buffer with 0s
 
-3$:		pop bc			; pop buffer size b
+		pop bc			; pop buffer size b
 		pop hl			; pop buffer address hl
 4$:		ld (hl),'0		; loop
 		inc hl			;   '0 -> [hl++]
@@ -1024,16 +1298,16 @@ ftos:		push hl			; save buffer address hl
 		ld e,b			; 0 -> e zero decimal exponent
 		ret			; return
 
-		; leading digit is zero, shift it away
+5$:		; leading digit is zero, shift it away
 
-5$:		exx			;
+		exx			;
 		pop de			;
 		dec e			; decrement the saved decimal exponent e
 		push de			;
 
-		; loop over the buffer to populate
+6$:		; loop over the buffer to populate
 
-6$:		exx			; loop
+		exx			; loop
 
 		; 10 * d.ehl' -> a.ehl' with d' = 0, decimal digit a and fraction ehl'
 
@@ -1057,9 +1331,9 @@ ftos:		push hl			; save buffer address hl
 		ld a,d		;  4	;
 		adc b		;  4	;   10 * d.ehl' -> aehl'
 
-		; digit is now in a, clear digit d in d.ehl'
+7$:		; digit is now in a, clear digit d in d.ehl'
 
-7$:		ld d,0			;   0 -> d' clear decimal digit
+		ld d,0			;   0 -> d' clear decimal digit
 
 		; store digit d in the buffer
 

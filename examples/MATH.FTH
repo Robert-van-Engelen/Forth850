@@ -1,17 +1,10 @@
-\ MATH.FTH collection of math functions
+\ MATH.FTH collection of floating point math functions
+\ Based on IEEE 754 mathr.asm with rounding configuration SUM/MUL/DIV=2/2/2
 \ Author: Dr. Robert van Engelen
 
 : FMAX      ( r1 r2 -- r3 ) 2OVER 2OVER F< IF 2SWAP THEN 2DROP ;
 
 : FMIN      ( r1 r2 -- r3 ) 2OVER 2OVER F< INVERT IF 2SWAP THEN 2DROP ;
-
-\ Truncation and rounding
-
-: FTRUNC    ( r1 -- r2 ) 2DUP ['] F>D CATCH 0= IF D>F 2SWAP THEN 2DROP ;
-
-: FLOOR     ( r1 -- r2 ) 2DUP F0< IF $3F7FFFFF. ( = .99999... ) F- THEN FTRUNC ;
-
-: FROUND    ( r1 -- r2 ) .5E0 F+ FLOOR ;
 
 \ Factorial of an integer returns float
 
@@ -40,16 +33,18 @@
 \ Trig words based on Jupiter ACE "FORTH Programming" p.93
 \ improved to cover a wider range of angles and for speed (fewer terms to sum)
 
+3.1415928E0 2CONSTANT PI
+
 : FSIN      ( r1 -- r2 )
   \ map r1 to [0,pi/2) and adjust for the quadrant 0, 1, 2, 3
-  1.5707962E0 F/
+  1.5707964E0 F/
   2DUP F0< IF FABS 2E0 F+ THEN \ -r1 = pi+r1
   2DUP F>D \ truncate
   OVER >R \ save to test four quadrants
   D>F F- \ frac(r1/(pi/2))
   R@ 1 AND IF 1E0 2SWAP F- THEN \ quadrant 1 and 3
   R> 2 AND IF FNEGATE THEN \ quadrant 2 and 3
-  1.5707962E0 F*
+  1.5707964E0 F*
   \ Maclaurin series sin(x) = x - x^3/3! + x^5/5! - x^7/7! + ...
   2DUP 2DUP 2DUP F* FNEGATE
   2ROT 2ROT \ -- -x*x x x
@@ -61,7 +56,7 @@
   2 +LOOP
   2DROP 2SWAP 2DROP ;
 
-: FCOS      ( r1 -- r2 ) 1.5707962E0 2SWAP F- FSIN ;
+: FCOS      ( r1 -- r2 ) 1.5707964E0 2SWAP F- FSIN ;
 
 : FTAN      ( r1 -- r2 ) 2DUP FSIN 2SWAP FCOS F/ ;
 
@@ -83,9 +78,9 @@
     2ROT F+ 2SWAP \ -- x sum+x^(n+1)/(n+1) x^(n+1)
   LOOP
   2DROP 2SWAP 2DROP FNEGATE
-  ROT S>D D>F 0.6931467E0 F* F+ ; \ plus n*ln(2) = n*0.69314718055995
+  ROT S>D D>F 0.6931468E0 F* F+ ; \ plus n*ln(2) = n*0.69314718055995
 
-: FLOG      ( r1 -- r2 ) FLN 0.4342948E0 F* ; \ log(x) = ln(x)/ln(10) = ln(x)*0.43429448190325
+: FLOG      ( r1 -- r2 ) FLN 0.43429475E0 F* ; \ log(x) = ln(x)/ln(10) = ln(x)*0.43429448190325
 
 : FEXP      ( r1 -- r2 )
   2DUP F0< -ROT
@@ -115,11 +110,11 @@
     1E0 2SWAP F/
   THEN ;
 
-: FALOG     ( r1 -- r2 ) 2.3025851E0 F* FEXP ;
+: FALOG     ( r1 -- r2 ) 2.302586E0 F* FEXP ; \ exp(x*ln(10))
 
 \ Exponentiation (simple version)
 
-: F**       ( r1 r2 -- r3 ) 2SWAP FLN F* FEXP ;
+: F^        ( r1 r2 -- r3 ) 2SWAP FLN F* FEXP ;
 
 \ A more powerful F** using exponentiation by squaring when r2 is integer
 
@@ -142,7 +137,7 @@
     DROP 2SWAP 2DROP \ -- product
     R> IF 1E0 2SWAP F/ THEN \ r2 was negative
   ELSE
-    2SWAP FLN F* FEXP
+    F^
   THEN ;
 
 \ Hyperbolics

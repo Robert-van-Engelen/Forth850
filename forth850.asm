@@ -303,7 +303,7 @@ boot::		ld (bsp),sp		; save BASIC sp to [bsp]
 		.dw type
 		.dw repl
 
-rp0		.equ USER               ; rp0 = USER is top of (above) free memory
+rp0		.equ USER		; rp0 = USER is top of (above) free memory
 sp0:		.dw 0			; sp0
 sp1:		.dw 0			; sp1 = -1 - sp0
 top:		.dw 0			; dictionary top
@@ -862,8 +862,8 @@ true_next	.equ mone_next		; alias
 		sbc hl,bc		; hl - bc -> hl
 		ld (rp),hl		; [rp] - bc -> rp
 		ex de,hl		; [rp] - bc -> de
-		ld l,a                  ;
-		ld h,a                  ; 0 -> hl asserted a = 0
+		ld l,a			;
+		ld h,a			; 0 -> hl asserted a = 0
 		add hl,sp		; sp -> hl
 		ldir			; [hl++] -> [de++] until --bc = 0
 		ld sp,hl		; hl -> sp
@@ -2148,17 +2148,19 @@ cells		.equ twostar		; alias
 
 .if MATH
 
-.include "math.asm"
+		; include mathr.asm with rounding or simpler truncating math.asm
+
+.include "mathr.asm"
 
 		; floating point dyadic operation driver
 		; may throw -43 "floating-point result out of range"
 
-fopix:		pop hl			; pop hl with 2OS
+f2ix:		pop hl			; pop hl with 2OS
 		exx			;
 		pop bc			; pop bc' with 3OS
 		pop de			; pop de' with 4OS
 		exx			;
-		push bc			; save bc with ip
+f0ix:		push bc			; save bc with ip
 		ld b,d			;
 		ld c,e			; de -> bc
 		ex de,hl		; hl -> de
@@ -2171,7 +2173,14 @@ fopix:		pop hl			; pop hl with 2OS
 		pop bc			; rewstore bc with ip
 		push hl			; save hl as new 2OS
 		JP_NEXT			; continue
+
 jpix:		jp (ix)			;
+
+		; floating point unary function driver
+		; may throw -43 "floating-point result out of range"
+
+f1ix:		pop hl			; pop hl with 2OS
+		jr f0ix			;
 
 ;= F+		r1 r2 -- r3
 ;		sum r1+r2;
@@ -2179,7 +2188,7 @@ jpix:		jp (ix)			;
 
 		CODE F+,fplus
 		ld ix,fadd		; fadd execution vec -> ix
-		jr fopix		;
+		jr f2ix			;
 
 ;= F-		r1 r2 -- r3
 ;		difference r1-r2;
@@ -2187,7 +2196,7 @@ jpix:		jp (ix)			;
 
 		CODE F-,fminus
 		ld ix,fsuby		; fsuby execution vec -> ix
-		jr fopix		;
+		jr f2ix			;
 
 ;= F*		r1 r2 -- r3
 ;		product r1*r2;
@@ -2195,7 +2204,7 @@ jpix:		jp (ix)			;
 
 		CODE F*,fstar
 		ld ix,fmul		; fmul execution vec -> ix
-		jr fopix		;
+		jr f2ix			;
 
 ;= F/		r1 r2 -- r3
 ;		quotient r1/r2
@@ -2208,7 +2217,28 @@ jpix:		jp (ix)			;
 		ld a,-42		;
 		jp z,throw_a		; if TOS = 0 then throw -42
 		ld ix,fdivy		; fdivy execution vec -> ix
-		jr fopix		;
+		jr f2ix			;
+
+;= FTRUNC	r1 -- r2
+;		truncate float towards zero
+
+		CODE FTRUNC,ftrunc_
+		ld ix,ftrunc
+		jr f1ix
+
+;= FLOOR	r1 -- r2
+;		floor float towards negative infinity
+
+		CODE FLOOR,floor
+		ld ix,ffloor
+		jr f1ix
+
+;= FROUND	r1 -- r2
+;		round float to nearest
+
+		CODE FROUND,fround_
+		ld ix,fround
+		jr f1ix
 
 ;= FNEGATE	r1 -- r2
 ;		negate float
@@ -2224,10 +2254,11 @@ jpix:		jp (ix)			;
 ;
 ;    : FABS 2DUP F0< IF FNEGATE THEN ;
 
-		COLON FABS,fabs
-		.dw twodup,fzeroless,doif,1$
-		.dw   fnegate
-1$:		.dw doret
+		CODE FABS,fabs_
+		ld a,d
+		and 0x7f
+		ld d,a
+		JP_NEXT
 
 ;= F=		r1 r2 -- flag
 ;		true if r1 = r2
@@ -2330,7 +2361,7 @@ jpix:		jp (ix)			;
 		pop de			; pop de with 4OS
 		push bc			; save bc with ip
 		push ix			;
-		pop bc			; ix -> bc with 3OS 
+		pop bc			; ix -> bc with 3OS
 		call ftos		; bcde -> [hl...hl+a-1 digits] exponent e and sign d bit 7
 		pop bc			; restore bc with ip
 		rl d			;

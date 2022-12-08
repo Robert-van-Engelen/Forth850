@@ -12,7 +12,7 @@ explanation how this works.
 You can write Forth source code in the built-in TEXT editor and read it back
 into Forth850 with the [TEXT](examples/TEXT.FTH) word.
 
-A larger "full version" (work in progress) forth850-full.wav is included with
+A larger "full version" forth850-full.wav is included with
 [additional words](#additional-words-included-with-the-full-version),
 including single precision floating point math words implemented with a new and
 efficient [Z80 floating point math](#z80-floating-point-math-routines) library
@@ -52,11 +52,12 @@ interface CE-126P or a CE-124:
     BLOADM
 
 Loading via serial is in principle possible.  Instructions will be included
-in this README sometime later.
+in this README sometime later once I've figure that out (help is appreciated).
 
 Load the forth850-full.wav "full version" to include many
-[additional words](#additional-words-included-with-the-full-version).
-The full version will continue to evolve and grow with new features.
+[additional words](#additional-words-included-with-the-full-version) and
+[floating point words](#floating-point-math-words-included-with-the-full-version).
+The full version will continue to evolve with new features.
 
 ## How to switch between Forth and BASIC
 
@@ -679,13 +680,17 @@ true if x1 is within x2 up to x3 exclusive
 
 ### INVERT
 _x1 -- x2_
-one's complement ~x
+one's complement ~x1
 
     : INVERT 1+ NEGATE ;
+    : INVERT -1 XOR ;
 
 ### NEGATE
 _n1 -- n2_
-two's complement -n
+two's complement -n1
+
+    : NEGATE 0 SWAP - ;
+    : NEGATE INVERT 1+ ;
 
 ### ABS
 _n1 -- n2_
@@ -2340,6 +2345,18 @@ _r1 r2 -- r3_
 quotient r1/r2
 may throw -42 "floating-point divide by zero";
 may throw -43 "floating-point result out of range"
+
+### FTRUNC
+_r1 -- r2_
+truncate float towards zero
+
+### FLOOR
+_r1 -- r2_
+floor float towards negative infinity
+
+### FROUND
+_r1 -- r2_
+round float to nearest
 
 ### FNEGATE
 _r1 -- r2_
