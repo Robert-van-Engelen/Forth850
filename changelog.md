@@ -10,7 +10,9 @@
 - nov  6, 2022: Forth850 v0.7 alpha update
 - nov  7, 2022: Forth850 v0.8 alpha update
 - nov 10, 2022: Forth850 v0.9 beta fully tested
-- nov 11, 2022: Forth850 v0.9 fixed `<ERR-13>` regression issue and tested
-- nov 15, 2022: Forth850 v0.9 fixed `D-` typo in code
-- nov 22, 2022: Forth850 v0.9 fixed `*` typo in code (hl not de register)
+- nov 11, 2022: Forth850 v0.9 fix `<ERR-13>` regression issue and tested
+- nov 15, 2022: Forth850 v0.9 fix `D-` typo in code
+- nov 22, 2022: Forth850 v0.9 fix `*` typo in code (hl not de register)
 - nov 29, 2022: Forth850 v0.9 add new Z80 IEEE 754 floating point routines
+- dec  7, 2022: Forth850 v0.9 fix floating point string parsing bug
+- dec  8, 2022: Forth850 v0.9 add new Z80 IEEE 754 math with rounding modes
