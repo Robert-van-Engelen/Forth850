@@ -155,6 +155,21 @@ fneg:		ld a,b			; sign bit 7 and exponent
 
 ;-------------------------------------------------------------------------------
 ;
+;		FLOATING POINT ABSOLUTE VALUE
+;
+;		fabs:	|bcde| -> bcde
+;			no errors (cf reset)
+;			a,b modified
+;
+;-------------------------------------------------------------------------------
+
+fabs:		ld a,b
+		and 0x7f
+		ld b,a
+		ret
+
+;-------------------------------------------------------------------------------
+;
 ;		FLOATING POINT SUBTRACTION
 ;
 ;		fsubx:	bcde - bcde' -> bcde
@@ -587,6 +602,81 @@ itof:		ld a,b			;
 		rr c			; rotate right result man2 c and assign exponent bit
 		or a			; reset cf
 		ret			; return float bcde (cf reset)
+
+;-------------------------------------------------------------------------------
+;
+;		TRUNCATION
+;
+;		ftrunc:	trunc(bcde) -> bcde round towards zero
+;			no errors (cf reset)
+;			a,b,c,d,e,h,l modified
+;
+;		trunc(-bcde) = -trunc(bcde)
+;		frac(bcde) = bcde - trunc(bcde)
+;
+;-------------------------------------------------------------------------------
+
+ftrunc:		push bc			;
+		push de			; save bcde
+		call ftoi		; convert to integer if possible
+		jr c,1$			; if converted then
+		pop af			;
+		pop af			;   discard old bcde
+		jp itof			;   convert back to float and return
+1$:		pop de			;
+		pop bc			; restore old bcde
+		or a			; reset cf
+		ret			; return
+
+;-------------------------------------------------------------------------------
+;
+;		FLOORING
+;
+;		ffloor:	floor(bcde) -> bcde round towards -infinity
+;			cf set on overflow
+;			a,b,c,d,e,h,l,a',b',c',d',e',h',l' modified
+;
+;		floor(|bcde|) = trunc(|bcde|)
+;		ceil(bcde) = -floor(-bcde)
+;
+;-------------------------------------------------------------------------------
+
+ffloor:		push bc			;
+		push de			; save bcde
+		call ftrunc		; trunc(bcde) -> bcde
+		exx			;
+		pop de			;
+		pop bc			; pop old bcde -> bcde'
+		exx			;
+		push bc			; save trunc(bcde)
+		push de			;
+		call fsuby		; bcde' - trunc(bcde) -> frac(bcde)
+		ISPOSZ			; test if frac(bcde) >= 0
+		pop de			;
+		pop bc			; restore trunc(bcde)
+		ret z			; if frac(bcde) >= 0 then return trunc(bcde)
+		exx			;
+		ld bc,bias + 0x100 << 7	;
+		ld de,0x0000		; -1.0e0 -> bcde'
+		jp fadd			; return trunc(bcde) - 1.0e0
+
+;-------------------------------------------------------------------------------
+;
+;		ROUNDING
+;
+;		fround:	round(bcde) -> bcde round to nearest, ties to away
+;			cf set on overflow
+;			a,b,c,d,e,h,l,a',b',c',d',e',h',l' modified
+;
+;		round(bcde) = floor(bcde + 0.5e0)
+;
+;-------------------------------------------------------------------------------
+
+fround:		exx			;
+		ld bc,bias - 1 << 7	;
+		ld de,0x0000		; 0.5e0 -> bcde'
+		call fadd		; bcde + 0.5e0 -> bcde (cannot overflow)
+		jr ffloor		; return floor(bcde)
 
 ;-------------------------------------------------------------------------------
 ;
