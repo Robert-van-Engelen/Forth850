@@ -3214,7 +3214,7 @@ code size small by using tricks with CPU arithmetic and flags.  The floating
 point library is about 1KB.
 
 Single precision floating point values are stored in registers BC (high order)
-and DE (low order) to form a 32 bit float `bcde` and shadow float `bcde`'.
+and DE (low order) to form a 32 bit float `bcde` and shadow float `bcde'`.
 
 - `fadd`: float `bcde` + `bcde'` -> `bcde`; cf set on overflow
 - `fsubx`: float `bcde` - `bcde'` -> `bcde`; cf set on overflow
@@ -3226,7 +3226,7 @@ and DE (low order) to form a 32 bit float `bcde` and shadow float `bcde`'.
 - `fdivy`: float `bcde'` / `bcde` -> `bcde`; cf set on overflow or when dividing by zero
 - `ftoi`: float `bcde` -> signed 32 bit integer `bcde` truncated towards zero; cf set when out of range
 - `itof`: signed 32 bit integer `bcde` -> float `bcde`; no errors (cf reset)
-- `ftrunc`: float trunc(`bcde`) -> `bcde`; no errors (cd reset)
+- `ftrunc`: float trunc(`bcde`) -> `bcde`; no errors (cf reset)
 - `ffloor`: float floor(`bcde`) -> `bcde`; cf set on overflow
 - `fround`: float round(`bcde`) -> `bcde`; cf set on overflow
 - `fpow10`: 10^`a` * `bcde` -> `bcde` for -128 <= `a` < 39; cf set on overflow

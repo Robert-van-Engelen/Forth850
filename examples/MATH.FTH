@@ -1,5 +1,5 @@
 \ MATH.FTH collection of floating point math functions
-\ Based on IEEE 754 mathr.asm with rounding configuration SUM/MUL/DIV=2/2/2
+\ Based on IEEE 754 mathr.asm rounding configuration SUM/MUL/DIV=2/2/2 or 2/2/1
 \ Author: Dr. Robert van Engelen
 
 : FMAX      ( r1 r2 -- r3 ) 2OVER 2OVER F< IF 2SWAP THEN 2DROP ;

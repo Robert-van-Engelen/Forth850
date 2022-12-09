@@ -110,9 +110,9 @@
 
 ; Round to nearest, ties away (1) ties to even (2) and truncate (0) modes
 
-SUMROUND = 2	; fadd and fsub rounding mode
-MULROUND = 2	; fmul rounding mode (also applies to itof, stof and fpow10)
-DIVROUND = 2	; fdiv rounding mode (also applies to stof and fpow10)
+SUMROUND = 2	; fadd and fsub rounding mode (also applies to itof and stof)
+MULROUND = 2	; fmul rounding mode (also applies to stof and fpow10)
+DIVROUND = 1	; fdiv rounding mode (also applies to stof and fpow10)
 
 ROUND = SUMROUND+MULROUND+DIVROUND	; nonzero if rounding is requested
 
@@ -752,21 +752,11 @@ itof:		ld a,b			;
 		adc a		;  4	;     ahl.e << 1 -> ahl.e
 		jp p,1$		; 10(51);   until a bit 7 set
 
-2$:		; round
+2$:		; round ahl.e
 
-.if MULROUND
+.if SUMROUND
 		rl e			; set cf to e bit 7
-.if SUMROUND - MULROUND
-.if MULROUND - 1
-		call c,roundtoeven	; if carry then round result mantissa ahl.cf
-		jp finalize		; finalize bahl to return bcde using sign' l' bit 7
-.else
-		call c,roundtoaway	; if carry then round result mantissa ahl.cf
-		jp finalize		; finalize bahl to return bcde using sign' l' bit 7
-.endif
-.else
 		jp finalizer		; finalize and round bahl to return bcde using sign' l' bit 7
-.endif
 .else
 		jp finalize		; finalize bahl to return bcde using sign' l' bit 7
 .endif
@@ -850,29 +840,204 @@ fround:		exx			;
 ;
 ;		FLOATING POINT MULTIPLICATION BY POWER OF 10
 ;
-;		fpow10:	10**a * bcde -> bcde for -128 <= a < 39
+;		fpow10:	10**a * bcde -> bcde
 ;			cf set on overflow
 ;			a,b,c,d,e,h,l,a',b',c',d',e',h',l' modified
 ;
+;		four computational methods compared, minimum and mean number of
+;		bits of accuracy (relative error) in 10 million random samples
+;
+;		  method                                   min bits   mean bits
+;		  iterative multiplication by 10:           20.2439     23.4988
+;		  iterative multiplication by 10**4:        21.3502     24.4916
+;		  iterative multiplication by 10**5:        21.3243     24.5500
+;		  iterative multiplication by 10**6:        21.3297     24.5937
+;		  iterative multiplication by 10**7:        21.3253     24.5619
+;		  iterative multiplication by 10**8:        21.3004     24.5260
+;		  iterative multiplication by 10**10:       21.0809     24.4483
+;		  iterative multiplication by 10**16:       20.7694     24.0836
+;		  table lookup with  4 powers of 10:        21.4136     24.6670
+;		  table lookup with  8 powers of 10:        21.9131     25.2981
+;		  table lookup with  9 powers of 10:        21.8907     25.4628
+;		  table lookup with 10 powers of 10:        22.0177     25.5388
+;		* table lookup with 12 powers of 10:        22.0482     25.7529
+;		  table lookup with 16 powers of 10:        22.0004     25.4073
+;		  exponentiation by squaring from bottom:   22.0004     25.3867
+;		  exponentiation by squaring from top:      22.0023     25.3830
+;
 ;-------------------------------------------------------------------------------
+
+.if 1		; table lookup with 12 powers of 10 for -128 <= a <= 127
+
+fpow10:		or a			; test a and reset cf
+		jp p,mulpow10		; if a > 0 then multiply bcde by 10**a
+		neg			; -a -> a
+		cp 39			;
+		jr c,1$			; if a >= 39 then
+		sub 38			;   a - 38 -> a
+		call 1$			;   bcde / 10**a -> bcde
+		ld a,38			;   38 -> a
+1$:		push bc			;
+		push de			;
+		call pow10		; 10**a -> bcde
+		exx			; bcde -> bcde'
+		pop de			;
+		pop bc			; restore bcde
+		jp c,underflow		; if 10**a overflows then return underflow
+		jp fdivx		; bcde / 10**a -> bcde
+
+pow10:		; return float bcde = 10**a for 0 < a <= 38
+
+		ld bc,bias << 7		;
+		ld de,0x0000		; 1.0e0 -> bcde
+
+mulpow10:	; return float bcde * 10**a for 0 <= a <= 127
+
+		ld l,11			; 11 -> l use power 10**12 from table
+		jr 2$			; jump into loop to check and update counters
+1$:		push hl			; loop, save counters
+		ld a,l			;   l -> a ranging 0 to 11
+		exx			;
+		ld hl,powers		;   powers -> hl' table indexed by a from 0
+		add a			;
+		add a			;
+		ld c,a			;
+		ld b,0			;
+		add hl,bc		;   hl' + 4 * a -> hl'
+		ld c,(hl)		;
+		inc hl			;
+		ld b,(hl)		;
+		inc hl			;
+		ld e,(hl)		;
+		inc hl			;
+		ld d,(hl)		;   [hl'] -> bcde' with 10**2**(a-1)
+		call fmul		;   10**(2**(a-1)) * bcde -> bcde
+		pop hl			;   restore hl
+		ret c			;   if overflow then return error (cf set)
+		ld a,h			;   h -> a
+2$:		sub 12			;
+		ld h,a			;   a - 12 -> h
+		jp p,1$			;   if h >= 0 then continue loop
+		add 11			;   a + 11 -> a, cf = 0 if a < 0
+		ret m			;   if a < 0 then return (cf reset)
+		ld l,a			;   a -> l ranging 0 to 10
+		jr 1$			; repeat
+
+powers:		; table of powers 10**i for i = 1 to 12
+
+		.dw 0x4120,0x0000	; = 10**1
+		.dw 0x42c8,0x0000	; = 10**2
+		.dw 0x447a,0x0000	; = 10**3
+		.dw 0x461c,0x4000	; = 10**4
+		.dw 0x47c3,0x5000	; = 10**5
+		.dw 0x4974,0x2400	; = 10**6
+		.dw 0x4b18,0x9680	; = 10**7
+		.dw 0x4cbe,0xbc20	; = 10**8
+		.dw 0x4e6e,0x6b28	; = 10**9
+		.dw 0x5015,0x02f9	; = 10**10
+		.dw 0x51ba,0x43b7	; = 10**11
+		.dw 0x5368,0xd4a5	; = 10**12
+
+.else
+.if 1		; exponentiation by squaring from top with table lookup for -128 <= a <= 63
+
+fpow10:		or a			; test a and reset cf
+		jp p,mulpow10		; if a > 0 then multiply bcde by 10**a
+		neg			; -a -> a
+		cp 39			;
+		jr c,1$			; if a >= 39 then
+		sub 38			;   a - 38 -> a
+		call 1$			;   bcde / 10**a -> bcde
+		ld a,38			;   38 -> a
+1$:		push bc			;
+		push de			;
+		call pow10		; 10**a -> bcde
+		exx			; bcde -> bcde'
+		pop de			;
+		pop bc			; restore bcde
+		jp c,underflow		; if 10**a overflows then return underflow
+		jp fdivx		; bcde / 10**a -> bcde
+
+pow10:		; return float 10**a for 0 < a <= 38
+
+		ld bc,bias << 7		;
+		ld de,0x0000		; 1.0e0 -> bcde
+
+mulpow10:	; return float bcde * 10**a for 0 <= a <= 63
+
+		add a			;
+		ret c			; if a >= 128 return error (cf set)
+		add a			;
+		ret c			; if a >= 64 return error (cf set)
+		ld h,a			; a << 2 -> h to prep shifting h left 6 times
+		ld l,7			; 7 -> l loop counter + 1
+1$:		dec l			; for l = 6 to 1 step -1
+		ret z			;   if l = 0 then break (cf reset)
+		sla h			;   h << 1 -> cf,h
+		jr nc,1$		;   if carry then
+		push hl			;     save hl
+		ld a,l			;
+		exx			;
+		ld hl,powers - 4	;     powers - 4 -> hl' table indexed by a from 1
+		add a			;
+		add a			;
+		ld c,a			;
+		ld b,0			;
+		add hl,bc		;     hl' + 4 * a -> hl'
+		ld c,(hl)		;
+		inc hl			;
+		ld b,(hl)		;
+		inc hl			;
+		ld e,(hl)		;
+		inc hl			;
+		ld d,(hl)		;     [hl'] -> bcde' with 10**2**(a-1)
+		call fmul		;     10**(2**(a-1)) * bcde -> bcde
+		pop hl			;     restore hl
+		ret c			;     if overflow then return error (cf set)
+		jr 1$			; next
+
+powers:		; table of powers 10**2**i for i = 0 to 5
+
+		.dw 0x4120,0x0000	; = 10**1
+		.dw 0x42c8,0x0000	; = 10**2
+		.dw 0x461c,0x4000	; = 10**4
+		.dw 0x4cbe,0xbc20	; = 10**8
+		.dw 0x5a0e,0x1bca	; = 10**16
+		.dw 0x749d,0xc5ae	; = 10**32
+
+.else		; direct table lookup with for -128 <= a <= 76
 
 fpow10:		or a			; test a and reset cf
 		ret z			; if a = 0 then return float bcde unchanged (cf reset)
 		exx			;
-		jp p,1$			; if a > 0 then multiply by 10th power
+		jp p,2$			; if a > 0 then multiply by 10th power
 		neg			; -a -> a
-		call pow10		; 10**a -> bcde'
-		jp c,underflow		; if 10**a overflows then return underflow
-		jp fdivy		; bcde' / bcde -> bcde
+		cp 39			;
+		jr c,1$			; if a >= 39 then
+		sub 38			;   a - 38 -> a
+		call pow10		;   10**a -> bcde
+		jp c,underflow		;   if 10**a overflows then return underflow
+		call fdivy		;   bcde' / 10**a -> bcde
+		exx			;   bcde -> bcde'
+		ld a,38			;   38 -> a
 1$:		call pow10		; 10**a -> bcde'
-		ret c			; if 10**a overflows then return error (cf set)
+		jp c,underflow		; if 10**a overflows then return underflow
+		jp fdivy		; bcde / 10**a -> bcde
+2$:		cp 39			;
+		jr c,3$			; if a >= 39 then
+		sub 38			;   a - 38 -> a
+		call pow10		;   10**a -> bcde
+		ret c			;   if 10**a overflows then return error (cf set)
+		call fmul		;   bcde' / 10**a -> bcde
+		ret c			;   if overflow then return overflow (cf set)
+		exx			;   bcde -> bcde'
+		ld a,38			;   38 -> a
+3$:		call pow10		; 10**a -> bcde'
+		ret c			; if overflow then return overflow (cf set)
 		jp fmul			; 10*a * bcde -> bcde
 
-pow10:		; return float bcde = 10**a for 0 < a < 39
+pow10:		; return float 10**a for 0 < a <= 38
 
-		cp 39			;
-		ccf			;
-		ret c			; if a > 38 return error (cf set)
 		ld hl,powers - 4	; power - 4 -> hl minus 4 since indexed from 1
 		add a			;
 		add a			;
@@ -888,7 +1053,7 @@ pow10:		; return float bcde = 10**a for 0 < a < 39
 		ld d,(hl)		; [hl] -> bcde
 		ret			; return (cf reset)
 
-powers:		; table of powers of 10
+powers:		; table of powers 10**i for i = 1 to 38
 
 		.dw 0x4120,0x0000	; = 10**1
 		.dw 0x42c8,0x0000	; = 10**2
@@ -928,6 +1093,9 @@ powers:		; table of powers of 10
 		.dw 0x7b40,0x97ce	; = 10**36
 		.dw 0x7cf0,0xbdc2	; = 10**37
 		.dw 0x7e96,0x7699	; = 10**38
+
+.endif
+.endif
 
 ;-------------------------------------------------------------------------------
 ;
@@ -1093,11 +1261,11 @@ parse_done:	; parsing done
 
 2$:		; round and rearrange aeh'.l' to cde'
 
-.if MULROUND
+.if SUMROUND
 		rl l			; set cf to l bit 7
 		ld l,h			;
 		ld h,e			; aeh' -> ahl'
-.if MULROUND - 1
+.if SUMROUND - 1
 		call c,roundtoeven	; if carry then round result mantissa ahl.cf
 .else
 		call c,roundtoaway	; if carry then round result mantissa ahl.cf
