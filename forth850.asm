@@ -2313,6 +2313,17 @@ f1ix:		pop hl			; pop hl with 2OS
 		pop de			; pop new TOS
 		JP_NEXT			; continue
 
+;= S>F		n -- r
+;		widen signed single to float
+
+		CODE S>F,stof
+		push de			; save TOS with n as new 2OS
+		sla d			; d << 1 -> cf.d
+		sbc a			; -cf -> a
+		ld d,a			;
+		ld e,a			; set new TOS to sign extend 2OS
+		jr dtof			; D>F and continue
+
 ;= F>D		r -- d
 ;		narrow float to a signed double;
 ;		may throw -11 "result out of range"
@@ -2340,7 +2351,7 @@ f1ix:		pop hl			; pop hl with 2OS
 		pop hl			; pop hl with c-addr
 		ld a,e			; e -> a with string length u (8 bits, ignore high byte)
 		push bc			; save bc with ip
-		call stof		; [hl..hl+b-1] -> bcde
+		call atof		; [hl..hl+b-1] -> bcde
 		ld h,b			;
 		ld l,c			; bc -> hl
 		pop bc			; restore bc with ip
@@ -2362,7 +2373,7 @@ f1ix:		pop hl			; pop hl with 2OS
 		push bc			; save bc with ip
 		push ix			;
 		pop bc			; ix -> bc with 3OS
-		call ftos		; bcde -> [hl...hl+a-1 digits] exponent e and sign d bit 7
+		call ftoa		; bcde -> [hl...hl+a-1 digits] exponent e and sign d bit 7
 		pop bc			; restore bc with ip
 		rl d			;
 		sbc a			;
@@ -5270,7 +5281,7 @@ loop_bc_step:	ld hl,(rp)		; [rp] -> hl
 		JP_NEXT			; continue
 
 ; (LEAVE)	--
-;		end loop by setting the loop counter to the limit;
+;		discard the loop parameters and exit the innermost do-loop;
 ;		runtime of the LEAVE compile-only word
 
 		CODE (LEAVE),doleave
@@ -5438,7 +5449,7 @@ loop_bc_step:	ld hl,(rp)		; [rp] -> hl
 		.dw doret
 
 ; LEAVE		--
-;		end loop by setting the loop counter to the limit;
+;		exit the innermost do-loop;
 ;		may throw -14 "interpreting a compile-only word"
 
 		COLON_IMM LEAVE,leave

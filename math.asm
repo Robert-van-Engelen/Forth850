@@ -1,6 +1,6 @@
 ;-------------------------------------------------------------------------------
 ;
-;		Z80 IEEE 754 FLOATING POINT MATH LIBRARY
+;		Z80 IEEE 754 FLOATING POINT MATH LIBRARY - TRUNCATION MODE ONLY
 ;
 ; Author:
 ;   Dr. Robert van Engelen, Copyright 2022
@@ -690,7 +690,7 @@ fround:		exx			;
 ;		four computational methods compared, minimum and mean number of
 ;		bits of accuracy (relative error) in 10 million random samples
 ;
-;		  method                                  min bits    mean bits
+;		  method                                   min bits   mean bits
 ;		  iterative multiplication by 10:           20.2439     23.4988
 ;		  iterative multiplication by 10**4:        21.3502     24.4916
 ;		  iterative multiplication by 10**5:        21.3243     24.5500
@@ -707,6 +707,7 @@ fround:		exx			;
 ;		  table lookup with 16 powers of 10:        22.0004     25.4073
 ;		  exponentiation by squaring from bottom:   22.0004     25.3867
 ;		  exponentiation by squaring from top:      22.0023     25.3830
+;		  table lookup with 38 powers of 10:        exact       exact
 ;
 ;-------------------------------------------------------------------------------
 

@@ -1748,7 +1748,7 @@ runtime of the UNLOOP compile-only word
 
 ### (LEAVE)
 _--_
-end loop by setting the loop counter to the limit;
+discard the loop parameters and exit the innermost do-loop;
 runtime of the LEAVE compile-only word
 
 ### AHEAD
@@ -1832,7 +1832,7 @@ may throw -14 "interpreting a compile-only word"
 
 ### LEAVE
 _--_
-end loop by setting the loop counter to the limit;
+exit the innermost do-loop;
 may throw -14 "interpreting a compile-only word"
 
 ### I
@@ -2398,6 +2398,10 @@ true if r < 0.0e0
 ### D>F
 _d -- r_
 widen signed double to float
+
+### S>F
+_n -- r_
+widen signed single to float
 
 ### F>D
 _r -- d_
@@ -3230,8 +3234,8 @@ and DE (low order) to form a 32 bit float `bcde` and shadow float `bcde'`.
 - `ffloor`: float floor(`bcde`) -> `bcde`; cf set on overflow
 - `fround`: float round(`bcde`) -> `bcde`; cf set on overflow
 - `fpow10`: 10^`a` * `bcde` -> `bcde` for -128 <= `a` < 39; cf set on overflow
-- `stof`: string [`hl`..`hl`+`a`-1] -> float `bcde`; cf set on parsing error and `hl` points after the char
-- `ftos`: float `bcde` -> [`hl`...`hl`+`a`-1] digits, exponent `e` and sign `d` bit 7; no errors (flags undefined)
+- `atof`: string [`hl`..`hl`+`a`-1] -> float `bcde`; cf set on parsing error and `hl` points after the char
+- `ftoa`: float `bcde` -> [`hl`...`hl`+`a`-1] string of digits, exponent `e` and sign `d` bit 7; no errors (flags undefined)
 
 ## Z80 string routines
 

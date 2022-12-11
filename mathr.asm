@@ -1,6 +1,6 @@
 ;-------------------------------------------------------------------------------
 ;
-;		Z80 IEEE 754 FLOATING POINT MATH LIBRARY
+;		Z80 IEEE 754 FLOATING POINT MATH LIBRARY WITH ROUNDING MODES
 ;
 ; Author:
 ;   Dr. Robert van Engelen, Copyright 2022
@@ -110,9 +110,9 @@
 
 ; Round to nearest, ties away (1) ties to even (2) and truncate (0) modes
 
-SUMROUND = 2	; fadd and fsub rounding mode (also applies to itof and stof)
-MULROUND = 2	; fmul rounding mode (also applies to stof and fpow10)
-DIVROUND = 1	; fdiv rounding mode (also applies to stof and fpow10)
+SUMROUND = 2	; fadd and fsub rounding mode (and itof and stof excess digits)
+MULROUND = 2	; fmul rounding mode (and fpow10 and stof)
+DIVROUND = 1	; fdiv rounding mode (and fpow10 and stof)
 
 ROUND = SUMROUND+MULROUND+DIVROUND	; nonzero if rounding is requested
 
@@ -864,6 +864,7 @@ fround:		exx			;
 ;		  table lookup with 16 powers of 10:        22.0004     25.4073
 ;		  exponentiation by squaring from bottom:   22.0004     25.3867
 ;		  exponentiation by squaring from top:      22.0023     25.3830
+;		  table lookup with 38 powers of 10:        exact       exact
 ;
 ;-------------------------------------------------------------------------------
 

@@ -1,5 +1,5 @@
 \ MATH.FTH collection of floating point math functions
-\ Based on IEEE 754 mathr.asm rounding configuration SUM/MUL/DIV=2/2/2 or 2/2/1
+\ Based on IEEE 754 mathr.asm rounding modes SUM/MUL/DIV=2/2/2 or 2/2/1
 \ Author: Dr. Robert van Engelen
 
 : FMAX      ( r1 r2 -- r3 ) 2OVER 2OVER F< IF 2SWAP THEN 2DROP ;
@@ -10,7 +10,7 @@
 
 : FACT      ( u -- r )
   1E0 ROT 1+ 1 ?DO
-    I S>D D>F F*
+    I S>F F*
   LOOP ;
 
 \ Square root using IEEE 754 binary representation to compute
@@ -23,42 +23,98 @@
   DUP 8 RSHIFT $3f - -ROT \ 2^(n/2) = 2^(exponent/2 - bias/2)
   $ff AND $3f00 + \ remove exponent 2^(n/2)
   \ Newton Raphson
-  2DUP \ initial estimate
+  2DUP \ initial estimate is copy of x
   5 0 DO
-    2OVER 2OVER F/ F+ .5E0 F* \ Newton Raphson
+    2OVER 2OVER F/ F+ .5E0 F*
   LOOP
   2SWAP 2DROP
   ROT $7f + 7 LSHIFT 0 SWAP F* ; \ times 2^(n/2)
 
-\ Trig words based on Jupiter ACE "FORTH Programming" p.93
+\ FSIN word based on Jupiter ACE "FORTH Programming" p.93
 \ improved to cover a wider range of angles and for speed (fewer terms to sum)
 
 3.1415928E0 2CONSTANT PI
 
 : FSIN      ( r1 -- r2 )
-  \ map r1 to [0,pi/2) and adjust for the quadrant 0, 1, 2, 3
-  1.5707964E0 F/
-  2DUP F0< IF FABS 2E0 F+ THEN \ -r1 = pi+r1
-  2DUP F>D \ truncate
-  OVER >R \ save to test four quadrants
-  D>F F- \ frac(r1/(pi/2))
-  R@ 1 AND IF 1E0 2SWAP F- THEN \ quadrant 1 and 3
-  R> 2 AND IF FNEGATE THEN \ quadrant 2 and 3
-  1.5707964E0 F*
+  \ map r1 to [0,pi/2) and adjust for quadrant 0, 1, 2, 3
+  1.5707964E0 F/ \ rescale r1 to x in [0,1)
+  2DUP F0< IF FABS 2E0 F+ THEN \ -x=2+x i.e. -r1=pi+r1
+  2DUP F>D \ truncate x
+  OVER >R \ save truncated low order x to test for quadrant
+  D>F F- \  frac(x)=x-trunc(x) i.e. frac(r1/(pi/2))
+  R@ 1 AND IF 1E0 2SWAP F- THEN \ quadrant 1 and 3: 1-x
+  R> 2 AND IF FNEGATE THEN \ quadrant 2 and 3: -x
+  1.5707964E0 F* \ revert rescaling to obtain x in (-pi/2,pi/2]
   \ Maclaurin series sin(x) = x - x^3/3! + x^5/5! - x^7/7! + ...
-  2DUP 2DUP 2DUP F* FNEGATE
-  2ROT 2ROT \ -- -x*x x x
+  2DUP 2DUP 2DUP F* FNEGATE 2ROT 2ROT \ -- -x*x x x
   11 2 DO
-    5 PICK 5 PICK \ -- -x*x sum term -x*x 
-    F* I I 1+ * \ -- -x*x sum -x*x*term i*(i+1)
-    S>D D>F F/ \ -- -x*x sum -x*x*term/i*(i+1)
-    2DUP 2ROT F+ 2SWAP \ -x*x sum-x*x*term/i*(i+1) -x*x*term/i*(i+1) 
+    5 PICK 5 PICK F* \ -- -x*x sum -x*x*term
+    I DUP 1+ *       \ -- -x*x sum -x*x*term i*(i+1)
+    S>F F/           \ -- -x*x sum -x*x*term/i*(i+1)
+    2SWAP 2OVER F+   \ -- -x*x -x*x*term/i*(i+1) sum-x*x*term/i*(i+1)
+    2SWAP            \ -- -x*x sum-x*x*term/i*(i+1) -x*x*term/i*(i+1) 
   2 +LOOP
   2DROP 2SWAP 2DROP ;
 
 : FCOS      ( r1 -- r2 ) 1.5707964E0 2SWAP F- FSIN ;
 
 : FTAN      ( r1 -- r2 ) 2DUP FSIN 2SWAP FCOS F/ ;
+
+: FASIN     ( r1 -- r2 )
+  1E0 2OVER FABS F< IF -46 THROW THEN
+  \ map r1 to [-sqrt(1/2),sqrt(1/2)] using arcsin(x) = pi/2-arcsin(qrt(1-x^2))
+  0.70710678E0 2OVER FABS F< IF \ if |r1| > sqrt(1/2) then
+    2DUP F0<
+    -ROT
+    2DUP F* 1E0 2SWAP F- FSQRT 
+    TRUE
+  ELSE
+    FALSE
+  THEN
+  -ROT
+  \ Maclaurin series arcsin(x) = x + (1/2)x^3/3 + (1*3)/(2*4)x^5/5 + (1*3*5)/(2*4*6)x^7/7 + ...
+  2DUP 2DUP 2DUP F* 2ROT 2ROT \ -- x*x x x
+  35 3 DO
+    5 PICK 5 PICK F*     \ -- x*x sum term*x*x
+    I 2- S>F F*          \ -- x*x sum term*x*x*(i-2)
+    I 1- S>F F/          \ -- x*x sum term*x*x*(i-2)/(i-1)
+    2SWAP 2OVER I S>F F/ \ -- x*x term*x*x*(i-2)/(i-1) sum term*x*x*(i-2)/(i-1)/i
+    F+                   \ -- x*x term*x*x*(i-2)/(i-1) sum+term*x*x*(i-2)/(i-1)/i
+    2SWAP                \ -- x*x sum+term*x*x*(i-2)/(i-1)/i term*x*x*(i-2)/(i-1)
+  2 +LOOP
+  2DROP 2SWAP 2DROP
+  ROT IF 1.5707964E0 2SWAP F- ROT IF FNEGATE THEN THEN ; \ sign(x)*(pi/2-arcsin(sqrt(1-x^2)))
+
+: FACOS     ( r1 -- r2 ) FASIN 1.5707964E0 2SWAP F- ; \ = pi/2 - arcsin(x)
+
+: FATAN     ( r1 -- r2 )
+  \ map r1 to [-1,1] using arctan(x) = pi/2-arctan(1/x)
+  1E0 2OVER FABS F< IF \ if |r1| > 1 then
+    1E0 2SWAP F/
+    TRUE
+  ELSE
+    FALSE
+  THEN
+  -ROT
+  \ map r1 in [-1,1] to [-sqrt(2)+1,sqrt(2)-1] using arctan(x) = 2*arctan(x/(1+sqrt(1+x^2)))
+  .41423562E0 2OVER FABS F< IF \ if |r1| > sqrt(2)-1 then
+    2DUP 2DUP F* 1E0 F+ FSQRT 1E0 F+ F/
+    TRUE
+  ELSE
+    FALSE
+  THEN
+  -ROT
+  \ Maclaurin series arctan(x) = x - x^3/3 + x^5/5 - x^7/7 + ... with x in (-1,1)
+  2DUP 2DUP 2DUP F* FNEGATE 2ROT 2ROT \ -- -x*x x x
+  19 3 DO
+    5 PICK 5 PICK F* \ -- -x*x sum -x*x*term
+    2DUP I S>F F/    \ -- -x*x sum -x*x*term -x*x*term/i
+    2ROT F+          \ -- -x*x -x*x*term/i sum-x*x*term/i
+    2SWAP            \ -- -x*x sum-x*x*term/i -x*x*term/i
+  2 +LOOP
+  2DROP 2SWAP 2DROP
+  ROT IF 2E0 F* THEN \ 2*arctan(x/(1+sqrt(1+x^2)))
+  ROT IF 1.5707964E0 2SWAP F- THEN ; \ pi/2-arctan(1/x)
 
 \ Log and antilog
 
@@ -68,24 +124,24 @@
   \ map r1 to [0.5,1) using ln(x*2^n) = ln(x) + ln(2^n) = ln(x) + n*ln(2)
   DUP 7 RSHIFT $7e - -ROT \ 2^(n+1) = 2^(exponent - bias + 1)
   $7f AND $3f00 + \ remove exponent 2^(n+1)
-  1E0 2SWAP F-
+  1E0 2SWAP F- \ 1-x
   \ Maclaurin series -ln(1-x) = x + x^2/2 + x^3/3 + ... with x in (0,0.5]
   2DUP 2DUP \ -- x x x
   20 2 DO
-    5 PICK 5 PICK \ -- x sum x^n x
-    F* \ -- x sum x^(n+1)
-    2DUP I S>D D>F F/ \ -- x sum x^(n+1) x^(n+1)/(n+1)
-    2ROT F+ 2SWAP \ -- x sum+x^(n+1)/(n+1) x^(n+1)
+    5 PICK 5 PICK F*     \ -- x sum x^n*x
+    2SWAP 2OVER I S>F F/ \ -- x x^(n+1) sum x^(n+1)/(n+1)
+    F+                   \ -- x x^(n+1) sum+x^(n+1)/(n+1)
+    2SWAP                \ -- x sum+x^(n+1)/(n+1) x^(n+1)
   LOOP
   2DROP 2SWAP 2DROP FNEGATE
-  ROT S>D D>F 0.6931468E0 F* F+ ; \ plus n*ln(2) = n*0.69314718055995
+  ROT S>F 0.6931468E0 F* F+ ; \ + n*ln(2) approx ln(2) such that 1E0 FLN = 0
 
-: FLOG      ( r1 -- r2 ) FLN 0.43429475E0 F* ; \ log(x) = ln(x)/ln(10) = ln(x)*0.43429448190325
+: FLOG      ( r1 -- r2 ) FLN 0.43429475E0 F* ; \ = ln(x)/ln(10) appeox ln(10) such that 10E0 FLOG = 1E0
 
 : FEXP      ( r1 -- r2 )
   2DUP F0< -ROT
   FABS
-  \ map |r1| to [0,0.5) using exp(x*2^n) = exp(x)^(2^n)
+  \ map |r1| to [0,0.5] using exp(x*2^n) = exp(x)^(2^n)
   DUP 7 RSHIFT $7e - \ 2^(n+1) = 2^(exponent - bias + 1)
   DUP 0< IF
     DROP 0 -ROT \ n+1<0 in exponent 2^(n+1)
@@ -94,11 +150,12 @@
     $7f AND $3f00 + \ remove exponent 2^(n+1)
   THEN
   \ Maclaurin series exp(x) = 1 + x + x^2/2! + x^3/3! + ...
-  2DUP 1E0 F+ 2OVER \ x 1+x x
+  2DUP 1E0 F+ 2OVER \ -- x 1+x x
   11 2 DO
-    5 PICK 5 PICK \ -- x sum term x 
-    F* I S>D D>F F/ \ -- x sum x*term/i
-    2DUP 2ROT F+ 2SWAP \ x sum+x*term/i x*term/i
+    5 PICK 5 PICK F* \ -- x sum term*x
+    I S>F F/         \ -- x sum term*x/i
+    2SWAP 2OVER F+   \ -- x term*x/i sum+term*x/i
+    2SWAP            \ -- x sum+term*x/i term*x/i
   LOOP
   2DROP 2SWAP 2DROP
   \ square exp(x) n+1 times when n+1>0 in exponent 2^(n+1)
@@ -110,7 +167,7 @@
     1E0 2SWAP F/
   THEN ;
 
-: FALOG     ( r1 -- r2 ) 2.302586E0 F* FEXP ; \ exp(x*ln(10))
+: FALOG     ( r1 -- r2 ) 2.302586E0 F* FEXP ; \ = exp(x*ln(10)) approx ln(10) such that 1E0 ALOG = 10E0
 
 \ Exponentiation (simple version)
 
