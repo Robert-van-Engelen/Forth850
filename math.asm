@@ -12,6 +12,7 @@
 ;     string to/from float conversion
 ;   - "memoryless" using registers only (+shadow), at most one push+pop per flop
 ;   - optimized for speed and reduced code size (no loop unrolling)
+;   - does not produce negative zeros
 ;   - extensively tested
 ;
 ; Sacrifices:
@@ -149,7 +150,10 @@ bias		.equ 127		; exponent bias 127 IEEE 754 or 128
 ;
 ;-------------------------------------------------------------------------------
 
-fneg:		ld a,b			; sign bit 7 and exponent
+fneg:		ld a,b			;
+		or c			;
+		ret z			; if bcde = 0 then return (cf reset)
+		ld a,b			; sign bit 7 and exponent
 		xor 0x80		; invert sign bit 7
 		ld b,a			; set new sign bit 7
 		ret			; return bcde (cf reset)
@@ -945,7 +949,7 @@ powers:		; table of powers 10**i for i = 1 to 38
 ;
 ;		CONVERT STRING TO FLOAT
 ;
-;		stof:	[hl..hl+a-1] -> bcde
+;		atof:	[hl..hl+a-1] -> bcde
 ;			cf set on parsing error and hl points after the char
 ;			a,b,c,d,e,h,l,a',b',c',d',e',h',l' modified
 ;			b   remaining string length counter
@@ -959,7 +963,7 @@ powers:		; table of powers 10**i for i = 1 to 38
 ;
 ;-------------------------------------------------------------------------------
 
-stof:		ld b,a			; a -> b string length
+atof:		ld b,a			; a -> b string length
 		cp 1			;
 		ret c			; if b = 0 then return error (cf set)
 		cp 32			;
@@ -1198,7 +1202,7 @@ parse_exponent:	; parse the decimal exponent part into e with sign d
 ;
 ;		CONVERT FLOAT TO STRING
 ;
-;		ftos:	bcde -> [hl...hl+a-1] digits, exponent e and sign d bit 7
+;		ftoa:	bcde -> [hl...hl+a-1] digits, exponent e and sign d bit 7
 ;			no errors (flags undefined)
 ;			a,b,c,d,e,h,l,a',b',c',d',e',h',l' modified
 ;			 a  nonzero buffer size
@@ -1213,7 +1217,7 @@ parse_exponent:	; parse the decimal exponent part into e with sign d
 ;
 ;-------------------------------------------------------------------------------
 
-ftos:		push hl			; save buffer address hl
+ftoa:		push hl			; save buffer address hl
 		push af			; save nonzero buffer size a
 
 		; estimate decimal exponent = exp*77/256 ~= log10(2**exp) = exp * log10(2)

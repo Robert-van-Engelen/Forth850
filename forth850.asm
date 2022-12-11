@@ -2223,31 +2223,34 @@ f1ix:		pop hl			; pop hl with 2OS
 ;		truncate float towards zero
 
 		CODE FTRUNC,ftrunc_
-		ld ix,ftrunc
-		jr f1ix
+		ld ix,ftrunc		; ftrunc execution vec -> ix
+		jr f1ix			;
 
 ;= FLOOR	r1 -- r2
 ;		floor float towards negative infinity
 
 		CODE FLOOR,floor
-		ld ix,ffloor
-		jr f1ix
+		ld ix,ffloor		; ffloor execution vec -> ix
+		jr f1ix			;
 
 ;= FROUND	r1 -- r2
 ;		round float to nearest
 
 		CODE FROUND,fround_
-		ld ix,fround
-		jr f1ix
+		ld ix,fround		; fround execution vec -> ix
+		jr f1ix			;
 
 ;= FNEGATE	r1 -- r2
 ;		negate float
 
 		CODE FNEGATE,fnegate
 		ld a,d			;
-		xor 0x80		; flip the sign bit 7
+		or e			;
+		jr z,1$			; if r1 <> 0 then
+		ld a,d			;
+		xor 0x80		;   flip the sign bit 7
 		ld d,a			;
-		JP_NEXT			;
+1$:		JP_NEXT			; continue
 
 ;= FABS		r1 -- r2
 ;		absolute value |r1|
@@ -2255,10 +2258,10 @@ f1ix:		pop hl			; pop hl with 2OS
 ;    : FABS 2DUP F0< IF FNEGATE THEN ;
 
 		CODE FABS,fabs_
-		ld a,d
-		and 0x7f
-		ld d,a
-		JP_NEXT
+		ld a,d			;
+		and 0x7f		;
+		ld d,a			; clear sign bit
+		JP_NEXT			; continue
 
 ;= F=		r1 r2 -- flag
 ;		true if r1 = r2
