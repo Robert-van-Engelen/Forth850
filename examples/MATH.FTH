@@ -88,9 +88,10 @@
 : FACOS     ( r1 -- r2 ) FASIN 1.5707964E0 2SWAP F- ; \ = pi/2 - arcsin(x)
 
 : FATAN     ( r1 -- r2 )
-  \ map r1 to [-1,1] using arctan(x) = pi/2-arctan(1/x)
+  \ map r1 to [-1,1] using arctan(x) = sign(x) * (pi/2-arctan(1/abs(x)))
   1E0 2OVER FABS F< IF \ if |r1| > 1 then
-    1E0 2SWAP F/
+    2DUP F0< -ROT
+    1E0 2SWAP FABS F/
     TRUE
   ELSE
     FALSE
@@ -114,7 +115,7 @@
   2 +LOOP
   2DROP 2SWAP 2DROP
   ROT IF 2E0 F* THEN \ 2*arctan(x/(1+sqrt(1+x^2)))
-  ROT IF 1.5707964E0 2SWAP F- THEN ; \ pi/2-arctan(1/x)
+  ROT IF 1.5707964E0 2SWAP F- ROT IF FNEGATE THEN THEN ; \ sign(x) * (pi/2-arctan(1/abs(x)))
 
 \ Log and antilog
 
