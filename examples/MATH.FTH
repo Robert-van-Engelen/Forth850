@@ -1,5 +1,5 @@
 \ MATH.FTH collection of floating point math functions
-\ Based on IEEE 754 mathr.asm rounding modes SUM/MUL/DIV=2/2/2 or 2/2/1
+\ Based on IEEE 754 mathr.asm rounding modes SUM/MUL/DIV=2/2/2
 \ Author: Dr. Robert van Engelen
 
 : FMAX      ( r1 r2 -- r3 ) 2OVER 2OVER F< IF 2SWAP THEN 2DROP ;
@@ -74,7 +74,7 @@
   -ROT
   \ Maclaurin series arcsin(x) = x + (1/2)x^3/3 + (1*3)/(2*4)x^5/5 + (1*3*5)/(2*4*6)x^7/7 + ...
   2DUP 2DUP 2DUP F* 2ROT 2ROT \ -- x*x x x
-  35 3 DO
+  34 3 DO
     5 PICK 5 PICK F*     \ -- x*x sum term*x*x
     I 2- S>F F*          \ -- x*x sum term*x*x*(i-2)
     I 1- S>F F/          \ -- x*x sum term*x*x*(i-2)/(i-1)
@@ -107,7 +107,7 @@
   -ROT
   \ Maclaurin series arctan(x) = x - x^3/3 + x^5/5 - x^7/7 + ... with x in (-1,1)
   2DUP 2DUP 2DUP F* FNEGATE 2ROT 2ROT \ -- -x*x x x
-  19 3 DO
+  16 3 DO
     5 PICK 5 PICK F* \ -- -x*x sum -x*x*term
     2DUP I S>F F/    \ -- -x*x sum -x*x*term -x*x*term/i
     2ROT F+          \ -- -x*x -x*x*term/i sum-x*x*term/i
@@ -135,9 +135,9 @@
     2SWAP                \ -- x sum+x^(n+1)/(n+1) x^(n+1)
   LOOP
   2DROP 2SWAP 2DROP FNEGATE
-  ROT S>F 0.6931468E0 F* F+ ; \ + n*ln(2) approx ln(2) such that 1E0 FLN = 0
+  ROT S>F 0.693147245E0 F* F+ ; \ + n*ln(2) approx ln(2) such that 1E0 FLN = 0
 
-: FLOG      ( r1 -- r2 ) FLN 0.43429475E0 F* ; \ = ln(x)/ln(10) appeox ln(10) such that 10E0 FLOG = 1E0
+: FLOG      ( r1 -- r2 ) FLN 0.43429445E0 F* ; \ = ln(x)/ln(10) appeox ln(10) such that 10E0 FLOG = 1E0
 
 : FEXP      ( r1 -- r2 )
   2DUP F0< -ROT
@@ -168,7 +168,7 @@
     1E0 2SWAP F/
   THEN ;
 
-: FALOG     ( r1 -- r2 ) 2.302586E0 F* FEXP ; \ = exp(x*ln(10)) approx ln(10) such that 1E0 ALOG = 10E0
+: FALOG     ( r1 -- r2 ) 2.3025851E0 F* FEXP ; \ = exp(x*ln(10)) approx ln(10) such that 1E0 ALOG = 10E0
 
 \ Exponentiation (simple version)
 

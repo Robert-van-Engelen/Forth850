@@ -17,3 +17,4 @@
 - dec  7, 2022: Forth850 v0.9 fix floating point string parsing bug
 - dec  8, 2022: Forth850 v0.9 add new Z80 IEEE 754 math with rounding modes
 - dec  9, 2022: Forth850 v0.9 rounding modes set to SUM/MUL/DIV=2/2/1
+- dec 25, 2022: Forth850 v0.9 fix IEEE 754 math rounding with sticky bits

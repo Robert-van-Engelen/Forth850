@@ -991,13 +991,16 @@ true_next	.equ mone_next		; alias
 
 		CODE 2R@,tworfetch
 		push de			; save TOS
-		ld ix,(rp)		; [rp] -> ix
-		ld e,(ix+2)		;
-		ld d,(ix+3)		;
-		push de			; save [ix+2] -> de as new 2OS
-		ld e,(ix+0)		;
-		ld d,(ix+1)		; set [ix] -> de as TOS
-		JP_NEXT			; continue
+		ld hl,(rp)		; [rp] -> hl
+		ld e,(hl)		;
+		inc hl			;
+		ld d,(hl)		;
+		inc hl			;
+		push de			; save [rp++] -> de as new 2OS
+		ld e,(hl)		;
+		inc hl			;
+		ld d,(hl)		;
+		jp swap			; SWAP
 
 ; RP@		-- addr
 ;		fetch return stack pointer
@@ -1020,10 +1023,9 @@ rp:		.dw 0
 ;    : PICK 1+ CELLS SP@ + @ ;
 
 		CODE PICK,pick
-		ld l,e			;
-		ld h,d			;
-		add hl,de		;
-		adc hl,sp		; sp + 2 * n -> hl
+		ex de,hl		; TOS -> hl
+		add hl,hl		; 2 * n -> hl
+		add hl,sp		; sp + 2 * n -> hl
 		jp fetch_de		; set [hl] -> de as new TOS and continue
 
 .if FULL
@@ -2244,13 +2246,8 @@ f1ix:		pop hl			; pop hl with 2OS
 ;		negate float
 
 		CODE FNEGATE,fnegate
-		ld a,d			;
-		or e			;
-		jr z,1$			; if r1 <> 0 then
-		ld a,d			;
-		xor 0x80		;   flip the sign bit 7
-		ld d,a			;
-1$:		JP_NEXT			; continue
+		ld ix,fneg		; fneg execution vec -> ix
+		jr f1ix			;
 
 ;= FABS		r1 -- r2
 ;		absolute value |r1|
@@ -2258,15 +2255,13 @@ f1ix:		pop hl			; pop hl with 2OS
 ;    : FABS 2DUP F0< IF FNEGATE THEN ;
 
 		CODE FABS,fabs_
-		ld a,d			;
-		and 0x7f		;
-		ld d,a			; clear sign bit
-		JP_NEXT			; continue
+		ld ix,fabs		; fabs execution vec -> ix
+		jr f1ix			;
 
 ;= F=		r1 r2 -- flag
 ;		true if r1 = r2
 ;
-;    : F= D= ; ( IEEE 754 standard )
+;    : F= D= ; ( works for IEEE 754 floating point without negative zero and inf/nan )
 
 		CODE F=,fequal
 		jp dequal		; IEEE 754 float are comparable as integer
@@ -2277,7 +2272,7 @@ f1ix:		pop hl			; pop hl with 2OS
 ;    : F<
 ;      DUP 3 PICK AND 0< IF
 ;        2SWAP
-;      D< ;
+;      D< ; ( works for IEEE 754 floating point without negative zero and inf/nan )
 
 		COLON F<,fless
 		.dw dup,dolit,3,pick,and,zeroless,doif,1$
@@ -2288,7 +2283,7 @@ f1ix:		pop hl			; pop hl with 2OS
 ;= F0=		r -- flag
 ;		true if r = 0.0e0
 ;
-;    : F0= D0= ; ( IEEE 754 standard )
+;    : F0= D0= ; ( works for IEEE 754 floating point without negative zero and inf/nan )
 
 		CODE F0=,fzeroequal
 		jp dzeroequal		; IEEE 754 float are comparable as integer
@@ -2296,7 +2291,7 @@ f1ix:		pop hl			; pop hl with 2OS
 ;= F0<		r -- flag
 ;		true if r < 0.0e0
 ;
-;    : F0< D0< ; ( IEEE 754 standard )
+;    : F0< D0< ; ( works for IEEE 754 floating point without negative zero and inf/nan )
 
 		CODE F0<,fzeroless
 		jp dzeroless		; IEEE 754 float are comparable as integer
