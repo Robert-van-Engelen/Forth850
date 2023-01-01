@@ -179,17 +179,23 @@ bias		.equ 127		; exponent bias 127 IEEE 754
 ;		FLOATING POINT TYPE CHECK
 ;
 ;		ftype:	test bcde for inf and nan, bcde unchanged
-;			cf set if bcde is nan
-;			z set if bcde is +/-inf
-;			hl modified
+;			cf set if bcde is nan (z undefined)
+;			z set if bcde is +/-inf (cf reset)
+;			a,hl modified
+;
+;		usage:	call ftest
+;			jr c,bcde_is_nan
+;			jr z,bcde_is_inf
 ;
 ;-------------------------------------------------------------------------------
 
-ftype:		EXPH			;
-		or a			; reset cf
-		inc h			;
-		ret nz			; return cf reset and z reset if not inf/nan
-		sbc hl,de		;
+ftype:		EXPH			; exponent -> h, c << 1 -> l
+		xor a			; 0 -> a, reset cf
+		inc h			; exponent + 1 -> h
+		ret nz			; if not inf/nan then return cf reset and z reset
+		sub l			; if l <> 0 then set cf
+		ld l,h			; 0 -> l
+		sbc hl,de		; hl - de - cf -> cf.hl
 		ret			; return cf set if nan, cf reset and z set if inf
 
 ;-------------------------------------------------------------------------------
@@ -607,7 +613,7 @@ res_de:		xor a			;
 fmul:		EXPA			; exponent -> a
 		jr z,mulzero		; if bcde is zero then return signed zero or nan
 		inc a			;
-		jr z,infnan		; if bcde is inf/nan then return inf or nan (cf set)
+		jr z,mulinfnan		; if bcde is inf/nan then return inf or nan (cf set)
 		sub bias+1		; subtract exponent bias + 1 to correct for inc a
 		ld h,a			; exponent - bias -> h
 		exx			; activate bcdehl'
@@ -737,10 +743,18 @@ outofrange:	; out of range, return zero (underflow, cf reset) or inf (overflow, 
 
 infnan:		; one nonzero operand of fmul and fdiv is inf/nan, return inf or nan (cf set)
 
+		call ftype		; test bcde for nan
+		ret c			; if bcde is nan then return nan (cf set)
 		exx			; activate bcde'
-		call ftype		; test bcde' for inf/nan
+		call ftype		; test bcde' for nan
 		ret c			; if bcde' is nan then return nan (cf set)
 		jr infb			; return signed inf (cf set)
+
+mulinfnan:	; multiply by inf or nan, return inf or nan (cf set)
+
+		call ftype		; test bcde for nan
+		ret c			; if bcde is nan then return nan (cf set)
+		jp divzero		; 
 
 mulzero:	; multiply by zero, return zero (cf reset) or nan (cf set)
 
@@ -904,10 +918,9 @@ fdivy:		EXPA			; exponent -> a
 
 divinfnan:	; division by inf or nan, return zero (cf reset) or nan (cf set)
 
-		exx			;
-		call ftype		; test bcde' for inf/nan
-		ret c			; if bcde' is nan then return nan
-		jp zerob		; return signed zero (cf reset)
+		call ftype		; test bcde for nan
+		ret c			; if bcde is nan then return nan (cf set)
+		jp mulzero		; if bcde' is inf or nan then return nan (cf set) else return zero (cf reset)
 
 divzero:	; division by zero, return inf or nan (cf set)
 
@@ -916,11 +929,8 @@ divzero:	; division by zero, return inf or nan (cf set)
 		jp z,fnan		; if 0/0 then return nan (cf set)
 		inc a			;
 		jp nz,infb		; if n/0 with n not inf and nan then return signed inf (cf set)
-		ld a,0x80		;
-		xor c			;
-		or d			;
-		or e			;
-		ret nz			; if nan/0 then return nan (cf set)
+		call ftype		; test bcde' for nan
+		ret c			; if nan/0 then return nan (cf set)
 		jp infb			; if inf/0 then return signed inf (cf set)
 
 ;-------------------------------------------------------------------------------
