@@ -1721,7 +1721,7 @@ parse_exponent:	; parse the decimal exponent part into e with sign d
 ftoa:		push hl			; save buffer address hl
 		push af			; save nonzero buffer size a
 		ISNN			; test if bcde is inf or nan
-		jr z,0$			; if bcde is inf or nan then
+		jr nz,0$		; if bcde is inf or nan then
 		pop af			;   restore buffer size a
 		pop hl			;   restore buffer address hl
 		scf			;   set cf
