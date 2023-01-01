@@ -20,19 +20,23 @@ library are defined in Forth in [examples/MATH.FTH](examples/MATH.FTH)
 Forth850 includes stack under/overflow checks, dictionary overflow checks and
 can be interrupted by pressing BREAK.
 
-You can write Forth source code in the G850(V)(S) built-in TEXT editor and read
-it back into Forth850 with the [TEXT](examples/TEXT.FTH) word included in the
-full version.
+You can write Forth source code in the PC-G850(V)(S) built-in TEXT editor and
+read it back into Forth850 with the [TEXT](examples/TEXT.FTH) word included in
+the full version.
 
 You can extend Forth850 as you wish, including assembly code written on the
-machine itself in the TEXT editor and assembled with the built-in Z80
-Assembler.  Use the Monitor to set breakpoints and run Forth850 with `G100`.
-See [ASMDEMO1.FTH](examples/ASMDEMO1.FTH) for an example with an explanation
-how this works.
+machine itself in the PC-G850(V)(S) TEXT editor and assembled with its Z80
+Assembler.  See [ASMDEMO1.FTH](examples/ASMDEMO1.FTH) for an example with an
+explanation.  You can also use the Monitor to set breakpoints and run Forth850
+with `G100` to trigger them.  
 
 To build Forth850 from the Z80 assembly source, you will need to install
 the [asz80](https://shop-pdp.net/ashtml/asz80.htm) assembler part of the
 [ASxxxx Cross Assemblers](https://shop-pdp.net/ashtml/asxget.php).
+
+If you plan to use parts of Forth850 and/or the optimized Z80 code in a project
+that you plan to share or redistribute, then please give me credit for my work
+as per [BCD-3 license](license.txt).
 
 Discuss: [HP Forum](https://www.hpmuseum.org/forum/thread-19085.html) and
 [reddit](https://www.reddit.com/r/Forth/comments/ytat79/a_fast_forth_for_vintage_sharp_pcg850_pocket)
@@ -40,13 +44,11 @@ Discuss: [HP Forum](https://www.hpmuseum.org/forum/thread-19085.html) and
 ## Performance
 
 I've implemented Forth850 as efficiently as possible in direct threaded code
-(DTC) with new Z80 code written from scratch, including faster Z80 math
-routines when compared to other Z80 Forth implementations.  See the
+(DTC) with new Z80 code written from scratch, including faster Z80 integer and
+float math routines compared to other Z80 Forth implementations.  See the
 [technical implementation sections](#Implementation) why Forth850 is fast for a
 DTC implementation.  The [Forth850 source code](forth850.asm) is included and
-extensively documented.  If you plan to use parts of Forth850 and/or the
-optimized Z80 code in a project that you plan to share or redistribute, then
-please give me credit for my work as per [BCD-3 license](license.txt).
+extensively documented.
 
 The [n-queens benchmark](https://www.hpmuseum.org/cgi-sys/cgiwrap/hpmuseum/articles.cgi?read=700)
 is solved in 0.865 seconds, the fastest Forth implementation of the benchmarks.
