@@ -1,6 +1,6 @@
 ;-------------------------------------------------------------------------------
 ;
-;	Z80 IEEE 754 FLOATING POINT WITH ROUNDING MODES, NO INF/NAN
+;	Z80 IEEE 754 FLOATING POINT WITH ROUNDING MODES, INF/NAN AND SIGNED ZERO
 ;
 ; Author:
 ;   Dr. Robert van Engelen, Copyright 2022
@@ -14,8 +14,8 @@
 ;     round to nearest - ties to away, and round to zero (truncate)
 ;   - "memoryless" using registers only (+shadow), at most one push+pop per flop
 ;   - optimized for speed and reduced code size (no loop unrolling)
-;   - no inf/nan; routines return error condition (cf set)
-;   - no negative zero
+;   - inf/nan with cf set when a function returns an inf or nan
+;   - signed zero
 ;   - no subnormals
 ;   - extensively tested
 ;
@@ -68,14 +68,13 @@
 ;		|____B____|____C____|____D___|____E___|
 ;
 ;		exponent bits:	8
-;		exponent bias:	127 (0x7f) for IEEE 754 or 128 (0x80) symmetry
+;		exponent bias:	127 (0x7f)
 ;		exponent zero:	indicates zero floating point value
+;		exponent max:	255 (0xff) indicates inf or nan
 ;		mantissa bits:	24 (including implicit msb of 1)
-;		infinity/nan:	no (errors are indicated with cf set)
-;		range:		2^-126 to 2^+127 assuming bias = 127
-;				2^-127 to 2^+127 assuming bias = 128
+;		range:		2^-126 to 2^+127
 ;
-;		examples with exponent bias = 127:
+;		examples:
 ;
 ;		   0 = 00 00 00 00
 ;		   1 = 3f 80 00 00
@@ -85,20 +84,23 @@
 ;		  -1 = bf 80 00 00
 ;		  -2 = c0 00 00 00
 ;		  -3 = c0 40 00 00
-;		 inf = 7f 80 00 00   n/a (invalid value)
-;		-inf = ff 80 00 00   n/a (invalid value)
+;		 inf = 7f 80 00 00
+;		-inf = ff 80 00 00
 ;		 nan = s 11111111 xxxxxxx xxxxxxxx xxxxxxxx at least one x is 1
-;		                     n/a (invalid value)
 ;
 ;		IEEE 754 binary floating point allows floating point values to
 ;		be compared as if comparing 32 bit signed integers with 'i<':
 ;
-;		For positive, zero and opposite signs:
-;		   zero:  0 = 00 00 00 00 (-0 = 80 00 00 00 is never produced)
-;		 1 <  2:  1 = 3f 80 00 00 i<  2 = 40 00 00 00
-;		-1 <  2: -1 = bf 80 00 00 i<  2 = 40 00 00 00
+;		  zero:   +0 = 00 00 00 00
+;		  zero:   -0 = 80 00 00 00 (negative zero)
+;		For positive opposite signs:
+;		 1 < 2:    1 = 3f 80 00 00 i< 2   = 40 00 00 00
+;		-1 < 2:   -1 = bf 80 00 00 i< 2   = 40 00 00 00
+;		-1 < inf: -1 = bf 80 00 00 i< inf = 7f 80 00 00
 ;		When both signs are negative the comparison is inverted:
-;		-2 < -1: -2 = c0 00 00 00 i> -1 = bf 80 00 00
+;		-2   < -1: -2   = c0 00 00 00 i> -1 = bf 80 00 00
+;		-inf < -1: -inf = ff 80 00 00 i> -1 = bf 80 00 00
+;		Comparing nan always returns false (nan is incomparable)
 ;
 ;-------------------------------------------------------------------------------
 
@@ -122,7 +124,7 @@ ROUND = SUMROUND+MULROUND+DIVROUND	; nonzero if rounding is requested
 ;
 ;-------------------------------------------------------------------------------
 
-bias		.equ 127		; exponent bias 127 IEEE 754 or 128
+bias		.equ 127		; exponent bias 127 IEEE 754
 
 ;-------------------------------------------------------------------------------
 ;
@@ -147,12 +149,17 @@ bias		.equ 127		; exponent bias 127 IEEE 754 or 128
 		add hl,hl		; exponent -> h, set cf if negative
 .endm
 
+; Set z if float bcde is not numeric (i.e. inf or nan), modifies hl
+
+.macro		ISNN
+		EXPH			;
+		inc h			; set z if float is inf or nan, set cf if negative
+.endm
+
 ; Test if float bcde is zero, modifies a
 
 .macro		ISZERO
-		ld a,c			;
-		and 0x80		;
-		or b			; set z if float is zero (no negative zero)
+		EXPA			; set z if float is zero (positive or negative zero)
 .endm
 
 ; Test if float bcde is negative or zero, modifies a
@@ -169,6 +176,24 @@ bias		.equ 127		; exponent bias 127 IEEE 754 or 128
 
 ;-------------------------------------------------------------------------------
 ;
+;		FLOATING POINT TYPE CHECK
+;
+;		ftype:	test bcde for inf and nan, bcde unchanged
+;			cf set if bcde is nan
+;			z set if bcde is +/-inf
+;			hl modified
+;
+;-------------------------------------------------------------------------------
+
+ftype:		EXPH			;
+		or a			; reset cf
+		inc h			;
+		ret nz			; return cf reset and z reset if not inf/nan
+		sbc hl,de		;
+		ret			; return cf set if nan, cf reset and z set if inf
+
+;-------------------------------------------------------------------------------
+;
 ;		FLOATING POINT NEGATION
 ;
 ;		fneg:	-bcde -> bcde
@@ -177,10 +202,7 @@ bias		.equ 127		; exponent bias 127 IEEE 754 or 128
 ;
 ;-------------------------------------------------------------------------------
 
-fneg:		ld a,b			;
-		or c			;
-		ret z			; if bcde is zero then return zero (cf reset)
-		ld a,b			; sign bit 7 and exponent
+fneg:		ld a,b			; sign bit 7 and exponent
 		xor 0x80		; invert sign bit 7
 		ld b,a			; set new sign bit 7
 		ret			; return float bcde (cf reset)
@@ -205,7 +227,7 @@ fabs:		res 7,b			; reset sign b bit 7
 ;
 ;		fsubx:	bcde - bcde' -> bcde
 ;		fsuby:	bcde' - bcde -> bcde
-;			cf set on overflow
+;			cf set if result float bcde is inf or nan
 ;			a,b,c,d,e,h,l,a',b',c',d',e',h',l' modified
 ;
 ;-------------------------------------------------------------------------------
@@ -219,21 +241,24 @@ fsuby:		call fneg		; -bcde -> bcde
 ;		FLOATING POINT ADDITION
 ;
 ;		fadd:	bcde + bcde' -> bcde
-;			cf set on overflow
+;			cf set if result float bcde is inf or nan
 ;			a,b,c,d,e,h,l,a',b',c',d',e',h',l' modified
+;
+;		0+n -> n for any n
+;		inf+inf -> inf
+;		inf-inf -> nan
+;		nan+n -> nan for any n
 ;
 ;-------------------------------------------------------------------------------
 
-fadd:		EXPH			; exponent -> h
-		ld a,h			;
+fadd:		EXPA			;
+		ld h,a			; exponent -> h
 		exx			; activate bcdehl'
-		or a			; check if exponent is zero (no subnormals)
-		ret z			; if bcde is zero then return float bcde' (cf reset)
-		EXPH			; exponent' -> h'
-		ld a,h			;
+		jr z,addzero		; if bcde is zero then return float bcde'
+		EXPA			;
+		ld h,a			; exponent' -> h'
 		exx			; activate bcdehl
-		or a			; check if exponent' is zero (no subnormals)
-		ret z			; if bcde' is zero then return float bcde (cf reset)
+		jr z,addzero		; if bcde' is zero then return float bcde
 
 		; compare the exponents
 
@@ -247,7 +272,7 @@ fadd:		EXPH			; exponent -> h
 .else
 		cp 24			; (SR=0) if exponent' - exponent >= 24 then
 .endif;SUMROUND
-		ret nc			;   return float bcde' (cf reset)
+		jr nc,addzero		;   return float bcde'
 
 		; save signs
 
@@ -328,17 +353,22 @@ add:		; add realigned mantissa 0.cde to 1.cde' to produce result mantissa ahl
 		rr l			; 10.ahl >> 1 -> 1.ahl shift right
 		jr shiftright		; shift right again result mantissa 1.ahl and increment exponent b
 
+addzero:	; adding zero, return the other operand and set cf when inf or nan
+
+		EXPA			; exponent -> a
+		add 1			; set cf when bcde is inf or nan
+		ret			; return float bcde (cf set when inf or nan)
+
 subtract:	; subtract realigned mantissa 0.cde from 1.cde' to produce result mantissa ahl
 
 		sbc hl,de		;
 		sbc c			; 1.cde' - 0.cde -> 1-cf.ahl with result mantissa, cf is inverted
-		ccf			; complement cf
-		jr c,shiftrightmant	; if carry then shift right result mantissa cf.ahl
+		jr nc,shiftrightmant	; if no carry then shift right result mantissa 1.ahl
 		dec b			; decrement exponent
-		jr z,fzero		; if exponent is zero then return return zero (underflow, cf reset)
+		jr z,zerol		; if exponent is zero then return zero (underflow, cf reset)
 		jr normalize		; normalize result mantissa 0.ahl to return inexact result bcde
 
-aligned:	; add or subtract aligned mantissas cde and cde' after comparing signs
+aligned:	; check if bcde and bcde' are inf/nan
 
 .if SUMROUND
 .if SUMROUND - 1
@@ -346,6 +376,25 @@ aligned:	; add or subtract aligned mantissas cde and cde' after comparing signs
 .endif
 .endif;SUMROUND
 		ld b,h			; save h -> b result exponent
+		inc h			;
+		jr nz,1$		; if bcde and bcde' are inf/nan then
+		ld a,c			;
+		exx			;
+		add c			;
+		or d			;
+		or e			;
+		exx			;
+		or d			;
+		or e			;
+		jr nz,fnan		;   if bcde or bcde' is nan then return nan
+		ld a,l			;
+		exx			;
+		xor l			;
+		jp m,fnan		;   if sign <> sign' then return nan
+		jr infl			;   return inf with sign l'
+
+1$:		; add or subtract aligned mantissas cde and cde' after comparing signs
+
 		ld a,l			; sign' l bit 7 -> a
 		exx			; activate bcdehl'
 		ld b,h			; save h' -> b' result exponent' = b result exponent
@@ -364,11 +413,11 @@ addaligned:	; add aligned mantissa cde to cde' to produce result mantissa 1.ahl
 shiftright:	; shift right result mantissa 1.ahl and increment exponent b
 
 		inc b			; increment result exponent
-		scf			; set cf for shift right or error
-		ret z			; if result exponent is zero then overflow (cf set)
+		jr z,infl		; if result exponent is zero then overflow (cf set)
 
-shiftrightmant:	; shift right result mantissa cf.ahl
+shiftrightmant:	; shift right result mantissa 1.ahl
 
+		scf			;
 		rra			;
 		rr h			;
 		rr l			; cf.ahl >> 1 -> ahl.cf
@@ -398,8 +447,7 @@ finalizea:	; finalize bahl to return float bcde with sign' l' bit 7
 
 .if bias - 128	; check overflow when bias = 127, for bias = 128 the result exponent <= bias + 127 = 255
 		inc b			; check if result exponent overflowed (+/- infinity)
-		scf			; set cf
-		ret z			; if result exponent overflowed then return error (cf set)
+		jr z,infl		; if result exponent overflowed then return error (cf set)
 		dec b			;
 .endif
 
@@ -427,8 +475,7 @@ roundtoaway:	inc l			; entry point to round to nearest ties to away (return with
 		inc b			;
 		ret nz			; if okay then return (z reset), otherwise biased exponent > 255
 		pop af			; pop and discard return address
-		scf			; set cf
-		ret			; return error (cf set)
+		jr infl			; return +/-inf
 .endif;ROUND
 
 resubtract:	; redo subtract mantissa cde' from cde after swap to produce result mantissa ahl
@@ -461,54 +508,125 @@ normalize:	; normalize bahl to return inexact result bcde with sign' l' bit 7
 		add hl,hl	; 11	;
 		adc a		;  4	;   ahl << 1 -> ahl
 		djnz 1$		; 13(38); until --b = 0
-		; FALL THROUGH
+		jr zerol		; return zero (underflow, cf reset)
 
 ;-------------------------------------------------------------------------------
 ;
 ;		FLOATING POINT CONSTANT ZERO
 ;
 ;		fzero:	0.0 -> bcde
+;		fzeroa:	sign in a bit 7 + 0.0 -> bcde
 ;			cf reset
 ;			a,b,c,d,e modified
 ;
 ;-------------------------------------------------------------------------------
 
-fzero:		xor a			; 0 -> a and reset cf
-		ld b,a			;
-		ld c,a			;
-		ld d,a			; 0 -> bcde
+fzero:		xor a			; 0 -> a
+		jr set_b_res_cde	; return zero (cf reset)
+
+zerob:		; return zero with sign b xor b' bit 7 and cf reset
+
+		ld a,b			; sign' -> a bit 7
+		exx			; activate bcde = +/-0
+		xor b			; sign' xor sign -> a bit 7
+		.db 1			; skip 2 bytes to return zero with sign a bit 7 (cf reset)
+
+zerol:		; return zero with result sign l' bit 7 and cf reset
+
+		exx			;
+		ld a,l			;
+
+fzeroa:		; return zero with sign a bit 7 and cf reset
+
+		and 0x80		;
+set_b_res_cde:	ld b,a			;
+res_cde:	xor a			; 0 -> a and reset cf
+set_cde:	ld c,a			;
+set_de:		ld d,a			;
 		ld e,a			;
-		ret			; return float bcde (cf reset, v reset, z set)
+		ret			; return float bcde
+
+;-------------------------------------------------------------------------------
+;
+;		FLOATING POINT QUIET NAN
+;
+;		fnan:	quiet nan 0x7fc00000 -> bcde
+;			a,b,c,d,e modified
+;
+;-------------------------------------------------------------------------------
+
+fnan:		ld bc,0x7fc0		;
+		jr res_de		; return 0x7fc00000 quiet nan (cf set)
+
+;-------------------------------------------------------------------------------
+;
+;		FLOATING POINT SIGNED INF
+;
+;		finfa:	sign in a bit 7 + inf 0x7f800000 -> bcde
+;			cf set
+;			a,b,c,d,e modified
+;
+;-------------------------------------------------------------------------------
+
+infb:		; return inf with sign b xor b' bit 7 and cf set
+
+		ld a,b			;
+		exx			; activate bcde'
+		xor b			; sign xor sign' -> a bit 7
+		.db 1			; skip 2 bytes to return inf with sign a bit 7 (cf set)
+
+infl:		; return inf with result sign l' bit 7 and cf set
+
+		exx			;
+		ld a,l			; l' -> a
+
+finfa:		; return inf with sign a bit 7 and cf set
+
+		or 0x7f			;
+		ld b,a			;
+		ld c,0x80		;
+res_de:		xor a			;
+		scf			; set cf
+		jr set_de		; return 0x7f800000 inf with sign a bit 7 (cf set)
 
 ;-------------------------------------------------------------------------------
 ;
 ;		FLOATING POINT MULTIPLICATION
 ;
 ;		fmul:	bcde * bcde' -> bcde
-;			cf set on overflow
+;			cf set if result float bcde is inf or nan
 ;			a,b,c,d,e,h,l,a',b',c',d',e',h',l' modified
+;
+;		0*inf -> nan
+;		n*inf -> inf for any n except 0, nan
+;		n*nan -> nan for any n
+;		0*n -> 0 for any n except inf, nan
 ;
 ;-------------------------------------------------------------------------------
 
 fmul:		EXPA			; exponent -> a
-		jr z,fzero		; if bcde is zero then return zero (cf reset)
-		sub bias		; subtract exponent bias
+		jr z,mulzero		; if bcde is zero then return signed zero or nan
+		inc a			;
+		jr z,infnan		; if bcde is inf/nan then return inf or nan (cf set)
+		sub bias+1		; subtract exponent bias + 1 to correct for inc a
 		ld h,a			; exponent - bias -> h
 		exx			; activate bcdehl'
 		EXPA			; exponent' -> a
-		jr z,fzero		; if bcde' is zero then return zero (cf reset)
-		sub bias		; subtract exponent bias
+		jr z,mulzero		; if bcde' is zero then return signed zero or nan
+		inc a			;
+		jr z,infnan		; if bcde' is inf/nan then return inf or nan (cf set)
+		sub bias+1		; subtract exponent bias + 1 to correct for inc a
 		exx			; activate bcdehl
 
 		; add unbiased exponents to produce result exponent
 
 		add h			; (exponent' - bias) + (exponent - bias) -> a
-		jp pe,outofrange	; if out of range then return zero (underflow, cf reset) or overflow (cf set)
+		jp pe,outofrange	; if out of range then return zero (underflow, cf reset) or inf (overflow, cf set)
 
 		; save biased result exponent and sign
 
 		add bias		; bias the result exponent
-		jr z,fzero		; if result exponent is zero then return zero (underflow, cf reset)
+		jr z,zerob		; if result exponent is zero then return zero (underflow, cf reset)
 		ex af,af'		; save result biased exponent to a'
 		ld a,b			; b -> a with sign bit 7
 		set 7,c			; set bit 7 of man2 c
@@ -549,7 +667,7 @@ fmul:		EXPA			; exponent -> a
 .if MULROUND - 1
 		jr nc,3$		; (MR=2) if carry then
 		inc b			; (MR=2)   increment result exponent
-		ret z			; (MR=2)   if result exponent is zero then overflow (cf set)
+		jr z,infl		; (MR=2)   if result exponent is zero then return inf (cf set)
 		rra			; (MR=2)
 		rr h			; (MR=2)
 		rr l			; (MR=2)   cf.ahl >> 1 -> ahl.cf
@@ -558,7 +676,7 @@ fmul:		EXPA			; exponent -> a
 .if SUMROUND - MULROUND
 		jr nc,3$		; (MR=1) if carry then
 		inc b			; (MR=1)   increment result exponent
-		ret z			; (MR=1)   if result exponent is zero then overflow (cf set)
+		jr z,infl		; (MR=1)   if result exponent is zero then return inf (cf set)
 		rra			; (MR=1)
 		rr h			; (MR=1)
 		rr l			; (MR=1)   cf.ahl >> 1 -> ahl.cf
@@ -611,11 +729,25 @@ fmul:		EXPA			; exponent -> a
 		jp finalizea		; (MR=0) finalize bahl to return float bcde
 .endif;MULROUND
 
-		; out of range, return zero (underflow, cf reset) or overflow (cf set)
+outofrange:	; out of range, return zero (underflow, cf reset) or inf (overflow, cf set)
 
-outofrange:	add a			; carry if bit 7 set
-		jr nc,fzero		; if incorrect positive then return zero (underflow, cf reset)
-		ret			; return with overflow error (cf set)
+		add a			; carry if bit 7 set
+		jp nc,zerob		; if incorrect positive then return signed zero (underflow, cf reset)
+		jr infb			; return signed inf (overflow, cf set)
+
+infnan:		; one nonzero operand of fmul and fdiv is inf/nan, return inf or nan (cf set)
+
+		exx			; activate bcde'
+		call ftype		; test bcde' for inf/nan
+		ret c			; if bcde' is nan then return nan (cf set)
+		jr infb			; return signed inf (cf set)
+
+mulzero:	; multiply by zero, return zero (cf reset) or nan (cf set)
+
+		exx			; activate bcde'
+		ISNN			; test if bcde' is inf or nan
+		jp z,fnan		; if bcde' is inf or nan then return nan (cf set)
+		jp zerob		; return signed zero (cf reset)
 
 ;-------------------------------------------------------------------------------
 ;
@@ -623,32 +755,43 @@ outofrange:	add a			; carry if bit 7 set
 ;
 ;		fdivx:	bcde / bcde' -> bcde
 ;		fdivy:	bcde' / bcde -> bcde
-;			cf set on overflow or when dividing by zero
+;			cf set if result float bcde is inf or nan
 ;			a,b,c,d,e,h,l,a',b',c',d',e',h',l' modified
+;
+;		0/0 -> nan
+;		n/0 -> inf for any n except 0, nan
+;		0/n -> 0 for any n except 0, nan
+;		inf/inf -> nan
+;		n/inf -> 0 for any n except inf, nan
+;		n/nan -> nan for any n
+;		nan/n -> nan for any n
 ;
 ;-------------------------------------------------------------------------------
 
 fdivx:		exx			;
 fdivy:		EXPA			; exponent -> a
-		scf			; set cf
-		ret z			; if divisor bcde is zero then division by zero error (cf set)
-		sub bias		; subtract exponent bias
+		jr z,divzero		; if divisor bcde is zero then division by zero
+		inc a			;
+		jr z,divinfnan		; if divisor bcde is inf/nan then division by inf/nan
+		sub bias+1		; subtract exponent bias + 1 to correct for inc a
 		ld h,a			; exponent - bias -> h'
 		exx			; activate bcdehl'
 		EXPA			; exponent' -> a
-		jp z,fzero		; if dividend bcde' is zero then return zero (cf reset)
-		sub bias		; subtract exponent bias
+		jp z,zerob		; if dividend bcde' is zero then return signed zero
+		inc a			;
+		jr z,infnan		; if dividend bcde' is inf/nan then return inf or nan
+		sub bias+1		; subtract exponent bias + 1 to correct for inc a
 		exx			; activate bcdehl
 
 		; subtract unbiased exponents to produce result exponent
 
 		sub h			; (exponent' - bias) - (exponent - bias) -> a
-		jp pe,outofrange	; if out of range then return zero (underflow, cf reset) or overflow (cf set)
+		jp pe,outofrange	; if out of range then return zero (underflow, cf reset) or inf (overflow, cf set)
 
 		; save biased result exponent to b' and result sign to l'
 
 		add bias		; bias the result exponent
-		jp z,fzero		; if result exponent is zero then return zero (underflow, cf reset)
+		jp z,zerob		; if result exponent is zero then return zero (underflow, cf reset)
 		ex af,af'		; save a with result exponent
 		ld a,b			; b -> a' with sign bit 7
 		exx			; activate bcdehl'
@@ -695,7 +838,7 @@ fdivy:		EXPA			; exponent -> a
 		jr nz,4$		; if zero then
 		dec b			;   decrement result exponent b'
 		exx			;   activate bcdehl
-		jp z,fzero		;   if result exponent is zero then return zero (underflow, cf reset)
+		jp z,zerol		;   if result exponent is zero then return zero (underflow, cf reset)
 		inc b			;   1 -> b loop counter
 		jr nc,1$		;   loop once when no final rla carry for mantissa lsb
 		jr 2$			;   loop once when final rla carry for mantissa lsb
@@ -758,6 +901,27 @@ fdivy:		EXPA			; exponent -> a
 		scf		;  4	;   1 -> cf
 		djnz 2$		; 13	; until --b = 0
 		jr 3$			; normalize result mantissa chl'
+
+divinfnan:	; division by inf or nan, return zero (cf reset) or nan (cf set)
+
+		exx			;
+		call ftype		; test bcde' for inf/nan
+		ret c			; if bcde' is nan then return nan
+		jp zerob		; return signed zero (cf reset)
+
+divzero:	; division by zero, return inf or nan (cf set)
+
+		exx			;
+		EXPA			; exponent' -> a
+		jp z,fnan		; if 0/0 then return nan (cf set)
+		inc a			;
+		jp nz,infb		; if n/0 with n not inf and nan then return signed inf (cf set)
+		ld a,0x80		;
+		xor c			;
+		or d			;
+		or e			;
+		ret nz			; if nan/0 then return nan (cf set)
+		jp infb			; if inf/0 then return signed inf (cf set)
 
 ;-------------------------------------------------------------------------------
 ;
@@ -957,7 +1121,7 @@ fround:		exx			;
 ;		FLOATING POINT MULTIPLICATION BY POWER OF 10
 ;
 ;		fpow10:	10**a * bcde -> bcde
-;			cf set on overflow
+;			cf set if result float bcde is inf or nan
 ;			a,b,c,d,e,h,l,a',b',c',d',e',h',l' modified
 ;
 ;		four computational methods compared, minimum and mean number of
@@ -1254,7 +1418,6 @@ atof:		ld b,a			; a -> b string length
 		; begin parsing
 
 		ld a,(hl)		;
-		inc hl			; [hl++] -> a next char
 
 		; check for a leading minus sign
 
@@ -1266,18 +1429,65 @@ atof:		ld b,a			; a -> b string length
 1$:		; check for a leading plus sign
 
 		cp '+			;
-		jr nz,compare_char	;
-2$:		dec b			; decrement length and check if zero
+		jr nz,3$		;
+2$:		inc hl			;
+		dec b			; decrement length and check if zero
 		scf			;
 		ret z			; if remaining length b = 0 then error (cf set)
+
+3$:		; check for inf and nan
+
+		ld a,b			;
+		cp 3			;
+		jr nz,parse_float	; if remaining length b <> 3 then parse float
+		ld a,(hl)		;
+		or 0x20			;
+		cp 'i			;
+		jr z,4$			; if char is 'i or 'I then parse inf
+		cp 'n			;
+		jr nz,parse_float	; if char is not 'n or 'N then parse float
+
+		; parse and return nan (cf reset)
+
+		inc hl			;
+		ld a,(hl)		;
+		or 0x20			;
+		cp 'a			;
+		scf			;
+		ret nz			;
+		inc hl			;
+		ld a,(hl)		;
+		or 0x20			;
+		cp 'n			;
+		scf			;
+		ret nz			; return error (cf set)
+		call fnan		; return nan
+		or a			;
+		ret			;
+
+4$:		; parse and return inf (cf reset)
+
+		inc hl			;
+		ld a,(hl)		;
+		or 0x20			;
+		cp 'n			;
+		scf			;
+		ret nz			;
+		inc hl			;
+		ld a,(hl)		;
+		or 0x20			;
+		cp 'f			;
+		scf			;
+		ret nz			; return error (cf set)
+		ld a,c			; sign c -> a bit 7
+		call finfa		;
+		or a			;
+		ret			;
 
 parse_float:	; loop to parse float
 
 		ld a,(hl)		;
 		inc hl			; [hl++] -> a next char
-
-compare_char:	; compare next character in a
-
 		cp '.			;
 		jr nz,1$		; if char is '. then
 		bit 6,c			;
@@ -1492,7 +1702,7 @@ parse_exponent:	; parse the decimal exponent part into e with sign d
 ;		CONVERT FLOAT TO STRING
 ;
 ;		ftoa:	bcde -> [hl...hl+a-1] digits, exponent e and sign d bit 7
-;			no errors (cf reset)
+;			cf set when bcde is inf or nan (cannot convert)
 ;			a,b,c,d,e,h,l,a',b',c',d',e',h',l' modified
 ;			 a  nonzero buffer size argument
 ;			bc  float argument
@@ -1510,8 +1720,14 @@ parse_exponent:	; parse the decimal exponent part into e with sign d
 
 ftoa:		push hl			; save buffer address hl
 		push af			; save nonzero buffer size a
+		ISNN			; test if bcde is inf or nan
+		jr z,0$			; if bcde is inf or nan then
+		pop af			;   restore buffer size a
+		pop hl			;   restore buffer address hl
+		scf			;   set cf
+		ret			;   return inf/nan error (cf set)
 
-		; estimate decimal exponent = exp*77/256 ~= log10(2**exp) = exp * log10(2)
+0$:		; estimate decimal exponent = exp*77/256 ~= log10(2**exp) = exp * log10(2)
 
 		EXPA			; exponent -> a
 		jr z,3$			; if bcde is zero then populate buffer with 0s

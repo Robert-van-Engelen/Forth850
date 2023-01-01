@@ -4,20 +4,40 @@
 A modern Forth 2012 standard compliant system for the vintage SHARP
 PC-G850(V)(S) pocket computer.
 
+The basic version forth850 is under 8K and has [295 words](forth850-words).
+
+A more complete 11K version forth850-full is also included with:
+
+- [54 additional words](#additional-words-included-with-the-full-version)
+
+- single precision floating point math words implemented with a new and
+efficient [Z80 IEEE 754 floating point math](#z80-floating-point-math-routines)
+library I wrote for Forth850.  More floating point math functions that use this
+library are defined in Forth in [examples/MATH.FTH](examples/MATH.FTH)
+
+- a more capable Forth line editor with replay back feature (cursor keys)
+
+Forth850 includes stack under/overflow checks, dictionary overflow checks and
+can be interrupted by pressing BREAK.
+
+You can write Forth source code in the G850(V)(S) built-in TEXT editor and read
+it back into Forth850 with the [TEXT](examples/TEXT.FTH) word included in the
+full version.
+
 You can extend Forth850 as you wish, including assembly code written on the
 machine itself in the TEXT editor and assembled with the built-in Z80
-Assembler.  See [ASMDEMO1.FTH](examples/ASMDEMO1.FTH) for an example with an
-explanation how this works.
+Assembler.  Use the Monitor to set breakpoints and run Forth850 with `G100`.
+See [ASMDEMO1.FTH](examples/ASMDEMO1.FTH) for an example with an explanation
+how this works.
 
-You can write Forth source code in the built-in TEXT editor and read it back
-into Forth850 with the [TEXT](examples/TEXT.FTH) word.
+To build Forth850 from the Z80 assembly source, you will need to install
+the [asz80](https://shop-pdp.net/ashtml/asz80.htm) assembler part of the
+[ASxxxx Cross Assemblers](https://shop-pdp.net/ashtml/asxget.php).
 
-A larger "full version" forth850-full.wav is included with
-[additional words](#additional-words-included-with-the-full-version),
-including single precision floating point math words implemented with a new and
-efficient [Z80 floating point math](#z80-floating-point-math-routines) library
-I wrote for Forth850.  More floating point math functions that use this library
-are defined in Forth in [examples/MATH.FTH](examples/MATH.FTH).
+Discuss: [HP Forum](https://www.hpmuseum.org/forum/thread-19085.html) and
+[reddit](https://www.reddit.com/r/Forth/comments/ytat79/a_fast_forth_for_vintage_sharp_pcg850_pocket)
+
+## Performance
 
 I've implemented Forth850 as efficiently as possible in direct threaded code
 (DTC) with new Z80 code written from scratch, including faster Z80 math
@@ -31,12 +51,7 @@ please give me credit for my work as per [BCD-3 license](license.txt).
 The [n-queens benchmark](https://www.hpmuseum.org/cgi-sys/cgiwrap/hpmuseum/articles.cgi?read=700)
 is solved in 0.865 seconds, the fastest Forth implementation of the benchmarks.
 Forth850 n-queens runs 5 times faster than the C n-queens benchmark on the
-PC-G850VS.
-
-Forth850 includes stack under/overflow checks, dictionary overflow checks and
-can be interrupted by pressing BREAK.
-
-Discuss: [HP Forum](https://www.hpmuseum.org/forum/thread-19085.html) and [reddit](https://www.reddit.com/r/Forth/comments/ytat79/a_fast_forth_for_vintage_sharp_pcg850_pocket)
+Sharp PC-G850VS.
 
 ## Installation
 
@@ -75,24 +90,16 @@ Memory allocation can be adjusted without affecting the Forth dictionary.
 
 In RUN MODE enter `MON` to enter the Monitor, then enter `USERaddr` with an
 upper address `addr` larger than `23ff` (9K bytes.)  If words are added to
-Forth850, you must make sure that `addr` is large enough by calculating the
-`addr` as follows:
+Forth850, you must make sure that `addr` is large enough, i.e. equal or larger
+than the hex value displayed with:
 
     HERE #708 + HEX . DECIMAL
     23FF
 
 In the Monitor specify `USERaddr` with the address displayed.  This leaves
-about 200 bytes free dictionary space minus 40 bytes for the "hold area" to run
+about 200 bytes free dictionary space plus 40 bytes for the "hold area" to run
 Forth850.  The largest size is `USER75FF` which gives about 21K free dictionary
 space (but there won't be space left on the machine for files, BASIC or TEXT.)
-
-## Nice to have ("full version" work in progress)
-
-- improved command line editor, like Forth500
-- serial IO to communicate via RS232 and load Forth source via serial
-- DONE: [single precision floating point words](#floating-point-math-words-included-with-the-full-version)
-- DONE: ability to [load Forth source code from the TEXT editor](examples/TEXT.FTH)
-- DONE: sound with [BEEP](examples/ASMDEMO1.FTH)
 
 ## Forth850 manual
 
@@ -845,7 +852,7 @@ trim trailing white space and control characters
 
 ### /STRING
 _c-addr1 u1 n -- c-addr2 u2_
-slice n characters off string
+slice n characters off the start of a string
 
     : /STRING ROT OVER + -ROT - ;
 
@@ -866,11 +873,11 @@ set cursor row 0 to 5
 
 ### X@
 _-- u_
-fetch cursor column
+fetch cursor column 0 to 23, or 24 when beyond the right window edge
 
 ### Y@
 _-- u_
-fetch cursor row
+fetch cursor row 0 to 5
 
 ### AT-XY
 _u1 u2 --_
@@ -1092,6 +1099,7 @@ right   =$1c,
 left    =$1d,
 up      =$1e,
 down    =$1f;
+a space is produced for the TAB key by the GETCHR system call,
 calc keys and BASIC keys produce BASIC tokens as key code $fe:
 SIN     =$fe register B = $95 BASIC token for SIN (ignored)
 
@@ -2372,7 +2380,7 @@ absolute value |r1|
 _r1 r2 -- flag_
 true if r1 = r2
 
-    : F= D= ; ( IEEE 754 standard )
+    : F= D= ; ( works for IEEE 754 floating point without negative zero and inf/nan )
 
 ### F<
 _r1 r2 -- flag_
@@ -2381,19 +2389,37 @@ true if r1 < r2
     : F<
       DUP 3 PICK AND 0< IF
         2SWAP
-      D< ;
+      D< ; ( works for IEEE 754 floating point without negative zero and inf/nan )
 
 ### F0=
 _r -- flag_
 true if r = 0.0e0
 
-    : F0= D0= ; ( IEEE 754 standard )
+    : F0= D0= ; ( works for IEEE 754 floating point without negative zero and inf/nan )
 
 ### F0<
 _r -- flag_
 true if r < 0.0e0
 
-    : F0< D0< ; ( IEEE 754 standard )
+    : F0< D0< ; ( works for IEEE 754 floating point without negative zero and inf/nan )
+
+### FMAX
+_r1 r2 -- r3_
+
+max of r1 and r2
+
+    : FMAX
+      2OVER 2OVER F< IF 2SWAP THEN
+      2DROP ;
+
+### FMIN
+_r1 r2 -- r3_
+
+min of r1 and r2
+
+    : FMIN
+      2OVER 2OVER F< INVERT IF 2SWAP THEN
+      2DROP ;
 
 ### D>F
 _d -- r_
@@ -3372,9 +3398,9 @@ cycles per character comparison when characters match
 
 Forth850 benefits from the work done by many others to offer inspiration, but
 the system does not include licensed code of the following implementations or
-any other not listed here.  Some parts of Forth850 are derived from freely
-available Forth resources listed above and the Z80 resources listed further
-below:
+any other implementation not listed here.  Some parts of Forth850 are derived
+from freely available Forth resources listed above and the Z80 resources listed
+further below:
 
 - CamelForth for the Z80: <http://www.camelforth.com/page.php?5>
 - eForth: <https://github.com/lispnik/eforth/blob/master/z80efort/EFZ80.ASM>
@@ -3382,7 +3408,7 @@ below:
 
 ## Z80 resources
 
-- Z80 assembler and linker: <https://shop-pdp.net/ashtml/asz80.htm>
+- asz80 assembler and linker: <https://shop-pdp.net/ashtml/asz80.htm> download <https://shop-pdp.net/ashtml/asxget.php>
 - Zilog Z80 CPU User Manual: <https://www.zilog.com/docs/z80/um0080.pdf>
 - Z80 Instruction Set: <https://wikiti.brandonw.net/index.php?title=Z80_Instruction_Set>
 - Z80 Instruction Set: <https://www.smspower.org/Development/InstructionSet>

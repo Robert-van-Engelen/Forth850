@@ -18,3 +18,4 @@
 - dec  8, 2022: Forth850 v0.9 add new Z80 IEEE 754 math with rounding modes
 - dec  9, 2022: Forth850 v0.9 rounding modes set to SUM/MUL/DIV=2/2/1
 - dec 25, 2022: Forth850 v0.9 fix IEEE 754 math rounding with sticky bits
+- jan  1, 2023: Forth850 v1.0 add more capable line editor to the full version

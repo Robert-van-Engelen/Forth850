@@ -8,7 +8,7 @@
 ;    FF       OO    OO RR RR      TT    HH    HH  88   88        55 00    00
 ;   FF       OO    OO RR  RR     TT    HH    HH 88     88       55 00    00
 ;  FF       OO    OO RR   RR    TT    HH    HH  88   88  55    55  00  00
-; FF        OOOOOO  RR    RR   TT    HH    HH   88888    555555    0000    v0.9
+; FF        OOOOOO  RR    RR   TT    HH    HH   88888    555555    0000    v1.0
 ;
 ;
 ; Author:
@@ -73,9 +73,10 @@
 .org		0x0100
 
 FAST = 1	; fast (1) or compact (0)
-FULL = 1	; include additional words
-MATH = 1	; include floating point math words
-TEST = 0	; include tests.asm
+EDIT = 1	; include a more capable line editor with replay back (1)
+FULL = 1	; include additional words (1)
+MATH = 1	; include floating point math words (1)
+TEST = 0	; include tests.asm (1)
 
 ;-------------------------------------------------------------------------------
 ;
@@ -85,6 +86,7 @@ TEST = 0	; include tests.asm
 
 win_rows	.equ 6
 win_cols	.equ 24
+win_size	.equ win_rows*win_cols
 
 ;-------------------------------------------------------------------------------
 ;
@@ -107,7 +109,7 @@ INSLN		.equ 0xbe65		; insert line at DE=xy
 INKEY		.equ 0xbe53		; returns A with key code cf=1 or 0 cf=0
 SEROUT		.equ 0xbfb2		; SIO write 0-terminated string HL (?)
 WRPSTR		.equ 0xbfd0		; draw pixel string HL size B at DE=xy
-SCROLL		.equ 0xbfeb		; scroll screen up
+SCROLL		.equ 0xbfeb		; scroll screen up, DE unchanged
 REPCHR		.equ 0xbfee		; put A=char at DE=xy B times
 PUTSTR		.equ 0xbff1		; put string HL=addr length B at DE=xy
 SHTDWN		.equ 0xbd2d		; power off, ON restarts in RUN mode
@@ -2296,6 +2298,34 @@ f1ix:		pop hl			; pop hl with 2OS
 		CODE F0<,fzeroless
 		jp dzeroless		; IEEE 754 float are comparable as integer
 
+;= FMAX		r1 r2 -- r3
+;		
+;		max of r1 and r2
+;
+;    : FMAX
+;      2OVER 2OVER F< IF 2SWAP THEN
+;      2DROP ;
+
+		COLON FMAX,fmax
+		.dw twoover,twoover,fless,doif,1$
+		.dw   twoswap
+1$:		.dw twodrop
+		.dw doret
+
+;= FMIN		r1 r2 -- r3
+;		
+;		min of r1 and r2
+;
+;    : FMIN
+;      2OVER 2OVER F< INVERT IF 2SWAP THEN
+;      2DROP ;
+
+		COLON FMIN,fmin
+		.dw twoover,twoover,fless,invert,doif,1$
+		.dw   twoswap
+1$:		.dw twodrop
+		.dw doret
+
 ;= D>F		d -- r
 ;		widen signed double to float
 
@@ -2863,7 +2893,7 @@ f1ix:		pop hl			; pop hl with 2OS
 		.dw doret
 
 ; /STRING	c-addr1 u1 n -- c-addr2 u2
-;		slice n characters off string
+;		slice n characters off the start of a string
 ;
 ;    : /STRING ROT OVER + -ROT - ;
 
@@ -2923,7 +2953,7 @@ y:		.db 0			; cursor row 0 to win_rows - 1
 		JP_NEXT			; continue
 
 ; X@		-- u
-;		fetch cursor column
+;		fetch cursor column 0 to 23, or 24 when beyond the right window edge
 
 		CODE X@,xfetch
 		push de			; save TOS
@@ -2933,7 +2963,7 @@ y:		.db 0			; cursor row 0 to win_rows - 1
 		JP_NEXT			; continue
 
 ; Y@		-- u
-;		fetch cursor row
+;		fetch cursor row 0 to 5
 
 		CODE Y@,yfetch
 		push de			; save TOS
@@ -2967,83 +2997,91 @@ y:		.db 0			; cursor row 0 to win_rows - 1
 ;		31 (down),
 
 		CODE EMIT,emit
-		ld hl,xy		; xy -> hl
 		ld a,e			; char -> a
-		cp 0x20			; test if control
-		jr c,emit_check_bs		; if a < 0x20 then handle control
 		exx			; save regs
-		ld de,(xy)		; x -> e, y -> d
-		call PUTCHR		; PUTCHR at de (xy)
+		cp 0x20			; test if a is a control character
+		jr nc,1$		; if a < 0x20 then
+		call emit_control	;   handle control character
+		jr 2$			; else
+1$:		ex af,af'		;   save a
+		call get_xy		;   (xy) -> de adjust x when beyond the right window edge
+		ex af,af'		;   restore a
+		call PUTCHR		;   PUTCHR a at de=xy
+		inc e			;   x + 1 -> x
+2$:		ld (xy),de		; store de -> (xy)
 		exx			; restore regs
-cursor_right:	ld a,(hl)		;
-		cp win_cols-1		;
-		jr nc,emit_crlf		; if [x] >= win_cols - 1 then CRLF
-		inc (hl)		; [x] + 1 -> [x]
-emit_exit:	pop de			; pop new TOS
+		pop de			; pop new TOS
 		JP_NEXT			; continue
 
-		; handle control chars
+		; get xy position in de, adjust x when beyond the right window edge
 
+get_xy:		ld de,(xy)		; (xy) -> de
+		ld a,e			;
+		cp win_cols		;
+		call nc,emit_crlf	; if x >= win_cols then CRLF
+		ld (xy),de		; de -> (xy)
+		ret			; exit
+
+		; control
+
+emit_control:	ld de,(xy)		; (xy) -> de
 emit_check_bs:	cp 0x08			;
-		jr nz,emit_check_tab	; if BS then
-cursor_left:	dec (hl)		;   [x]--
-		jp p,emit_exit		;   if [x] < 0 then
-		ld (hl),win_cols-1	;     win_cols - 1 -> [x]
-cursor_up:	inc hl			;
-		dec (hl)		;     [y]--
-		jp p,emit_exit		;     if [y] < 0 then
-		inc (hl)		;       [y]++
-		exx			;
-		ld de,0			;
-		call INSLN		;       scroll down
-		exx			;
-		jr emit_exit		;   exit
+		jr nz,emit_check_tab	; if a = BS then
+emit_left:	dec e			;   x--
+		ret p			;   if x >= 0 then exit
+		ld e,win_cols-1		;   win_cols - 1 -> x
+emit_up:	dec d			;   y--
+		ret p			;   if y >= 0 then exit
+		inc d			;   y++ sets 0 -> d
+		push de			;
+		ld e,d			;   0 -> e
+		call INSLN		;   scroll down
+		pop de			;
+		ret			;   exit
 emit_check_tab:	cp 0x09			;
-		jr nz,emit_check_lf	; if TAB then
-emit_tab:	ld a,(hl)		;
+		jr nz,emit_check_lf	; if a = TAB then
+emit_tab:	ld a,e			;
 		and -8			;
 		add 8			;
 		cp win_cols		;
-		ld (hl),a		;   ([x] & -8) + 8 -> [x]
-		jr c,emit_exit		;   if [x] < win_cols then exit
-emit_crlf:	ld (hl),0		;   0 -> [x] carriage return
-cursor_down:	inc hl			;
-		ld a,(hl)		;
+		ld e,a			;   (x & -8) + 8 -> x
+		ret c			;   if x < win_cols then exit
+emit_crlf:	ld e,0			;   0 -> x carriage return
+emit_down:	ld a,d			;
 		cp win_rows-1		;
-		jr nc,scroll_up		;   if [y] >= win_rows - 1 then scroll up
-		inc (hl)		;   [y]++
-		jr emit_exit		;   exit
+		jr nc,emit_scroll_up	;   if y >= win_rows - 1 then scroll up
+		inc d			;   y++
+		ret			;   exit
 emit_check_lf:	cp 0x0a			;
-		jr z,emit_crlf		; if LF then CRLF
+		jr z,emit_crlf		; if a = LF then CRLF
 emit_check_vt:	cp 0x0b			;
-		jr nz,emit_check_ff	; if VT then
-scroll_up:	exx			;   save regs
-		call SCROLL		;   scroll up
-		exx			;   restore regs
-		jr emit_exit		;   exit
+		jr nz,emit_check_ff	; if a = VT then
+emit_scroll_up:	jp SCROLL		;   scroll up
 emit_check_ff:	cp 0x0c			;
-		jr nz,emit_check_cr	; if FF then
-emit_cls:	exx			;   save regs
-		ld a,0x20		;
-		ld b,win_rows*win_cols	;
+		jr nz,emit_check_cr	; if a = FF then
+emit_cls:	ld a,0x20		;
+		ld b,win_size		;
 		ld de,0			;
-		ld (xy),de		;   0 -> [xy]
+		push de			;
 		call REPCHR		;   repeat space to clear screen
-		exx			;   restore regs
-		jr emit_exit		;   exit
+		pop de			;
+		ret			;   exit
 emit_check_cr:	cp 0x0d			;
-		jr nz,emit_check_rt	; if CR then
-emit_cr:	ld (hl),0		;   0 -> [x]
-		jr emit_exit		;   exit
+		jr nz,emit_check_rt	; if a = CR then
+emit_cr:	ld e,0			;   0 -> x
+		ret			;   exit
 emit_check_rt:	cp 0x1c			;
-		jr z,cursor_right	; if RIGHT then cursor right
+		jr nz,emit_check_lt	; if a = RIGHT then
+emit_right:	call get_xy		;   (xy) -> de adjust x when beyond the right window edge
+		inc e			;   cursor right
+		ret			;
 emit_check_lt:	cp 0x1d			;
-		jr z,cursor_left	; if LEFT then cursor left
+		jr z,emit_left		; if a = LEFT then cursor left
 emit_check_up:	cp 0x1e			;
-		jr z,cursor_up		; if UP then cursor up
+		jr z,emit_up		; if a = UP then cursor up
 emit_check_dn:	cp 0x1f			;
-		jr z,cursor_down	; if DOWN then cursor down
-		jr emit_exit		; exit
+		jr z,emit_down		; if a = DOWN then cursor down
+		ret			; exit
 
 ; TYPE		c-addr u --
 ;		type string to output
@@ -3066,18 +3104,20 @@ emit_check_dn:	cp 0x1f			;
 ;
 ;    : CR $A EMIT ;
 
-		COLON CR,cr
-		.dw dolit,0x0a,emit
-		.dw doret
+		CODE CR,cr
+		push de
+		ld e,0x0a
+		jp emit
 
 ; SPACE		--
 ;		emit a space (BL)
 ;
 ;    : SPACE BL EMIT ;
 
-		COLON SPACE,space
-		.dw bl,emit
-		.dw doret
+		CODE SPACE,space
+		push de
+		ld e,0x20
+		jp emit
 
 ; SPACES	n --
 ;		emit n spaces
@@ -3103,9 +3143,10 @@ emit_check_dn:	cp 0x1f			;
 ;
 ;    : PAGE $C EMIT ;
 
-		COLON PAGE,page
-		.dw dolit,0x0c,emit
-		.dw doret
+		CODE PAGE,page
+		push de
+		ld e,0x0c
+		jp emit
 
 .if FULL
 
@@ -3401,10 +3442,10 @@ set_base:	ld (base+3),hl		; 10 -> [base]
 		CODE DRAW,draw
 		push de			; save TOS
 		exx			; save bc with ip
+		call get_xy		; (xy) -> de adjust x when beyond the right window edge
 		pop bc			; pop u -> bc
 		ld b,c			; u -> b
 		pop hl			; pop c-addr -> hl
-		ld de,(xy)		; xy -> dr
 		call WRPSTR		; draw pixel string
 		exx			; restore bc with ip
 		pop de			; set new TOS
@@ -3418,10 +3459,10 @@ set_base:	ld (base+3),hl		; 10 -> [base]
 		CODE VIEW,view
 		push de			; save TOS
 		exx			; save bc with ip
+		call get_xy		; (xy) -> de adjust x when beyond the right window edge
 		pop bc			; pop u -> bc
 		ld b,c			; u -> b
 		pop hl			; pop c-addr -> hl
-		ld de,(xy)		; xy -> de
 		call RDPSTR		; read pixel string
 		exx			; restore bc with ip
 		pop de			; set new TOS
@@ -3434,8 +3475,8 @@ set_base:	ld (base+3),hl		; 10 -> [base]
 		CODE REVERSE,reverse
 		push de			; save TOS
 		exx			; save bc with ip
+		call get_xy		; (xy) -> de adjust x when beyond the right window edge
 		pop bc			; pop +n -> bc
-		ld de,(xy)		; xy -> de
 		ld hl,4$		; pixelbuffer -> hl
 		jr 3$			;
 1$:		ld b,6			; loop, 6 -> b
@@ -3531,6 +3572,7 @@ set_base:	ld (base+3),hl		; 10 -> [base]
 ;		left    =$1d,
 ;		up      =$1e,
 ;		down    =$1f;
+;		a space is produced for the TAB key by the GETCHR system call,
 ;		calc keys and BASIC keys produce BASIC tokens as key code $fe:
 ;		SIN     =$fe register B = $95 BASIC token for SIN (ignored)
 
@@ -3557,31 +3599,38 @@ set_base:	ld (base+3),hl		; 10 -> [base]
 ;
 ;-------------------------------------------------------------------------------
 
-.macro		WORD word
-set_'word:	ld (word),de
+; Store (toname) and retrieve (name) an integer by name
+
+.macro		INT name
+to'name:	ld (addr'name),de
 		pop de
 		JP_NEXT
-get_'word:	push de
-		ld de,(word)
+name:		push de
+		ld de,(addr'name)
 		JP_NEXT
-word:		.dw 0
+addr'name:	.dw 0
 .endm
 
-		; starting cursor xy
-		WORD edit_atx
-		WORD edit_aty
+		; starting cursor position xy
+
+		INT edx
+		INT edy
 
 		; min <= cur <= len <= max
-		WORD edit_buf		; buffer string address
-		WORD edit_min		; minimum cursor position (e.g. prompt)
-		WORD edit_cur		; cursor position
-		WORD edit_len		; string length
-		WORD edit_max		; buffer size, maximum string length
 
-edit_toxy:	call docol		; n -- x y	cursor pos n to xy
-		.dw get_edit_atx,plus
+		INT edbuf		; buffer string address
+		INT edmin		; minimum cursor position (for a prompt)
+		INT edcur		; cursor position
+		INT edlen		; length of the string in the buffer
+		INT edmax		; maximum string length (buffer size)
+
+edxy:		; -- x y
+		; xy window cursor position
+
+		call docol
+		.dw edcur,edx,plus
 		.dw dolit,win_cols,slashmod
-		.dw get_edit_aty,plus
+		.dw edy,plus
 		.dw doret
 
 ; EDIT		c-addr +n1 n2 n3 n4 -- c-addr +n5
@@ -3592,46 +3641,191 @@ edit_toxy:	call docol		; n -- x y	cursor pos n to xy
 ;		non-editable left margin n4;
 ;		leaves c-addr and length +n5
 
+.if EDIT
+
 		COLON EDIT,edit
-		.dw set_edit_min
-		.dw set_edit_cur
-		.dw set_edit_len
-		.dw set_edit_max
-		.dw set_edit_buf
-		; set initial cursor x y
-		.dw xfetch,set_edit_atx
-		.dw yfetch,set_edit_aty
-		; type buffer to output
-		.dw get_edit_buf,get_edit_len,type
-		; adjust parameters to fit viewing window
-1$:		.dw   get_edit_aty
-		.dw   get_edit_len,edit_toxy,nip
-		.dw   dolit,win_rows-1,minus,zero,max,minus
-		.dw   set_edit_aty
-		.dw   get_edit_len,edit_toxy,atxy,key
+		.dw toedmin		; store n4
+		.dw toedcur		; store n3
+		.dw toedlen		; store n2
+		.dw toedmax		; store n1
+		.dw toedbuf		; store c-addr
+		.dw xfetch,toedx	; store initial cursor x
+		.dw yfetch,toedy	; store initial cursor y
+		; output the buffer up to the end of the screen
+		.dw edcur		; save edcur
+		.dw zero,toedcur	; set cursor to begin of the buffer
+		.dw edtype		; display the buffer up to the end of the screen
+		.dw toedcur		; restore edcur
+1$:		; loop
+		.dw   edupd		; update display and cursor
+		.dw   key		; wait for user key
 		; case
-		.dw   dolit,0x0d,doof,2$
 		; of ENTER
-		.dw     get_edit_buf,get_edit_len
+		.dw   dolit,0x0d,doof,2$
+		.dw     edlen,toedcur,edupd
+		.dw     edbuf,edlen
 		.dw     doexit
-2$:		.dw   dolit,0x08,doof,3$
-		; of BS backspace
-		.dw     get_edit_len,get_edit_min,ugreater,doif,5$
-		.dw       get_edit_len,oneminus
-		.dw       dup,set_edit_len
-		.dw       dup,set_edit_cur
-		.dw       edit_toxy,atxy,space
+2$:		; of BS backspace
+		.dw   dolit,0x08,doof,3$
+		.dw     eddel
+		.dw     doahead,10$
+3$:		; of CLS
+		.dw   dolit,0x0c,doof,4$
+		.dw     edbuf,edlen,edmin,slashstring,blank
+		.dw     edmin,toedcur,edupd,edtype
+		.dw     edmin,toedlen
+		.dw     doahead,10$
+4$:		; of RIGHT
+		.dw   dolit,0x1c,doof,5$
+		.dw     edcur,oneplus,toedcur
+		.dw     doahead,10$
+5$:		; of LEFT
+		.dw   dolit,0x1d,doof,6$
+		.dw     edcur,oneminus,toedcur
+		.dw     doahead,10$
+6$:		; of UP
+		.dw   dolit,0x1e,doof,7$
+		.dw     edcur,dolit,win_cols,minus,toedcur
+		.dw     doahead,10$
+7$:		; of DOWN
+		.dw   dolit,0x1f,doof,8$
+		.dw     edcur,dolit,win_cols,plus,toedcur
+		.dw     doahead,10$
+8$:		; otherwise, insert or append char if within $20 to $7e
+		.dw   dup,bl,dolit,0x7f,within,doif,9$
+		.dw     dup,edins
+9$:		.dw   drop
+10$:		; endcase
+		.dw doagain,1$
+		.dw doret
+
+edtype:		; --
+		; display buffer at cursor up to its end or the end of the screen
+		call docol
+		.dw edbuf,edcur,plus
+		.dw edxy	; edbuf+edcur x y
+		.dw twodup,atxy
+		.dw dolit,win_cols,star,plus
+		.dw dolit,win_size
+		.dw swap,minus	; edbuf+edcur win_size-(y*win_cols+x)
+		.dw edlen,edcur,minus,umin
+		.dw type
+		.dw doret
+
+edline:		; --
+		; display the buffer line under the cursor
+		call docol
+		.dw edxy	; -- x y
+		.dw swap	; -- y x
+		.dw edlen,edcur,minus,plus
+		.dw dolit,win_cols,umin
+		.dw swap	; -- min(win_cols,edlen-edcur+x) y
+		.dw zero,over,atxy
+		.dw edy,minus,dolit,win_cols,star
+		.dw edx,minus	; -- min(win_cols,edlen-edcur+x) (y-edy)*win_cols-edx
+		.dw dup,zeroless,doif,1$
+		.dw   drop
+		.dw   edx,spaces
+		.dw   edx,minus
+		.dw   zero	; -- min(win_cols,edlen-edcur+x)-edx 0
+1$:		.dw edbuf,plus	; -- min(win_cols,edlen-edcur+x) (y-edy)*win_cols-edx+edbuf
+		.dw swap,type
+		.dw doret
+
+edins:		; char --
+		; insert character in buffer at cursor
+		call docol
+		.dw edlen,edmax,uless,doif,1$
+		.dw   edbuf,edcur,plus
+		.dw   dup,dup,oneplus,edlen,edcur,minus,cmoveup
+		.dw   cstore
+		.dw   edlen,oneplus,toedlen
+		.dw   edtype
+		.dw   edcur,oneplus,toedcur
+		.dw   doexit
+1$:		.dw drop
+		.dw doret
+
+eddel:		; --
+		; delete character before the cursor from buffer
+		call docol
+		.dw edcur,edmin,ugreater,doif,1$
+		.dw   edbuf,edcur,plus
+		.dw   dup,oneminus,edlen,edcur,minus,cmove
+		.dw   bl,edbuf,edlen,plus,oneminus,cstore
+		.dw   edcur,oneminus,toedcur
+		.dw   edtype
+		.dw   edlen,oneminus,toedlen
+1$:		.dw doret
+
+edupd:		; --
+		; update display and cursor position
+		call docol
+		.dw edcur,edlen,min
+		.dw edmax,oneminus,min
+		.dw edmin,max,toedcur	; ensure min <= cur <= min(len,max-1)
+1$:		; loop
+		.dw   edxy
+		.dw   swap,xstore
+		; if y is above the visible screen
+		.dw   dup,zeroless,doif,2$
+		.dw     drop,zero,ystore
+		.dw     edy,oneplus,toedy
+		.dw     dolit,0x1e,emit	; cursor up to scroll down
+		.dw     doahead,4$
+2$:		; else if y is visible
+		.dw   dup,dolit,win_rows,less,doif,3$
+		.dw     ystore
+		.dw     doexit
+3$:		; else y is below the visible screen
+		.dw     drop
+		.dw     dolit,win_rows-1,ystore
+		.dw     edy,oneminus,toedy
+		.dw     dolit,0x1f,emit	; cursor down to scroll up
+4$:		.dw   edline
+		.dw doagain,1$
+		.dw doret
+
+.else
+
+		COLON EDIT,edit
+		.dw toedmin		; store n4
+		.dw toedcur		; store n3
+		.dw toedlen		; store n2
+		.dw toedmax		; store n1
+		.dw toedbuf		; store c-addr
+		.dw xfetch,toedx	; store initial cursor x
+		.dw yfetch,toedy	; store initial cursor y
+		.dw edbuf,edlen,type	; type buffer to output
+1$:		; loop
+		.dw   edlen,toedcur	; set edcur to edlen
+		.dw   edy
+		.dw   edxy,nip
+		.dw   dolit,win_rows-1,minus,zero,max
+		.dw   minus,toedy	; update initial cursor y if moved
+		.dw   edxy,atxy,key	; wait for user key
+		; case of ENTER
+		.dw   dolit,0x0d,doof,2$
+		.dw     edbuf,edlen
+		.dw     doexit
+2$:		; of BS backspace
+		.dw   dolit,0x08,doof,3$
+		.dw     edlen,edmin,ugreater,doif,5$
+		.dw       edlen,oneminus,dup,toedlen,toedcur
+		.dw       edxy,atxy,space
 		.dw     doahead,5$
-		; otherwise, append char if within $20 to $7e
-3$:		.dw   dup,bl,dolit,0x7f,within,doif,4$
-		.dw     get_edit_len,get_edit_max,uless,doif,4$
-		.dw       dup,get_edit_len,edit_toxy,atxy,emit
-		.dw       dup,get_edit_buf,get_edit_len,plus,cstore
-		.dw       get_edit_len,oneplus,dup,set_edit_len,set_edit_cur
+3$:		; otherwise, append char if within $20 to $7e
+		.dw   dup,bl,dolit,0x7f,within,doif,4$
+		.dw     edlen,edmax,uless,doif,4$
+		.dw       dup,emit,space
+		.dw       dup,edbuf,edlen,plus,cstore
+		.dw       edlen,oneplus,toedlen
 4$:		.dw   drop
 		; endcase
 5$:		.dw doagain,1$
 		.dw doret
+
+.endif
 
 ; ACCEPT	c-addr +n1 -- +n2
 ;		accept user input into buffer c-addr +n1;
@@ -3703,12 +3897,36 @@ edit_toxy:	call docol		; n -- x y	cursor pos n to xy
 ;		leaves false when end of input
 
 		COLON REFILL,refill
-		.dw sourceid,invert,dup,doif,1$
+		.dw sourceid,invert,dup,doif,6$
+		.dw   toin,off
+.if EDIT
+		.dw   tib
+		.dw   dolit,tib_size
+1$:		; loop until valid key
+		.dw   key
+		; of RIGHT
+		.dw   dolit,0x1c,doof,2$
+		.dw     source,nip,zero
+		.dw     doahead,5$
+2$:		; of LEFT
+		.dw   dolit,0x1d,doof,3$
+		.dw     source,nip,dup
+		.dw     doahead,5$
+3$:		; otherwise, if not within $20 to $7e then invalid key and try again
+		.dw   dup,bl,dolit,0x7f,within,invert,doif,4$
+		.dw     drop
+		.dw     doagain,1$
+4$:		; else put character in TIB to edit
+		.dw   tib,cstore
+		.dw   one,one
+5$:		.dw   zero,edit
+.else
 		.dw   tib
 		.dw   dup,dolit,tib_size
-		.dw   accept,dotwoto,source+3
-		.dw   toin,off
-1$:		.dw doret
+		.dw   accept
+.endif
+		.dw   dotwoto,source+3
+6$:		.dw doret
 
 ; SKIPS		char "<chars>" --
 ;		skips chars in input, 0x20 (bl) skips 0x00 to 0x20
@@ -3951,11 +4169,9 @@ edit_toxy:	call docol		; n -- x y	cursor pos n to xy
 		.dw   false
 		.dw   doexit
 		.dw doahead,6$
-5$:		.dw   tor
+5$:		.dw   drop
 		.dw   mone,slashstring
 		.dw   base,fetch
-		.dw   rfrom
-		.dw drop
 6$:		.dw base,fetch,tor
 		.dw base,store
 		.dw nextchar

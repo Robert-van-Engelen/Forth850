@@ -2,10 +2,6 @@
 \ Based on IEEE 754 mathr.asm rounding modes SUM/MUL/DIV=2/2/2
 \ Author: Dr. Robert van Engelen
 
-: FMAX      ( r1 r2 -- r3 ) 2OVER 2OVER F< IF 2SWAP THEN 2DROP ;
-
-: FMIN      ( r1 r2 -- r3 ) 2OVER 2OVER F< INVERT IF 2SWAP THEN 2DROP ;
-
 \ Factorial of an integer returns float
 
 : FACT      ( u -- r )
