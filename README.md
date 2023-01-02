@@ -3238,12 +3238,12 @@ increase, which is undesirable for small memory devices.
 
 I've written a collection of Z80 IEEE 754 single precision floating point math
 routines:
-- [math.asm](math.asm) a simple version with truncation
-- [mathr.asm](mathr.asm) includes three IEEE 754 rounding modes, where the
-default rounding mode is to round to nearest, ties to even;
-- [mathri.asm](mathr.asm) includes the three IEEE 754 rounding modes, and
-inf/nan and signed zero.  This version is not intended for Forth850, because
-Forth850 raises floating point exceptions.
+- [math.asm](math.asm) (960 bytes of code) a simple version with truncation
+- [mathr.asm](mathr.asm) (1085 bytes of code) includes three IEEE 754 rounding
+modes, where the default rounding mode is to round to nearest, ties to even;
+- [mathri.asm](mathr.asm) (1296 bytes of code) includes the three IEEE 754
+rounding modes, and inf/nan and signed zero.  This version is not intended for
+Forth850, because Forth850 raises floating point exceptions.
 
 My objective was to make the floating point routines as efficient as possible,
 such as by using the shadow registers instead of memory.  No memory is used,
