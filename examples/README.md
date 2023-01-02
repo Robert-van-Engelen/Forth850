@@ -27,8 +27,8 @@ This creates the `bas2img`, `bin2wav` and `wav2bin` utilities.
 Convert a Forth source file `filename.fth` to a wav file with `bas2img` and
 `bin2wav`:
 
-   ./bas2img --pc=G850VS --type=asm -l0x408 filename.fth
-   ./bin2wav --pc=G850VS filename.img
+    ./bas2img --pc=G850VS --type=asm -l0x408 filename.fth
+    ./bin2wav --pc=G850VS filename.img
 
 Option `--type=asm` automatically adds line numbers so you do not need to add
 line numbers to the Forth source code to transfer.  Option `-l0x408` preserves
@@ -37,8 +37,8 @@ source code to wav files.
 
 In BASIC RUN MODE on the PC-G850(V)(S), execute `BLOAD` to load via the
 cassette interface.  Play the wav file, for example with `afplay filename.wav`
-in MacOS terminal.  After loading, go to the Text Editor and press B(asic) then
-T to select Text<-basic.  This loads the Forth source file into the Text
-Editor.
+in MacOS terminal.  After loading, go to the Text Editor and press B for Basic
+then T to select Text<-basic.  This loads a copy of the Forth source file into
+the Text Editor.  The program loaded in BASIC PRO MODE can be deleted.
 
 In Forth850 execute `TEXT` to load Forth source from the Text Editor.
