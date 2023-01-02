@@ -1,8 +1,9 @@
 Forth850 Additions and Examples
 ===============================
 
-With the Forth850 full version you can load an example into the PC-G850(V)(S)
-Text Editor and execute `TEXT` in Forth850 to load it into Forth850.
+With the Forth850 full version you can load a Forth source code example into
+the PC-G850(V)(S) Text Editor and execute `TEXT` in Forth850 to load it into
+Forth850.
 
 With a serial interface you can load Forth source code via the Text Editor
 SIO command.  This requires line numbers in the Forth source code file to
