@@ -3237,13 +3237,19 @@ increase, which is undesirable for small memory devices.
 ## Z80 floating point math routines
 
 I've written a collection of Z80 IEEE 754 single precision floating point math
-routines, see [mathr.asm](mathr.asm) a version with three IEEE 754 rounding
-modes and a simpler [math.asm](math.asm) with truncation.  My objective was to
-make them as efficient as possible, such as by using the shadow registers
-instead of memory.  No memory is used, except at most one push-pop pair to move
-a value between the (shadow) registers.  The second objective was to keep the
-code size small by using tricks with CPU arithmetic and flags.  The floating
-point library is about 1KB.
+routines:
+- [math.asm](math.asm) a simple version with truncation
+- [mathr.asm](mathr.asm) includes three IEEE 754 rounding modes, where the
+default rounding mode is to round to nearest, ties to even;
+- [mathri.asm](mathr.asm) includes the three IEEE 754 rounding modes, and
+inf/nan and signed zero.  This version is not intended for Forth850, because
+Forth850 raises floating point exceptions.
+
+My objective was to make the floating point routines as efficient as possible,
+such as by using the shadow registers instead of memory.  No memory is used,
+except at most one push-pop pair to move a value between the (shadow)
+registers.  The second objective was to keep the code size small by using
+tricks with CPU arithmetic and flags.  The floating point library is about 1KB.
 
 Single precision floating point values are stored in registers BC (high order)
 and DE (low order) to form a 32 bit float `bcde` and shadow float `bcde'`.
@@ -3264,6 +3270,16 @@ and DE (low order) to form a 32 bit float `bcde` and shadow float `bcde'`.
 - `fpow10`: 10^`a` * `bcde` -> `bcde` for -128 <= `a` < 39; cf set on overflow
 - `atof`: string [`hl`..`hl`+`a`-1] -> float `bcde`; cf set on parsing error and `hl` points after the char
 - `ftoa`: float `bcde` -> [`hl`...`hl`+`a`-1] string of digits, exponent `e` and sign `d` bit 7; no errors (flags undefined)
+- `fzero`: set `bcde` to 0.0
+
+[mathri.asm](mathr.asm) includes inf/nan and signed zero.  In this version the
+routines listed above may return signed inf or nan with cf set to indicate
+overflow and errors.  In addition, this version includes the following
+routines:
+
+- `ftype`: float `bcde` -> `bcde` unchanged; cf set if `bcde` is nan, cf reset and z set if `bcde` is +/-inf
+- `fnan`: set `bcde` to nan; cf set
+- `finf`: set `bcde` to inf with sign in register A bit 7 (negative when set); cf set
 
 ## Z80 string routines
 
