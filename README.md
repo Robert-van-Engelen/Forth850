@@ -2761,9 +2761,9 @@ Forth words are parsed with my new `CHOP` and `TRIM` words that efficiently
 parse and extract white-space-delimited words from the input.
 
 Entry:
-- DE with TOS: character to truncate string with char
+- DE with TOS: a char to truncate the string with
 - 2OS: string length u1
-- 3OS: srinng address c-addr
+- 3OS: string address c-addr
 
 Exit:
 - DE with TOS: truncated string length u2
@@ -2771,7 +2771,7 @@ Exit:
 
 Performance:
 21 cycles per character for non-BL char to chop, 40 cycles per character for BL
-to chop white space char, 33 cycles to trim non-BL char
+to chop white space
 
     chop:           ld a,e                  ; char -> a
                     exx                     ; save bc with ip
@@ -2805,29 +2805,41 @@ to chop white space char, 33 cycles to trim non-BL char
                     jp pe,3$        ; 10    ; until bc = 0
                     jr 1$                   ; not found
 
+Entry:
+- DE with TOS: char to trim the string by removing them from its beginning
+- 2OS: string length u1
+- 3OS: string address c-addr1
+
+Exit:
+- DE with TOS: updated string length u2
+- 2OS: updated string address c-addr2
+
+Performance:
+33 cycles to trim non-BL char, 106 cycles to trim white space with BL char
+
     trim:           ld a,e                  ; char -> a
                     exx                     ; save bc with ip
                     pop bc                  ; u1 -> bc
                     pop hl                  ; c-addr1 -> hl
-    1$:             ex af,af'               ; save a
-                    ld a,c                  ;
-                    or b                    ;
-                    jr z,3$                 ; if bc <> 0 then
-                    ex af,af'               ;   restore a
+    1$:             ex af,af'       ;  4    ; save a
+                    ld a,c          ;  4    ;
+                    or b            ;  4    ;
+                    jr z,3$         ;  7    ; if bc <> 0 then
+                    ex af,af'       ;  4    ;   restore a
     2$:             cpi             ; 16    ;   loop
-                    jr nz,4$        ;  7    ;     while a = [hl++], --bc
+                    jr nz,4$        ;  7/12 ;     while a = [hl++], --bc
                     jp pe,2$        ; 10    ;   until b = 0
     3$:             push hl                 ; save hl as 2OS
                     push bc                 ; save bc as TOS
                     exx                     ; restore bc with ip
                     pop de                  ; pop new TOS
                     JP_NEXT                 ; continue
-    4$:             cp 0x20                 ;
-                    jr nz,5$                ; if char = 0x20 then
-                    dec hl                  ;
-                    cp (hl)                 ;
-                    inc hl                  ;
-                    jr nc,1$                ;   if [hl-1] <= 0x20 then keep trimming
+    4$:             cp 0x20         ;  7    ;
+                    jr nz,5$        ;  7    ; if char = 0x20 then
+                    dec hl          ;  6    ;
+                    cp (hl)         ;  7    ;
+                    inc hl          ;  6    ;
+                    jr nc,1$        ; 12    ;   if [hl-1] <= 0x20 then keep trimming
     5$:             inc bc                  ; correct bc++ for cpi match
                     dec hl                  ; correct hl-- for cpi match
                     jr 3$                   ; finalize trimming
