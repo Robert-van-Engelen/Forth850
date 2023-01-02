@@ -568,7 +568,7 @@ fnan:		ld bc,0x7fc0		;
 ;
 ;		FLOATING POINT SIGNED INF
 ;
-;		finfa:	sign in a bit 7 + inf 0x7f800000 -> bcde
+;		finf:	sign in a bit 7 + inf 0x7f800000 -> bcde
 ;			cf set
 ;			a,b,c,d,e modified
 ;
@@ -586,7 +586,7 @@ infl:		; return inf with result sign l' bit 7 and cf set
 		exx			;
 		ld a,l			; l' -> a
 
-finfa:		; return inf with sign a bit 7 and cf set
+finf:		; return inf with sign a bit 7 and cf set
 
 		or 0x7f			;
 		ld b,a			;
@@ -1472,7 +1472,7 @@ atof:		ld b,a			; a -> b string length
 		scf			;
 		ret nz			; return error (cf set)
 		call fnan		; return nan
-		or a			;
+		or a			; reset cf
 		ret			;
 
 4$:		; parse and return inf (cf reset)
@@ -1490,8 +1490,8 @@ atof:		ld b,a			; a -> b string length
 		scf			;
 		ret nz			; return error (cf set)
 		ld a,c			; sign c -> a bit 7
-		call finfa		;
-		or a			;
+		call finf		;
+		or a			; reset cf
 		ret			;
 
 parse_float:	; loop to parse float
