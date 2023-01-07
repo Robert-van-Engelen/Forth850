@@ -138,33 +138,28 @@
 : FEXP      ( r1 -- r2 )
   2DUP F0< -ROT
   FABS
-  \ map |r1| to [0,0.5] using exp(x*2^n) = exp(x)^(2^n)
-  DUP 7 RSHIFT $7e - \ 2^(n+1) = 2^(exponent - bias + 1)
-  DUP 0< IF
-    DROP 0 -ROT \ n+1<0 in exponent 2^(n+1)
-  ELSE
-    -ROT 
-    $7f AND $3f00 + \ remove exponent 2^(n+1)
-  THEN
-  \ Maclaurin series exp(x) = 1 + x + x^2/2! + x^3/3! + ...
-  2DUP 1E0 F+ 2OVER \ -- x 1+x x
-  11 2 DO
+  \ map |r1| to [0,ln(2)) using exp(x+k*ln(2)) = exp(x)*2^k
+  2DUP 0.693147245E0 F/ F>D D>S DUP>R
+  S>F 0.693147245E0 F* F-
+  \ Maclaurin series expm1(x) = exp(x) - 1 = x + x^2/2! + x^3/3! + ...
+  2DUP 2OVER \ -- x x x
+  10 2 DO
     5 PICK 5 PICK F* \ -- x sum term*x
     I S>F F/         \ -- x sum term*x/i
     2SWAP 2OVER F+   \ -- x term*x/i sum+term*x/i
     2SWAP            \ -- x sum+term*x/i term*x/i
   LOOP
   2DROP 2SWAP 2DROP
-  \ square exp(x) n+1 times when n+1>0 in exponent 2^(n+1)
-  ROT 0 ?DO
-    2DUP F*
-  LOOP
+  \ exp(x) = expm1(x) + 1
+  1E0 F+
+  \ multiply exp(x) by 2^k
+  R> 7 LSHIFT +
   \ return reciprocal for negative r1
   ROT IF
     1E0 2SWAP F/
   THEN ;
 
-: FALOG     ( r1 -- r2 ) 2.3025851E0 F* FEXP ; \ = exp(x*ln(10)) approx ln(10) such that 1E0 ALOG = 10E0
+: FALOG     ( r1 -- r2 ) 2.30258536E0 F* FEXP ; \ = exp(x*ln(10)) approx ln(10) such that 1E0 ALOG = 10E0
 
 \ Exponentiation (simple version)
 
@@ -179,7 +174,7 @@
     \ exponentiation by squaring
     2DUP F0< >R \ r2 is negative
     FABS F>D 1E0 2SWAP \ -- r1 1 ud
-    IF -46 THROW THEN \ exponent d exceeds 16 bits
+    IF -46 THROW THEN \ error when exponent ud exceeds 16 bits
     >R
     BEGIN
       R@ 1 AND IF 2OVER F* THEN
