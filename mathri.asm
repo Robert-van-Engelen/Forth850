@@ -88,18 +88,25 @@
 ;		-inf = ff 80 00 00
 ;		 nan = s 11111111 xxxxxxx xxxxxxxx xxxxxxxx at least one x is 1
 ;
+;		Negative zero is a special case to treat as equal to zero:
+;		  +0 = 00 00 00 00
+;		  -0 = 80 00 00 00 (negative zero with sign bit set)
+;
 ;		IEEE 754 binary floating point allows floating point values to
 ;		be compared as if comparing 32 bit signed integers with 'i<':
 ;
-;		  zero:   +0 = 00 00 00 00
-;		  zero:   -0 = 80 00 00 00 (negative zero)
-;		For positive opposite signs:
+;		For positive and opposite signs:
+;		 0 < 2:    0 = 00 80 00 00 i< 2   = 40 00 00 00
 ;		 1 < 2:    1 = 3f 80 00 00 i< 2   = 40 00 00 00
+;		-0 < 2:   -0 = 80 00 00 00 i< 2   = 40 00 00 00
 ;		-1 < 2:   -1 = bf 80 00 00 i< 2   = 40 00 00 00
 ;		-1 < inf: -1 = bf 80 00 00 i< inf = 7f 80 00 00
+;
 ;		When both signs are negative the comparison is inverted:
+;		-2   < -0: -2   = c0 00 00 00 i> -0 = 80 00 00 00
 ;		-2   < -1: -2   = c0 00 00 00 i> -1 = bf 80 00 00
 ;		-inf < -1: -inf = ff 80 00 00 i> -1 = bf 80 00 00
+;
 ;		Comparing nan always returns false (nan is incomparable)
 ;
 ;-------------------------------------------------------------------------------
@@ -371,7 +378,7 @@ subtract:	; subtract realigned mantissa 0.cde from 1.cde' to produce result mant
 		sbc c			; 1.cde' - 0.cde -> 1-cf.ahl with result mantissa, cf is inverted
 		jr nc,shiftrightmant	; if no carry then shift right result mantissa 1.ahl
 		dec b			; decrement exponent
-		jr z,zerol		; if exponent is zero then return zero (underflow, cf reset)
+		jr z,zerol		; if exponent is zero then return zero with sign l' bit 7 (underflow, cf reset)
 		jr normalize		; normalize result mantissa 0.ahl to return inexact result bcde
 
 aligned:	; check if bcde and bcde' are inf/nan
@@ -514,7 +521,7 @@ normalize:	; normalize bahl to return inexact result bcde with sign' l' bit 7
 		add hl,hl	; 11	;
 		adc a		;  4	;   ahl << 1 -> ahl
 		djnz 1$		; 13(38); until --b = 0
-		jr zerol		; return zero (underflow, cf reset)
+		jr zerol		; return zero with sign l' bit 7 (underflow, cf reset)
 
 ;-------------------------------------------------------------------------------
 ;
@@ -632,7 +639,7 @@ fmul:		EXPA			; exponent -> a
 		; save biased result exponent and sign
 
 		add bias		; bias the result exponent
-		jr z,zerob		; if result exponent is zero then return zero (underflow, cf reset)
+		jr z,zerob		; if result exponent is zero then return signed zero (underflow, cf reset)
 		ex af,af'		; save result biased exponent to a'
 		ld a,b			; b -> a with sign bit 7
 		set 7,c			; set bit 7 of man2 c
@@ -673,7 +680,7 @@ fmul:		EXPA			; exponent -> a
 .if MULROUND - 1
 		jr nc,3$		; (MR=2) if carry then
 		inc b			; (MR=2)   increment result exponent
-		jr z,infl		; (MR=2)   if result exponent is zero then return inf (cf set)
+		jr z,infl		; (MR=2)   if result exponent is zero then return inf (overflow, cf set)
 		rra			; (MR=2)
 		rr h			; (MR=2)
 		rr l			; (MR=2)   cf.ahl >> 1 -> ahl.cf
@@ -682,7 +689,7 @@ fmul:		EXPA			; exponent -> a
 .if SUMROUND - MULROUND
 		jr nc,3$		; (MR=1) if carry then
 		inc b			; (MR=1)   increment result exponent
-		jr z,infl		; (MR=1)   if result exponent is zero then return inf (cf set)
+		jr z,infl		; (MR=1)   if result exponent is zero then return inf (overflow, cf set)
 		rra			; (MR=1)
 		rr h			; (MR=1)
 		rr l			; (MR=1)   cf.ahl >> 1 -> ahl.cf
@@ -735,33 +742,40 @@ fmul:		EXPA			; exponent -> a
 		jp finalizea		; (MR=0) finalize bahl to return float bcde
 .endif;MULROUND
 
-outofrange:	; out of range, return zero (underflow, cf reset) or inf (overflow, cf set)
+outofrange:	; out of range: return zero (underflow, cf reset) or inf (overflow, cf set)
 
 		add a			; carry if bit 7 set
 		jp nc,zerob		; if incorrect positive then return signed zero (underflow, cf reset)
 		jr infb			; return signed inf (overflow, cf set)
 
-infnan:		; one nonzero operand of fmul and fdiv is inf/nan, return inf or nan (cf set)
+divinfnan:	; bcde is inf/nan: if inf then return zero (cf reset) else return nan (cf set)
 
 		call ftype		; test bcde for nan
 		ret c			; if bcde is nan then return nan (cf set)
-		exx			; activate bcde'
-		call ftype		; test bcde' for nan
-		ret c			; if bcde' is nan then return nan (cf set)
-		jr infb			; return signed inf (cf set)
 
-mulinfnan:	; multiply by inf or nan, return inf or nan (cf set)
-
-		call ftype		; test bcde for nan
-		ret c			; if bcde is nan then return nan (cf set)
-		jp divzero		; 
-
-mulzero:	; multiply by zero, return zero (cf reset) or nan (cf set)
+mulzero:	; bcde is zero: if bcde' is inf or nan return nan (cf set) else return zero (cf reset)
 
 		exx			; activate bcde'
 		ISNN			; test if bcde' is inf or nan
 		jp z,fnan		; if bcde' is inf or nan then return nan (cf set)
 		jp zerob		; return signed zero (cf reset)
+
+mulinfnan:	; bcde is inf/nan: if nan return nan else return inf or nan (cf set)
+
+		call ftype		; test bcde for nan
+		ret c			; if bcde is nan then return nan (cf set)
+
+divzero:	; bcde is zero or inf: if bcde' is zero then return nan else return inf or nan (cf set)
+
+		exx			; activate bcde'
+		EXPA			; exponent' -> a
+		jp z,fnan		; if bcde' is zero then return nan (cf set)
+
+infnan:		; bcde is not inf/nan and bcde' is inf/nan: return inf or nan (cf set)
+
+		call ftype		; test bcde' for nan
+		ret c			; if bcde' is nan then return nan (cf set)
+		jp infb			; return signed inf (cf set)
 
 ;-------------------------------------------------------------------------------
 ;
@@ -805,7 +819,7 @@ fdivy:		EXPA			; exponent -> a
 		; save biased result exponent to b' and result sign to l'
 
 		add bias		; bias the result exponent
-		jp z,zerob		; if result exponent is zero then return zero (underflow, cf reset)
+		jp z,zerob		; if result exponent is zero then return signed zero (underflow, cf reset)
 		ex af,af'		; save a with result exponent
 		ld a,b			; b -> a' with sign bit 7
 		exx			; activate bcdehl'
@@ -852,7 +866,7 @@ fdivy:		EXPA			; exponent -> a
 		jr nz,4$		; if zero then
 		dec b			;   decrement result exponent b'
 		exx			;   activate bcdehl
-		jp z,zerol		;   if result exponent is zero then return zero (underflow, cf reset)
+		jp z,zerol		;   if result exponent is zero then return zero with sign l' bit 7 (underflow, cf reset)
 		inc b			;   1 -> b loop counter
 		jr nc,1$		;   loop once when no final rla carry for mantissa lsb
 		jr 2$			;   loop once when final rla carry for mantissa lsb
@@ -915,23 +929,6 @@ fdivy:		EXPA			; exponent -> a
 		scf		;  4	;   1 -> cf
 		djnz 2$		; 13	; until --b = 0
 		jr 3$			; normalize result mantissa chl'
-
-divinfnan:	; division by inf or nan, return zero (cf reset) or nan (cf set)
-
-		call ftype		; test bcde for nan
-		ret c			; if bcde is nan then return nan (cf set)
-		jp mulzero		; if bcde' is inf or nan then return nan (cf set) else return zero (cf reset)
-
-divzero:	; division by zero, return inf or nan (cf set)
-
-		exx			;
-		EXPA			; exponent' -> a
-		jp z,fnan		; if 0/0 then return nan (cf set)
-		inc a			;
-		jp nz,infb		; if n/0 with n not inf and nan then return signed inf (cf set)
-		call ftype		; test bcde' for nan
-		ret c			; if nan/0 then return nan (cf set)
-		jp infb			; if inf/0 then return signed inf (cf set)
 
 ;-------------------------------------------------------------------------------
 ;
@@ -1712,7 +1709,7 @@ parse_exponent:	; parse the decimal exponent part into e with sign d
 ;		CONVERT FLOAT TO STRING
 ;
 ;		ftoa:	bcde -> [hl...hl+a-1] digits, exponent e and sign d bit 7
-;			cf set when bcde is inf or nan (cannot convert)
+;			cf set when bcde is inf or nan (cannot convert, registers unchanged)
 ;			a,b,c,d,e,h,l,a',b',c',d',e',h',l' modified
 ;			 a  nonzero buffer size argument
 ;			bc  float argument
