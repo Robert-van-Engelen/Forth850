@@ -113,7 +113,8 @@
   ROT IF 2E0 F* THEN \ 2*arctan(x/(1+sqrt(1+x^2)))
   ROT IF 1.5707964E0 2SWAP F- ROT IF FNEGATE THEN THEN ; \ sign(x) * (pi/2-arctan(1/abs(x)))
 
-\ Log and antilog
+\ correctly rounded (*) FLN by summing in reverse order using the stack as temporary storage (40 cells)
+\ *) but loses accuracy close and above 1.0 such as 1.001 gives 5 digits accuracy instead of exact
 
 : FLN       ( r1 -- r2 )
   2DUP F0< IF -46 THROW THEN
@@ -124,34 +125,56 @@
   1E0 2SWAP F- \ 1-x
   \ Maclaurin series -ln(1-x) = x + x^2/2 + x^3/3 + ... with x in (0,0.5]
   2DUP 2DUP \ -- x x x
-  20 2 DO
-    5 PICK 5 PICK F*     \ -- x sum x^n*x
-    2SWAP 2OVER I S>F F/ \ -- x x^(n+1) sum x^(n+1)/(n+1)
-    F+                   \ -- x x^(n+1) sum+x^(n+1)/(n+1)
-    2SWAP                \ -- x sum+x^(n+1)/(n+1) x^(n+1)
+  22 2 DO
+    2OVER F*      \ -- x x^2/2 ... x x^n*x
+    2DUP I S>F F/ \ -- x x^2/2 ... x x^(n+1) x^(n+1)/(n+1) 
+    2ROT 2ROT     \ -- x x^2/2 ... x^(n+1)/(n+1) x x^(n+1)
   LOOP
-  2DROP 2SWAP 2DROP FNEGATE
-  ROT S>F 0.693147245E0 F* F+ ; \ + n*ln(2) approx ln(2) such that 1E0 FLN = 0
+  2DROP 2DROP     \ -- x x^2/2 ... x^19/19
+  22 2 DO F+ LOOP
+  FNEGATE
+  ROT S>F 0.69314724E0 F* F+ ; \ + n*ln(2) with approx ln(2) such that 1E0 FLN = 0
 
-: FLOG      ( r1 -- r2 ) FLN 0.43429445E0 F* ; \ = ln(x)/ln(10) appeox ln(10) such that 10E0 FLOG = 1E0
+\ slightly less accurate FLN without temporary storage on the stack
+
+\ : FLN       ( r1 -- r2 )
+\   2DUP F0< IF -46 THROW THEN
+\   2DUP F0= IF -46 THROW THEN
+\   \ map r1 to [0.5,1) using ln(x*2^n) = ln(x) + ln(2^n) = ln(x) + n*ln(2)
+\   DUP 7 RSHIFT $7e - -ROT \ 2^(n+1) = 2^(exponent - bias + 1)
+\   $7f AND $3f00 + \ remove exponent 2^(n+1)
+\   1E0 2SWAP F- \ 1-x
+\   \ Maclaurin series -ln(1-x) = x + x^2/2 + x^3/3 + ... with x in (0,0.5]
+\   2DUP 2DUP \ -- x x x
+\   22 2 DO
+\     5 PICK 5 PICK F*     \ -- x sum x^n*x
+\     2SWAP 2OVER I S>F F/ \ -- x x^(n+1) sum x^(n+1)/(n+1)
+\     F+                   \ -- x x^(n+1) sum+x^(n+1)/(n+1)
+\     2SWAP                \ -- x sum+x^(n+1)/(n+1) x^(n+1)
+\   LOOP
+\   2DROP 2SWAP 2DROP FNEGATE
+\   ROT S>F 0.693147245E0 F* F+ ; \ + n*ln(2) approx ln(2) such that 1E0 FLN = 0
+
+: FLOG      ( r1 -- r2 ) FLN 0.4342945E0 F* ; \ = ln(x)/ln(10) appeox ln(10) such that 10E0 FLOG = 1E0
+
+\ correctly rounded exp(x) by summing in reverse order using the stack as temporary storage (18 cells)
 
 : FEXP      ( r1 -- r2 )
   2DUP F0< -ROT
   FABS
   \ map |r1| to [0,ln(2)) using exp(x+k*ln(2)) = exp(x)*2^k
-  2DUP 0.693147245E0 F/ F>D D>S DUP>R
-  S>F 0.693147245E0 F* F-
-  \ Maclaurin series expm1(x) = exp(x) - 1 = x + x^2/2! + x^3/3! + ...
-  2DUP 2OVER \ -- x x x
+  2DUP 0.69314724E0 F/ F>D D>S DUP>R
+  S>F 0.69314724E0 F* F-
+  \ Maclaurin series exp(x) = 1 + x + x^2/2! + x^3/3! + ...
+  1E0 2SWAP 2DUP 2DUP \ -- 1 x x x
   10 2 DO
-    5 PICK 5 PICK F* \ -- x sum term*x
-    I S>F F/         \ -- x sum term*x/i
-    2SWAP 2OVER F+   \ -- x term*x/i sum+term*x/i
-    2SWAP            \ -- x sum+term*x/i term*x/i
+    2OVER F*    \ -- 1 x x^2/2! ... x term*x
+    I S>F F/    \ -- 1 x x^2/2! ... x term*x/i
+    2SWAP 2OVER \ -- 1 x x^2/2! ... term*x/i x term*x/i
   LOOP
-  2DROP 2SWAP 2DROP
-  \ exp(x) = expm1(x) + 1
-  1E0 F+
+  2DROP 2DROP   \ -- 1 x x^2/2! ... x^9/9!
+  \ sum the 10 terms in reverse order
+  10 1 DO F+ LOOP
   \ multiply exp(x) by 2^k
   R> 7 LSHIFT +
   \ return reciprocal for negative r1
@@ -159,7 +182,33 @@
     1E0 2SWAP F/
   THEN ;
 
-: FALOG     ( r1 -- r2 ) 2.30258536E0 F* FEXP ; \ = exp(x*ln(10)) approx ln(10) such that 1E0 ALOG = 10E0
+\ slightly less accurate FEXP without temporary storage on the stack
+
+\ : FEXP      ( r1 -- r2 )
+\   2DUP F0< -ROT
+\   FABS
+\   \ map |r1| to [0,ln(2)) using exp(x+k*ln(2)) = exp(x)*2^k
+\   2DUP 0.693147245E0 F/ F>D D>S DUP>R
+\   S>F 0.693147245E0 F* F-
+\   \ Maclaurin series expm1(x) = exp(x) - 1 = x + x^2/2! + x^3/3! + ...
+\   2DUP 2OVER \ -- x x x
+\   10 2 DO
+\     5 PICK 5 PICK F* \ -- x sum term*x
+\     I S>F F/         \ -- x sum term*x/i
+\     2SWAP 2OVER F+   \ -- x term*x/i sum+term*x/i
+\     2SWAP            \ -- x sum+term*x/i term*x/i
+\   LOOP
+\   2DROP 2SWAP 2DROP
+\   \ exp(x) = expm1(x) + 1
+\   1E0 F+
+\   \ multiply exp(x) by 2^k
+\   R> 7 LSHIFT +
+\   \ return reciprocal for negative r1
+\   ROT IF
+\     1E0 2SWAP F/
+\   THEN ;
+
+: FALOG     ( r1 -- r2 ) 2.3025853E0 F* FEXP ; \ = exp(x*ln(10)) approx ln(10) such that 1E0 ALOG = 10E0
 
 \ Exponentiation (simple version)
 
