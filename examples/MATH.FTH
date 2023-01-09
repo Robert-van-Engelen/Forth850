@@ -9,7 +9,7 @@
     I S>F F*
   LOOP ;
 
-\ Square root using IEEE 754 binary representation to compute
+\ Correctly rounded FSQRT using IEEE 754 binary representation to compute
 \ sqrt(x*2^n) = sqrt(x*2^(n%2))*2^(n/2) with Newton Raphson
 
 : FSQRT     ( r1 -- r2 )
@@ -26,33 +26,68 @@
   2SWAP 2DROP
   ROT $7f + 7 LSHIFT 0 SWAP F* ; \ times 2^(n/2)
 
-\ FSIN word based on Jupiter ACE "FORTH Programming" p.93
+3.1415928E0 2CONSTANT PI
+1.5707964E0 2CONSTANT PI/2
+
+\ Accurate sine and cosine by summing in reverse order using the stack as temporary storage (8 cells)
+
+: FCOSI     ( r1 flag -- r2 ) \ r2=sin(r1) if flag=-1 else r2=cos(r1) if flag=0
+  >R
+  \ map r1 to x in [-pi/4,pi/4]
+  PI/2 F/
+  \ floor(x + .5)
+  2DUP .5E0 F+ F>D
+  \ save (floor(x + .5) + flag) mod 4 quadrant 0,1,2,3 where flag is -1 (sin) or 0 (cos)
+  OVER R> + 3 AND >R
+  \ pi/2 * (x - floor(x + .5))
+  D>F F- PI/2 F*
+  2DUP 2DUP F* FNEGATE 2SWAP \ -- -x*x x
+  R> CASE
+  0 OF 2DROP  1E0 2SWAP 1 ENDOF \  cos(x) =  1 - x^2/2! + x^4/4! - x^6/6! + ...
+  1 OF FNEGATE    2SWAP 2 ENDOF \ -sin(x) = -x + x^3/3! - x^5/5! + x^7/7! - ...
+  2 OF 2DROP -1E0 2SWAP 1 ENDOF \ -cos(x) = -1 + x^2/2! - x^4/4! + x^6/6! - ...
+  3 OF            2SWAP 2 ENDOF \  sin(x) =  x - x^3/3! + x^5/5! - x^7/7! + ...
+  ENDCASE
+  \ Maclaurin series with 5 terms 0,2,4,6,8 (cos) or 1,3,5,7,9 (sin)
+  9 SWAP DO
+    2OVER 2OVER F* \ -- ... term -x*x -x*x*term
+    I DUP 1+ *     \ -- ... term -x*x -x*x*term i*(i+1)
+    S>F F/         \ -- ... term -x*x -x*x*term/(i*(i+1))
+    2SWAP          \ -- ... term -x*x*term/(i*(i+1)) -x*x
+  2 +LOOP
+  2DROP
+  \ sum the 5 terms in reverse order
+  F+ F+ F+ F+ ;
+
+: FSIN      ( r1 -- f2 ) TRUE FCOSI ;
+
+: FCOS      ( r1 -- f2 ) FALSE FCOSI ;
+
+\ Slightly less accurate FSIN based on Jupiter ACE "FORTH Programming" p.93
 \ improved to cover a wider range of angles and for speed (fewer terms to sum)
 
-3.1415928E0 2CONSTANT PI
-
-: FSIN      ( r1 -- r2 )
-  \ map r1 to [0,pi/2) and adjust for quadrant 0, 1, 2, 3
-  1.5707964E0 F/ \ rescale r1 to x in [0,1)
-  2DUP F0< IF FABS 2E0 F+ THEN \ -x=2+x i.e. -r1=pi+r1
-  2DUP F>D \ truncate x
-  OVER >R \ save truncated low order x to test for quadrant
-  D>F F- \  frac(x)=x-trunc(x) i.e. frac(r1/(pi/2))
-  R@ 1 AND IF 1E0 2SWAP F- THEN \ quadrant 1 and 3: 1-x
-  R> 2 AND IF FNEGATE THEN \ quadrant 2 and 3: -x
-  1.5707964E0 F* \ revert rescaling to obtain x in (-pi/2,pi/2]
-  \ Maclaurin series sin(x) = x - x^3/3! + x^5/5! - x^7/7! + ...
-  2DUP 2DUP 2DUP F* FNEGATE 2ROT 2ROT \ -- -x*x x x
-  11 2 DO
-    5 PICK 5 PICK F* \ -- -x*x sum -x*x*term
-    I DUP 1+ *       \ -- -x*x sum -x*x*term i*(i+1)
-    S>F F/           \ -- -x*x sum -x*x*term/i*(i+1)
-    2SWAP 2OVER F+   \ -- -x*x -x*x*term/i*(i+1) sum-x*x*term/i*(i+1)
-    2SWAP            \ -- -x*x sum-x*x*term/i*(i+1) -x*x*term/i*(i+1) 
-  2 +LOOP
-  2DROP 2SWAP 2DROP ;
-
-: FCOS      ( r1 -- r2 ) 1.5707964E0 2SWAP F- FSIN ;
+\ : FSIN      ( r1 -- r2 )
+\   \ map r1 to [0,pi/2) and adjust for quadrant 0, 1, 2, 3
+\   PI/2 F/ \ rescale r1 to x in [0,1)
+\   2DUP F0< IF FABS 2E0 F+ THEN \ -x=2+x i.e. -r1=pi+r1
+\   2DUP F>D \ truncate x
+\   OVER >R \ save truncated low order x to test for quadrant
+\   D>F F- \  frac(x)=x-trunc(x) i.e. frac(r1/(pi/2))
+\   R@ 1 AND IF 1E0 2SWAP F- THEN \ quadrant 1 and 3: 1-x
+\   R> 2 AND IF FNEGATE THEN \ quadrant 2 and 3: -x
+\   PI/2 F* \ revert rescaling to obtain x in (-pi/2,pi/2]
+\   \ Maclaurin series sin(x) = x - x^3/3! + x^5/5! - x^7/7! + ...
+\   2DUP 2DUP 2DUP F* FNEGATE 2ROT 2ROT \ -- -x*x x x
+\   11 2 DO
+\     5 PICK 5 PICK F* \ -- -x*x sum -x*x*term
+\     I DUP 1+ *       \ -- -x*x sum -x*x*term i*(i+1)
+\     S>F F/           \ -- -x*x sum -x*x*term/i*(i+1)
+\     2SWAP 2OVER F+   \ -- -x*x -x*x*term/i*(i+1) sum-x*x*term/i*(i+1)
+\     2SWAP            \ -- -x*x sum-x*x*term/i*(i+1) -x*x*term/i*(i+1) 
+\   2 +LOOP
+\   2DROP 2SWAP 2DROP ;
+\ 
+\ : FCOS      ( r1 -- r2 ) PI/2 2SWAP F- FSIN ;
 
 : FTAN      ( r1 -- r2 ) 2DUP FSIN 2SWAP FCOS F/ ;
 
@@ -79,9 +114,9 @@
     2SWAP                \ -- x*x sum+term*x*x*(i-2)/(i-1)/i term*x*x*(i-2)/(i-1)
   2 +LOOP
   2DROP 2SWAP 2DROP
-  ROT IF 1.5707964E0 2SWAP F- ROT IF FNEGATE THEN THEN ; \ sign(x)*(pi/2-arcsin(sqrt(1-x^2)))
+  ROT IF PI/2 2SWAP F- ROT IF FNEGATE THEN THEN ; \ sign(x)*(pi/2-arcsin(sqrt(1-x^2)))
 
-: FACOS     ( r1 -- r2 ) FASIN 1.5707964E0 2SWAP F- ; \ = pi/2 - arcsin(x)
+: FACOS     ( r1 -- r2 ) FASIN PI/2 2SWAP F- ; \ = pi/2 - arcsin(x)
 
 : FATAN     ( r1 -- r2 )
   \ map r1 to [-1,1] using arctan(x) = sign(x) * (pi/2-arctan(1/abs(x)))
@@ -111,9 +146,11 @@
   2 +LOOP
   2DROP 2SWAP 2DROP
   ROT IF 2E0 F* THEN \ 2*arctan(x/(1+sqrt(1+x^2)))
-  ROT IF 1.5707964E0 2SWAP F- ROT IF FNEGATE THEN THEN ; \ sign(x) * (pi/2-arctan(1/abs(x)))
+  ROT IF PI/2 2SWAP F- ROT IF FNEGATE THEN THEN ; \ sign(x) * (pi/2-arctan(1/abs(x)))
 
-\ correctly rounded (*) FLN by summing in reverse order using the stack as temporary storage (40 cells)
+0.69314724E0 2CONSTANT LN2 \ approx ln(2) such that 1E0 FLN = 0
+
+\ Correctly rounded (*) FLN by summing in reverse order using the stack as temporary storage (40 cells)
 \ *) but loses accuracy close and above 1.0 such as 1.001 gives 5 digits accuracy instead of exact
 
 : FLN       ( r1 -- r2 )
@@ -126,16 +163,17 @@
   \ Maclaurin series -ln(1-x) = x + x^2/2 + x^3/3 + ... with x in (0,0.5]
   2DUP 2DUP \ -- x x x
   22 2 DO
-    2OVER F*      \ -- x x^2/2 ... x x^n*x
-    2DUP I S>F F/ \ -- x x^2/2 ... x x^(n+1) x^(n+1)/(n+1) 
-    2ROT 2ROT     \ -- x x^2/2 ... x^(n+1)/(n+1) x x^(n+1)
+    2OVER F*      \ -- x x^2/2 ... x term*x
+    2DUP I S>F F/ \ -- x x^2/2 ... x term*x term*x/i
+    2ROT 2ROT     \ -- x x^2/2 ... term*x/i x term*x
   LOOP
   2DROP 2DROP     \ -- x x^2/2 ... x^19/19
+  \ sum the 20 terms in reverse order
   22 2 DO F+ LOOP
   FNEGATE
-  ROT S>F 0.69314724E0 F* F+ ; \ + n*ln(2) with approx ln(2) such that 1E0 FLN = 0
+  ROT S>F LN2 F* F+ ; \ + n*ln(2) with approx ln(2) such that 1E0 FLN = 0
 
-\ slightly less accurate FLN without temporary storage on the stack
+\ Slightly less accurate FLN without temporary storage on the stack
 
 \ : FLN       ( r1 -- r2 )
 \   2DUP F0< IF -46 THROW THEN
@@ -157,22 +195,22 @@
 
 : FLOG      ( r1 -- r2 ) FLN 0.4342945E0 F* ; \ = ln(x)/ln(10) appeox ln(10) such that 10E0 FLOG = 1E0
 
-\ correctly rounded exp(x) by summing in reverse order using the stack as temporary storage (18 cells)
+\ Correctly rounded exp(x) by summing in reverse order using the stack as temporary storage (18 cells)
 
 : FEXP      ( r1 -- r2 )
   2DUP F0< -ROT
   FABS
   \ map |r1| to [0,ln(2)) using exp(x+k*ln(2)) = exp(x)*2^k
-  2DUP 0.69314724E0 F/ F>D D>S DUP>R
-  S>F 0.69314724E0 F* F-
+  2DUP LN2 F/ F>D D>S DUP>R
+  S>F LN2 F* F-
   \ Maclaurin series exp(x) = 1 + x + x^2/2! + x^3/3! + ...
-  1E0 2SWAP 2DUP 2DUP \ -- 1 x x x
+  1E0 2SWAP 2DUP \ -- 1 x x
   10 2 DO
-    2OVER F*    \ -- 1 x x^2/2! ... x term*x
-    I S>F F/    \ -- 1 x x^2/2! ... x term*x/i
-    2SWAP 2OVER \ -- 1 x x^2/2! ... term*x/i x term*x/i
+    2OVER 2OVER F* \ -- 1 x x^2/2! ... term x term*x
+    I S>F F/       \ -- 1 x x^2/2! ... term x term*x/i
+    2SWAP          \ -- 1 x x^2/2! ... term term*x/i x
   LOOP
-  2DROP 2DROP   \ -- 1 x x^2/2! ... x^9/9!
+  2DROP \ -- 1 x x^2/2! ... x^9/9!
   \ sum the 10 terms in reverse order
   10 1 DO F+ LOOP
   \ multiply exp(x) by 2^k
@@ -182,7 +220,7 @@
     1E0 2SWAP F/
   THEN ;
 
-\ slightly less accurate FEXP without temporary storage on the stack
+\ Slightly less accurate FEXP without temporary storage on the stack
 
 \ : FEXP      ( r1 -- r2 )
 \   2DUP F0< -ROT
@@ -208,7 +246,9 @@
 \     1E0 2SWAP F/
 \   THEN ;
 
-: FALOG     ( r1 -- r2 ) 2.3025853E0 F* FEXP ; \ = exp(x*ln(10)) approx ln(10) such that 1E0 ALOG = 10E0
+2.3025853E0 2CONSTANT LN10 \ approx ln(10) such that 1E0 ALOG = 10E0
+
+: FALOG     ( r1 -- r2 ) LN10 F* FEXP ; \ = exp(x*ln(10))
 
 \ Exponentiation (simple version)
 
