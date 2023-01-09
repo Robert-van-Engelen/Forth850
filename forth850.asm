@@ -330,15 +330,15 @@ bsp:		.dw 0			; saved BASIC stack pointer
 		ld (rp),hl	; 16	; ip - 2 -> [rp]
 		pop bc		; 10(68); pop ip saved by call docol
 
-		; continue with ON/BREAK key check
+cont:		; continue with ON/BREAK key check
 
-cont:		in a,(0x1f)	; 11	; port 0x1f bit 7 is set if ON/BREAK is depressed
+		in a,(0x1f)	; 11	; port 0x1f bit 7 is set if ON/BREAK is depressed
 		add a		;  4	; test ON/BREAK key
 		jr c,break	;  7(22); if ON/BREAK pressed then break
 
-		; the next routine
+next:		; the next routine
 
-next:		ld a,(bc)	;  7	;
+		ld a,(bc)	;  7	;
 		ld l,a		;  4	;
 		inc bc		;  6	;
 		ld a,(bc)	;  7	;
@@ -346,9 +346,9 @@ next:		ld a,(bc)	;  7	;
 		inc bc		;  6	; [ip++] -> hl with xt
 		jp (hl)		;  4(38); jump to hl
 
-		; break
+break:		; ON/BREAK key handling
 
-break:		call INKEY		; INKEY
+		call INKEY		; INKEY
 		jr c,break		; repeat INKEY while a key is depressed
 		ld a,-28		;
 		jp throw_a		; throw -28 "user interrupt"
@@ -2152,19 +2152,26 @@ cells		.equ twostar		; alias
 
 .if MATH
 
-		; include mathr.asm with rounding or simpler truncating math.asm
+; Include mathr.asm with rounding or simpler truncating math.asm
 
 .include "mathr.asm"
 
-		; floating point dyadic operation driver
+;= F+		r1 r2 -- r3
+;		sum r1+r2;
+;		may throw -43 "floating-point result out of range"
+
+		CODE F+,fplus
+		ld ix,fadd		; fadd execution vec -> ix
+
+func2ix:	; floating point dyadic operation driver
 		; may throw -43 "floating-point result out of range"
 
-f2ix:		pop hl			; pop hl with 2OS
+		pop hl			; pop hl with 2OS
 		exx			;
 		pop bc			; pop bc' with 3OS
 		pop de			; pop de' with 4OS
 		exx			;
-f0ix:		push bc			; save bc with ip
+func0ix:	push bc			; save bc with ip
 		ld b,d			;
 		ld c,e			; de -> bc
 		ex de,hl		; hl -> de
@@ -2174,25 +2181,11 @@ f0ix:		push bc			; save bc with ip
 		ex de,hl		; de -> hl
 		ld d,b			;
 		ld e,c			; set bc -> de as new TOS
-		pop bc			; rewstore bc with ip
+		pop bc			; restore bc with ip
 		push hl			; save hl as new 2OS
 		JP_NEXT			; continue
 
 jpix:		jp (ix)			;
-
-		; floating point unary function driver
-		; may throw -43 "floating-point result out of range"
-
-f1ix:		pop hl			; pop hl with 2OS
-		jr f0ix			;
-
-;= F+		r1 r2 -- r3
-;		sum r1+r2;
-;		may throw -43 "floating-point result out of range"
-
-		CODE F+,fplus
-		ld ix,fadd		; fadd execution vec -> ix
-		jr f2ix			;
 
 ;= F-		r1 r2 -- r3
 ;		difference r1-r2;
@@ -2200,7 +2193,7 @@ f1ix:		pop hl			; pop hl with 2OS
 
 		CODE F-,fminus
 		ld ix,fsuby		; fsuby execution vec -> ix
-		jr f2ix			;
+		jr func2ix		;
 
 ;= F*		r1 r2 -- r3
 ;		product r1*r2;
@@ -2208,7 +2201,7 @@ f1ix:		pop hl			; pop hl with 2OS
 
 		CODE F*,fstar
 		ld ix,fmul		; fmul execution vec -> ix
-		jr f2ix			;
+		jr func2ix		;
 
 ;= F/		r1 r2 -- r3
 ;		quotient r1/r2
@@ -2221,35 +2214,42 @@ f1ix:		pop hl			; pop hl with 2OS
 		ld a,-42		;
 		jp z,throw_a		; if TOS = 0 then throw -42
 		ld ix,fdivy		; fdivy execution vec -> ix
-		jr f2ix			;
+		jr func2ix		;
 
 ;= FTRUNC	r1 -- r2
 ;		truncate float towards zero
 
 		CODE FTRUNC,ftrunc_
 		ld ix,ftrunc		; ftrunc execution vec -> ix
-		jr f1ix			;
+
+func1ix:	; floating point unary function driver
+		; may throw -43 "floating-point result out of range"
+
+		pop hl			; pop hl with 2OS
+		jr func0ix		;
 
 ;= FLOOR	r1 -- r2
 ;		floor float towards negative infinity
+;		may throw -43 "floating-point result out of range"
 
 		CODE FLOOR,floor
 		ld ix,ffloor		; ffloor execution vec -> ix
-		jr f1ix			;
+		jr func1ix		;
 
 ;= FROUND	r1 -- r2
-;		round float to nearest
+;		round float to nearest;
+;		may throw -43 "floating-point result out of range"
 
 		CODE FROUND,fround_
 		ld ix,fround		; fround execution vec -> ix
-		jr f1ix			;
+		jr func1ix		;
 
 ;= FNEGATE	r1 -- r2
 ;		negate float
 
 		CODE FNEGATE,fnegate
 		ld ix,fneg		; fneg execution vec -> ix
-		jr f1ix			;
+		jr func1ix		;
 
 ;= FABS		r1 -- r2
 ;		absolute value |r1|
@@ -2258,7 +2258,7 @@ f1ix:		pop hl			; pop hl with 2OS
 
 		CODE FABS,fabs_
 		ld ix,fabs		; fabs execution vec -> ix
-		jr f1ix			;
+		jr func1ix		;
 
 ;= F=		r1 r2 -- flag
 ;		true if r1 = r2
@@ -2753,8 +2753,8 @@ f1ix:		pop hl			; pop hl with 2OS
 		.dw doret
 
 ; CHOP		c-addr u1 char -- c-addr u2
-;		truncate string up to matching char;
-;		leaves string if char not found;
+;		truncate a string up to a matching char;
+;		leaves the string if char not found;
 ;		char = 0x20 (bl) chops 0x00 to 0x20 (white space and control)
 
 		CODE CHOP,chop
@@ -2795,7 +2795,7 @@ f1ix:		pop hl			; pop hl with 2OS
 		jr 1$			; not found
 
 ; TRIM		c-addr1 u1 char -- c-addr2 u2
-;		trim initial chars;
+;		trim initial chars from a string;
 ;		char = 0x20 (bl) trims 0x00 to 0x20 (white space and control)
 
 		CODE TRIM,trim
@@ -2803,16 +2803,16 @@ f1ix:		pop hl			; pop hl with 2OS
 		exx			; save bc with ip
 		pop bc			; u1 -> bc
 		pop hl			; c-addr1 -> hl
-1$:		ex af,af'		; save a
-		ld a,c			;
-		or b			;
-		jr z,3$			; if bc <> 0 then
-		ex af,af'		;   restore a
+1$:		ex af,af'	;  4	; save a
+		ld a,c		;  4	;
+		or b		;  4	;
+		jr z,3$		;  7	; if bc <> 0 then
+		ex af,af'	;  4	;   restore a
 
 		; trim char from front of the string
 
 2$:		cpi		; 16	;   loop
-		jr nz,4$	;  7	;     while a = [hl++], --bc
+		jr nz,4$	;  7/12	;     while a = [hl++], --bc
 		jp pe,2$	; 10	;   until b = 0
 
 		; done trimming
@@ -2822,15 +2822,15 @@ f1ix:		pop hl			; pop hl with 2OS
 		exx			; restore bc with ip
 		pop de			; pop new TOS
 		JP_NEXT			; continue
-4$:		cp 0x20			;
-		jr nz,5$		; if char = 0x20 then
+4$:		cp 0x20		;  7	;
+		jr nz,5$	;  7	; if char = 0x20 then
 
 		; trim white space and control char
 
-		dec hl			;
-		cp (hl)			;
-		inc hl			;
-		jr nc,1$		;   if [hl-1] <= 0x20 then keep trimming
+		dec hl		;  6	;
+		cp (hl)		;  7	;
+		inc hl		;  6	;
+		jr nc,1$	; 12	;   if [hl-1] <= 0x20 then keep trimming
 
 		; stop trimming at mismatch
 
@@ -2839,7 +2839,7 @@ f1ix:		pop hl			; pop hl with 2OS
 		jr 3$			; finalize trimming
 
 ; -TRIM		c-addr u1 char -- c-addr u2
-;		trim trailing chars;
+;		trim trailing chars from a string;
 ;		char = 0x20 (bl) trims 0x00 to 0x20 (white space and control)
 
 		CODE -TRIM,mtrim
@@ -2884,7 +2884,7 @@ f1ix:		pop hl			; pop hl with 2OS
 		jr 3$			; finalize trimming
 
 ; -TRAILING	c-addr u1 -- c-addr u2
-;		trim trailing white space and control characters
+;		trim trailing white space and control characters from a string
 ;
 ;    : -TRAILING BL -TRIM ;
 
@@ -2908,7 +2908,8 @@ f1ix:		pop hl			; pop hl with 2OS
 		JP_NEXT			; continue
 
 ; NEXT-CHAR	c-addr1 u1 -- c-addr2 u2 char
-;		get next char from string
+;		get next char from a string;
+;		increments the string address and decrements its length by one
 ;
 ;    : NEXT-CHAR OVER C@ >R 1- SWAP 1+ SWAP R> ;
 ;    : NEXT-CHAR OVER C@ -ROT 1- SWAP 1+ SWAP ROT ;
@@ -3013,18 +3014,18 @@ y:		.db 0			; cursor row 0 to win_rows - 1
 		pop de			; pop new TOS
 		JP_NEXT			; continue
 
-		; get xy position in de, adjust x when beyond the right window edge
+get_xy:		; get xy position in de, adjust x when beyond the right window edge
 
-get_xy:		ld de,(xy)		; (xy) -> de
+		ld de,(xy)		; (xy) -> de
 		ld a,e			;
 		cp win_cols		;
 		call nc,emit_crlf	; if x >= win_cols then CRLF
 		ld (xy),de		; de -> (xy)
 		ret			; exit
 
-		; control
+emit_control:	; handle control character
 
-emit_control:	ld de,(xy)		; (xy) -> de
+		ld de,(xy)		; (xy) -> de
 emit_check_bs:	cp 0x08			;
 		jr nz,emit_check_tab	; if a = BS then
 emit_left:	dec e			;   x--
@@ -3929,7 +3930,7 @@ edupd:		; --
 6$:		.dw doret
 
 ; SKIPS		char "<chars>" --
-;		skips chars in input, 0x20 (bl) skips 0x00 to 0x20
+;		skips chars in input when present, 0x20 (bl) skips 0x00 to 0x20 (white space and control)
 ;
 ;    : SKIPS SOURCE >IN @ /STRING ROT TRIM DROP SOURCE DROP - >IN ! ;
 
@@ -5733,7 +5734,7 @@ loop_counter:	ld e,(hl)		;
 		.dw qcomp
 		.dw oneplus,tor
 		.dw dolit,doof,compilecomma
-		.dw here,orig
+		.dw here,dolit,orig
 		.dw zero,comma
 		.dw rfrom
 		.dw doret
