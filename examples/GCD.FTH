@@ -1,0 +1,3 @@
+\ GCD.FTH
+
+: GCD   ( n1 n2 -- gcd ) BEGIN ?DUP WHILE TUCK MOD REPEAT ;
