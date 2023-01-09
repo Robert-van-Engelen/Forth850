@@ -85,10 +85,10 @@
 ;		  -1 = bf 80 00 00
 ;		  -2 = c0 00 00 00
 ;		  -3 = c0 40 00 00
-;		 inf = 7f 80 00 00   n/a (invalid value)
-;		-inf = ff 80 00 00   n/a (invalid value)
+;		 inf = 7f 80 00 00   n/a (invalid value in this version)
+;		-inf = ff 80 00 00   n/a (invalid value in this version)
 ;		 nan = s 11111111 xxxxxxx xxxxxxxx xxxxxxxx at least one x is 1
-;		                     n/a (invalid value)
+;		                     n/a (invalid value in this version)
 ;
 ;		IEEE 754 binary floating point allows floating point values to
 ;		be compared as if comparing 32 bit signed integers with 'i<':
@@ -659,7 +659,7 @@ fdivy:		EXPA			; exponent -> a
 		exx			; activate bcdehl
 		set 7,c			; set bit 7 of man2 c
 
-		; divide mantissas cde' / cde -> chl'
+		; divide mantissas cde' / cde -> quotient chl' remainder ahl
 
 		xor a			;
 		ld h,a			;

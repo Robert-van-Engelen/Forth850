@@ -335,6 +335,7 @@ normalize:	; normalize bahl to return inexact result bcde with sign' l' bit 7
 ;		FLOATING POINT CONSTANT ZERO
 ;
 ;		fzero:	0.0 -> bcde
+;			cf reset
 ;			a,b,c,d,e modified
 ;
 ;-------------------------------------------------------------------------------
@@ -409,6 +410,8 @@ fmul:		EXPA			; exponent -> a
 		ld b,a			; a' -> b with result exponent
 		ex af,af'		; restore a and cf
 		jp shiftoncarry		; normalize bahl to return float bcde
+
+		; out of range, return zero (underflow, cf reset) or overflow (cf set)
 
 outofrange:	add a			; carry if bit 7 set
 		jr nc,fzero		; if incorrect positive then return zero (underflow, cf reset)
@@ -608,7 +611,7 @@ itof:		ld a,b			;
 
 		; set result exponent b and normalize nonzero mantissa ahl.e
 
-		ld b,bias + 31		; set exponent b
+		ld b,bias+31		; set exponent b
 		or a			;
 		jp m,finalize		; if a bit 7 not set then
 1$:		dec b		;  4	;   loop, decrement exponent b (cannot underflow)

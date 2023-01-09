@@ -830,7 +830,7 @@ fdivy:		EXPA			; exponent -> a
 		exx			; activate bcdehl
 		set 7,c			; set bit 7 of man2 c
 
-		; divide mantissas cde' / cde -> chl'
+		; divide mantissas cde' / cde -> quotient chl' remainder ahl
 
 		xor a			;
 		ld h,a			;
