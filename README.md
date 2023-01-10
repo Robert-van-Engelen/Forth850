@@ -2,9 +2,9 @@
 ![PC-G850](PC-G850.jpg)
 
 A modern Forth 2012 standard compliant system for the vintage SHARP
-PC-G850(V)(S) pocket computer.
+PC-G850(V)(S) pocket computer or any Z80 system (with a few tweaks to port).
 
-The basic version forth850 is under 8K and has [295 words](forth850-words).
+Forth850 is under 8K and has [295 words](forth850-words).
 
 A more complete 11K version forth850-full is also included with:
 
