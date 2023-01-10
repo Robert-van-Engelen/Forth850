@@ -3044,8 +3044,8 @@ balance the cycle time per bit:
                     jp nz,4$        ;   10(33); until c = 0 repeat without addition
                     ret                     ; done
 
-Note: unrolling the loops improves speed at the cost of a significant code size
-increase, which is undesirable for small memory devices.
+Note: unrolling the loops would improve the speed at the cost of a significant
+code size increase, which is undesirable for small memory devices.
 
 ### Fast unsigned 16x16->32 bit multiplication
 
@@ -3074,8 +3074,8 @@ max 64 cycles x 17 iterations = 1088 cycles, excluding entry/exit overhead
                     jp nz,1$        ; 10(64); until --a = 0
                     ret                     ; done
 
-Note: unrolling the loop improves speed at the cost of a significant code size
-increase, which is undesirable for small memory devices.
+Note: unrolling the loop would improve the speed at the cost of a significant
+code size increase, which is undesirable for small memory devices.
 
 ### Fast signed/unsigned 32x32->32 bit multiplication
 
@@ -3206,8 +3206,8 @@ max 8 x (98+87+59+33) = 2216 cycles, excluding entry/exit overhead
                     exx                     ;
                     ret                     ; done
 
-Note: unrolling the inner loop improves speed at the cost of a significant code
-size increase, which is undesirable for small memory devices.
+Note: unrolling the inner loop would improve the speed at the cost of a
+significant code size increase, which is undesirable for small memory devices.
 
 ### Fast unsigned 32/16->16 bit division and remainder
 
@@ -3250,10 +3250,27 @@ max 85 cycles x 16 iterations = 1360 cycles, excluding entry/exit overhead
                     ld b,a                  ; a -> b quotient bc, remainder in hl
                     ret                     ; done
 
+The algorithm negates the divisor first to speed up subtraction by adding the
+negative of the divisor instead.  Another benefit of using the negated divisor
+is that this produces the right carry value to shift into the quotient,
+otherwise the carry should be inverted or the resulting quotient must be
+inverted.
+
 By moving the first conditional block out of the loop, we can save 5 CPU cycles
 on the critical path (the most expensive path through the loop) to reduce to
-max 80 cycles x 16 iterations = 1280 cycles at the cost of making the code a
-bit more cluttered:
+max 80 cycles per iteration at the cost of making the code more cluttered.
+
+Entry:
+- HL: high order dividend ud
+- BC: low order dividend ud
+- DE: divisor u1
+
+Exit:
+- HL: remainder u2
+- BC: quotient u3
+
+Performance:
+max 80 cycles x 16 iterations = 1280 cycles, excluding entry/exit overhead
 
     udiv3216:       xor a                   ;
                     sub e                   ;
@@ -3279,12 +3296,6 @@ bit more cluttered:
     3$:             add hl,de       ;    11 ; hl + -u1 -> hl
                     scf             ;     4 ; 1 -> cf
                     jr 2$           ;    12 ;
-
-The algorithm negates the divisor first to speed up subtraction by adding the
-negative of the divisor instead.  Another benefit of using the negated divisor
-is that this produces the right carry value to shift into the quotient,
-otherwise the carry should be inverted or the resulting quotient must be
-inverted.
 
 By comparison, the CamelForth Z80 code is also fast, but slower than my
 implemenation with 90 cycles x 16 iterations = 1440 cycles, excluding
@@ -3314,8 +3325,8 @@ entry/exit overhead:
                     ld d,a                  ; complement de, faster than ccf in loop
                     ret                     ; done
 
-Note: unrolling the loop improves speed at the cost of a significant code size
-increase, which is undesirable for small memory devices.
+Note: unrolling the loop would improve the speed at the cost of a significant
+code size increase, which is undesirable for small memory devices.
 
 ### Fast unsigned 32/32->32 bit division and remainder
 
@@ -3373,6 +3384,7 @@ max 162 cycles x 32 iterations = 5184 cycles, excluding entry/exit overhead
                     djnz 1$         ; 13(162); until --b = 0
                     ld b,a                  ;
                     ld e,c                  ;
+                    ret                     ;
 
 ## Z80 floating point math routines
 
