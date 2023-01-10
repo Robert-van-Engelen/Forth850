@@ -8,7 +8,7 @@ The basic version forth850 is under 8K and has [295 words](forth850-words).
 
 A more complete 11K version forth850-full is also included with:
 
-- [54 additional words](#additional-words-included-with-the-full-version)
+- [58 additional words](#additional-words-included-with-the-full-version)
 
 - single precision floating point math words implemented with a new and
 efficient [Z80 IEEE 754 floating point math](#z80-floating-point-math-routines)
@@ -492,27 +492,25 @@ signed double product d1*n
 
 ### UM/MOD
 _ud u1 -- u2 u3_
-remainder and quotient ud/u1;
+unsigned remainder and quotient ud/u1;
 the result is undefined when u1 = 0
 
 ### SM/REM
 _d1 n1 -- n2 n3_
-symmetric signed remainder and quotient d1/n1;
+symmetric remainder and quotient d1/n1 rounded towards zero;
 the result is undefined when n1 = 0
 
     : SM/REM
       2DUP XOR >R
       OVER >R
-      ABS >R
-      DABS R> UM/MOD
-      SWAP
-      R> 0< IF NEGATE THEN
-      SWAP
+      ABS -ROT DABS ROT
+      UM/MOD
+      R> 0< IF SWAP NEGATE SWAP THEN
       R> 0< IF NEGATE THEN ;
 
 ### FM/MOD
 _d1 n1 -- n2 n3_
-floored signed modulus and quotient d1/n1;
+floored signed modulus and quotient d1/n1 rounded towards negative (floored);
 the result is undefined when n1 = 0
 
     : FM/MOD
@@ -526,42 +524,42 @@ the result is undefined when n1 = 0
 
 ### /MOD
 _n1 n2 -- n3 n4_
-signed symmetric remainder and quotient n1/n2;
+symmetric remainder and quotient n1/n2;
 the result is undefined when n2 = 0
 
     : /MOD SWAP S>D ROT SM/REM ;
 
 ### MOD
 _n1 n2 -- n3_
-signed symmetric remainder of n1/n2;
+symmetric remainder of n1/n2;
 the result is undefined when n2 = 0
 
-    : / /MOD DROP ;
+    : MOD /MOD DROP ;
 
 ### /
 _n1 n2 -- n3_
-signed symmetric quotient n1/n2;
+quotient n1/n2;
 the result is undefined when n2 = 0
 
     : / /MOD NIP ;
 
 ### */MOD
 _n1 n2 n3 -- n4 n5_
-signed product symmetric remainder and quotient n1*n2/n3;
+product with symmetric remainder and quotient n1*n2/n3;
 the result is undefined when n3 = 0
 
     : */MOD -ROT M* ROT SM/REM ;
 
 ### */
 _n1 n2 n3 -- n4_
-signed product symmetric quotient n1*n2/n3;
+product with quotient n1*n2/n3;
 the result is undefined when n3 = 0
 
     : */ */MOD NIP ;
 
 ### M*/
 _d1 n1 n2 -- d2_
-signed double product symmetric quotient d1*n1/n2;
+double product with quotient d1*n1/n2;
 the result is undefined when n2 = 0
 
     : M*/ >R MD* R> SM/REM NIP ;
@@ -832,23 +830,23 @@ fill memory with 0x20 (bl) chars
 
 ### CHOP
 _c-addr u1 char -- c-addr u2_
-truncate string up to matching char;
-leaves string if char not found;
+truncate a string up to a matching char;
+leaves the string if char not found;
 char = 0x20 (bl) chops 0x00 to 0x20 (white space and control)
 
 ### TRIM
 _c-addr1 u1 char -- c-addr2 u2_
-trim initial chars;
+trim initial chars from a string;
 char = 0x20 (bl) trims 0x00 to 0x20 (white space and control)
 
 ### -TRIM
 _c-addr u1 char -- c-addr u2_
-trim trailing chars;
+trim trailing chars from a string;
 char = 0x20 (bl) trims 0x00 to 0x20 (white space and control)
 
 ### -TRAILING
 _c-addr u1 -- c-addr u2_
-trim trailing white space and control characters
+trim trailing white space and control characters from a string
 
     : -TRAILING BL -TRIM ;
 
@@ -860,7 +858,8 @@ slice n characters off the start of a string
 
 ### NEXT-CHAR
 _c-addr1 u1 -- c-addr2 u2 char_
-get next char from string
+get next char from a string;
+increments the string address and decrements its length by one
 
     : NEXT-CHAR OVER C@ >R 1- SWAP 1+ SWAP R> ;
     : NEXT-CHAR OVER C@ -ROT 1- SWAP 1+ SWAP ROT ;
@@ -1151,7 +1150,7 @@ leaves false when end of input
 
 ### SKIPS
 _char "<chars>" --_
-skips chars in input, 0x20 (bl) skips 0x00 to 0x20
+skips chars in input when present, 0x20 (bl) skips 0x00 to 0x20 (white space and control)
 
     : SKIPS SOURCE >IN @ /STRING ROT TRIM DROP SOURCE DROP - >IN ! ;
 
@@ -2105,6 +2104,37 @@ signed and unsigned double product d1*d2
 
     : D* >R ROT DUP>R -ROT MD* 2R> * 0 SWAP D+ ;
 
+### UD/MOD
+_ud1 ud2 -- ud3 ud4_
+unsigned double remainder and quotient ud1/ud2;
+the result is undefined when ud2 = 0
+
+### D/MOD
+_d1 d2 -- d3 d4_
+double symmetric remainder and quotient d1/d2;
+the result is undefined when d2 = 0
+
+    : D/MOD
+      DUP 3 PICK DUP>R XOR >R
+      DABS 2SWAP DABS 2SWAP
+      UD/MOD
+      R> 0< IF DNEGATE THEN
+      R> 0< IF 2SWAP DNEGATE 2SWAP THEN ;
+
+### DMOD
+_d1 d2 -- d3_
+double symmetric remainder of d1/d2;
+the result is undefined when d2 = 0
+
+    : DMOD D/MOD 2DROP ;
+
+### D/
+_d1 d2 -- d3_
+double quotient d1/d2;
+the result is undefined when d2 = 0
+
+    : D/ D/MOD 2SWAP 2DROP ;
+
 ### D=
 _d1 d2 -- flag_
 true if d1 = d2
@@ -2363,10 +2393,12 @@ truncate float towards zero
 ### FLOOR
 _r1 -- r2_
 floor float towards negative infinity
+may throw -43 "floating-point result out of range"
 
 ### FROUND
 _r1 -- r2_
-round float to nearest
+round float to nearest;
+may throw -43 "floating-point result out of range"
 
 ### FNEGATE
 _r1 -- r2_
@@ -2586,7 +2618,8 @@ as `>R`, require more cycles with the RP in IX compared to the RP in RAM.
 A jump to the "next routine" is with `jp (iy)` takes 8 CPU cycles, compared to
 a `jp next` that takes 10 cycles.  Inlining the "next routine" eliminates
 this overhead, but increases the code size.  Inlining should only be applied to
-performance-critical words that are frequently used.  See the section below.
+performance-critical words that are frequently used.  See macros `NEXT` and
+`JP_NEXT` defined in the section below.
 
 ### Next fetch and execute
 
@@ -2941,6 +2974,7 @@ Performance:
     6$:             push de                 ; save de with c-addr as 2OS
                     exx                     ; restore bc with ip
                     jp zero_next            ; set new TOS to 0
+                    JP_NEXT                 ; continue
 
 ## Z80 integer math routines
 
@@ -2979,6 +3013,7 @@ max 51 cycles x 8 iterations + 45 x 8 = 768 cycles, excluding entry/exit overhea
     4$:             sla e           ;  8    ;
                     rl d            ;  8    ;   de << 1 -> de
                     djnz 3$         ; 13(51); until --b = 0
+                    ret                     ; done
 
 We can make an additional speed improvement, which only costs us one more
 instruction byte.  To calculate the high order byte we do not need to iterate
@@ -3007,6 +3042,7 @@ balance the cycle time per bit:
     5$:             srl c           ;  8    ;   c >> 1 -> c set cf and z if no bits left
                     jr c,3$         ; 12/7(32); until cf = 0 repeat with addition
                     jp nz,4$        ;   10(33); until c = 0 repeat without addition
+                    ret                     ; done
 
 Note: unrolling the loops improves speed at the cost of a significant code size
 increase, which is undesirable for small memory devices.
@@ -3036,6 +3072,7 @@ max 64 cycles x 17 iterations = 1088 cycles, excluding entry/exit overhead
                     add hl,bc       ; 11    ;     hl + bc -> hl
     2$:             dec a           ;  4    ;
                     jp nz,1$        ; 10(64); until --a = 0
+                    ret                     ; done
 
 Note: unrolling the loop improves speed at the cost of a significant code size
 increase, which is undesirable for small memory devices.
@@ -3084,6 +3121,7 @@ max 98 cycles x 32 iterations = 3136 cycles, excluding entry/exit overhead
                     djnz 2$         ; 13(98);   until --b = 0
                     dec c                   ;
                     jr nz,1$                ; until --c = 0
+                    ret                     ; done
 
 The same tricks as the 16x16->16 multiplication method can be used to reduce
 the cycle time, but at a cost of increased code size.  We also assign different
@@ -3166,6 +3204,7 @@ max 8 x (98+87+59+33) = 2216 cycles, excluding entry/exit overhead
                     jp nz,8$        ;   10(33); until c = 0 repeat without addition
                     ld h,a                  ; a -> h high order
                     exx                     ;
+                    ret                     ; done
 
 Note: unrolling the inner loop improves speed at the cost of a significant code
 size increase, which is undesirable for small memory devices.
@@ -3187,7 +3226,7 @@ Exit:
 Performance:
 max 85 cycles x 16 iterations = 1360 cycles, excluding entry/exit overhead
 
-    udiv3216        xor a                   ;
+    udiv3216:       xor a                   ;
                     sub e                   ;
                     ld e,a                  ;
                     sbc a                   ;
@@ -3208,7 +3247,38 @@ max 85 cycles x 16 iterations = 1360 cycles, excluding entry/exit overhead
     3$:             rl c            ;  8    ;
                     rla             ;  4    ;   ac << 1 + cf -> ac
                     djnz 1$         ; 13(85); until --b = 0
-                    ld b,a                  ; a -> b quotient bc
+                    ld b,a                  ; a -> b quotient bc, remainder in hl
+                    ret                     ; done
+
+By moving the first conditional block out of the loop, we can save 5 CPU cycles
+on the critical path (the most expensive path through the loop) to reduce to
+max 80 cycles x 16 iterations = 1280 cycles at the cost of making the code a
+bit more cluttered:
+
+    udiv3216:       xor a                   ;
+                    sub e                   ;
+                    ld e,a                  ;
+                    sbc a                   ;
+                    sub d                   ;
+                    ld d,a                  ; -de -> de with -u1
+                    ld a,b                  ; b -> a low order dividend in ac
+                    ld b,16                 ; 16 -> b loop counter
+                    sla c                   ;
+                    rla                     ; ac << 1 -> ac
+    1$:             adc hl,hl       ; 15    ; loop, hl << 1 + cf -> hl
+                    jr c,3$         ;  7/12 ;   if cf = 1 then hl + -u1 -> hl, 1 -> cf else
+                    add hl,de       ; 11    ;     hl + -u1 -> hl
+                    jr c,2$         ; 12/ 7 ;     if cf = 0 then
+                    sbc hl,de       ;    15 ;       hl - -u1 -> hl to undo, no carry
+    2$:             rl c            ;  8    ;
+                    rla             ;  4    ;   ac << 1 + cf -> ac
+                    djnz 1$         ; 13(80); until --b = 0
+                    ld b,a                  ; a -> b quotient bc, remainder in hl
+                    ret                     ; done
+
+    3$:             add hl,de       ;    11 ; hl + -u1 -> hl
+                    scf             ;     4 ; 1 -> cf
+                    jr 2$           ;    12 ;
 
 The algorithm negates the divisor first to speed up subtraction by adding the
 negative of the divisor instead.  Another benefit of using the negated divisor
@@ -3242,9 +3312,67 @@ entry/exit overhead:
                     ld a,d                  ;
                     cpl                     ;
                     ld d,a                  ; complement de, faster than ccf in loop
+                    ret                     ; done
 
 Note: unrolling the loop improves speed at the cost of a significant code size
 increase, which is undesirable for small memory devices.
+
+### Fast unsigned 32/32->32 bit division and remainder
+
+This algorithm uses the shadow registers BC', DE' and HL'.  Because of this
+register pressure, there is little room for further optimization.  Registers
+IX and IY cannot be used since they lack the necessary adc and sbc
+instructions.
+
+Entry:
+- BC: high order dividend ud1
+- BC': low order dividend ud1
+- DE': high order divisor ud2
+- DE: low order divisor ud2
+
+Exit:
+- HL': high order remainder ud3
+- HL: low order remainder ud3
+- BC: high order quotient ud4
+- BC': low order quotient ud4
+
+Performance:
+max 162 cycles x 32 iterations = 5184 cycles, excluding entry/exit overhead
+
+    udiv3232:       exx                     ;
+                    xor a                   ;
+                    ld h,a                  ;
+                    ld l,a                  ; 0 -> hl'
+                    rl c                    ;
+                    rl b                    ;
+                    exx                     ;
+                    ld h,a                  ;
+                    ld l,a                  ; 0 -> hl
+                    ld a,b                  ; b -> a
+                    rl c                    ;
+                    rla                     ; ac << 1 -> ac
+                    ld b,32                 ; 32 -> b loop counter
+    1$:             adc hl,hl       ; 15    ;
+                    exx             ;  4    ;
+                    adc hl,hl       ; 15    ;
+                    exx             ;  4    ;   hl'.hl << 1 + cf -> hl'.hl no carry
+                    sbc hl,de       ; 15    ;
+                    exx             ;  4    ;
+                    sbc hl,de       ; 15    ;   hl'.hl - de'.de -> hl'.hl
+                    jr nc,2$        ; 12/ 7 ;   if cf = 1 then
+                    exx             ;     4 ;
+                    add hl,de       ;    11 ;
+                    exx             ;     4 ;
+                    adc hl,de       ;    15 ;     hl'.hl + de'.de -> hl'.hl to undo, sets carry
+    2$:             ccf             ;  4    ;   complement cf
+                    rl c            ;  8    ;
+                    rl b            ;  8    ;
+                    exx             ;  4    ;
+                    rl c            ;  8    ;
+                    rla             ;  4    ;   ac.bc' << 1 + cf
+                    djnz 1$         ; 13(162); until --b = 0
+                    ld b,a                  ;
+                    ld e,c                  ;
 
 ## Z80 floating point math routines
 

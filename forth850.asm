@@ -1383,7 +1383,7 @@ store_a_hl:	ld (hl),a		;
 1$:		.dw doret
 
 ; UM/MOD	ud u1 -- u2 u3
-;		remainder and quotient ud/u1;
+;		unsigned remainder and quotient ud/u1;
 ;		the result is undefined when u1 = 0
 
 		CODE UM/MOD,umslashmod
@@ -1403,52 +1403,48 @@ store_a_hl:	ld (hl),a		;
 		sla c			;
 		rla			; ac << 1 -> ac
 1$:		adc hl,hl	; 15	; loop, hl << 1 + cf -> hl
-		jr nc,2$	; 12/ 7	;   if cf = 1 then
-		add hl,de	;    11	;     hl + -u1 -> hl
-		scf		;     4	;     1 -> cf
-		jr 3$		;    12	;   else
-2$:		add hl,de	; 11	;     hl + -u1 -> hl
-		jr c,3$		; 12/ 7 ;     if cf = 0 then
+		jr c,3$		;  7/12	;   if cf = 1 then hl + -u1 -> hl, 1 -> cf else
+		add hl,de	; 11	;     hl + -u1 -> hl
+		jr c,2$		; 12/ 7 ;     if cf = 0 then
 		sbc hl,de	;    15	;       hl - -u1 -> hl to undo, no carry
-3$:		rl c		;  8	;
+2$:		rl c		;  8	;
 		rla		;  4	;   ac << 1 + cf -> ac
-		djnz 1$		; 13(85); until --b = 0
+		djnz 1$		; 13(80); until --b = 0
 		ld b,a			; a -> b quotient bc
 		push hl			; save hl with u2 remainder
 		push bc			; save bc with u3 quotient
 		exx			; restore bc with ip
 		pop de			; pop new TOS with quotient
 		JP_NEXT			; continue
+3$:		add hl,de	;    11	; hl + -u1 -> hl
+		scf		;     4	; 1 -> cf
+		jr 2$		;    12	;
 
 ; SM/REM	d1 n1 -- n2 n3
-;		symmetric signed remainder and quotient d1/n1;
+;		symmetric remainder and quotient d1/n1 rounded towards zero;
 ;		the result is undefined when n1 = 0
 ;
 ;    : SM/REM
 ;      2DUP XOR >R
 ;      OVER >R
-;      ABS >R
-;      DABS R> UM/MOD
-;      SWAP
-;      R> 0< IF NEGATE THEN
-;      SWAP
+;      ABS -ROT DABS ROT
+;      UM/MOD
+;      R> 0< IF SWAP NEGATE SWAP THEN
 ;      R> 0< IF NEGATE THEN ;
 
 		COLON SM/REM,smslashrem
 		.dw twodup,xor,tor
 		.dw over,tor
-		.dw abs,tor
-		.dw dabs,rfrom,umslashmod
-		.dw swap
+		.dw abs,mrot,dabs,rot
+		.dw umslashmod
 		.dw rfrom,zeroless,doif,1$
-		.dw   negate
-1$:		.dw swap
-		.dw rfrom,zeroless,doif,2$
+		.dw   swap,negate,swap
+1$:		.dw rfrom,zeroless,doif,2$
 		.dw   negate
 2$:		.dw doret
 
 ; FM/MOD	d1 n1 -- n2 n3
-;		floored signed modulus and quotient d1/n1;
+;		floored signed modulus and quotient d1/n1 rounded towards negative (floored);
 ;		the result is undefined when n1 = 0
 ;
 ;    : FM/MOD
@@ -1470,7 +1466,7 @@ store_a_hl:	ld (hl),a		;
 2$:		.dw doret
 
 ; /MOD		n1 n2 -- n3 n4
-;		signed symmetric remainder and quotient n1/n2;
+;		symmetric remainder and quotient n1/n2;
 ;		the result is undefined when n2 = 0
 ;
 ;    : /MOD SWAP S>D ROT SM/REM ;
@@ -1481,17 +1477,17 @@ store_a_hl:	ld (hl),a		;
 		.dw doret	
 
 ; MOD		n1 n2 -- n3
-;		signed symmetric remainder of n1/n2;
+;		symmetric remainder of n1/n2;
 ;		the result is undefined when n2 = 0
 ;
-;    : / /MOD DROP ;
+;    : MOD /MOD DROP ;
 
 		COLON MOD,mod
 		.dw slashmod,drop
 		.dw doret
 
 ; /		n1 n2 -- n3
-;		signed symmetric quotient n1/n2;
+;		quotient n1/n2;
 ;		the result is undefined when n2 = 0
 ;
 ;    : / /MOD NIP ;
@@ -1501,7 +1497,7 @@ store_a_hl:	ld (hl),a		;
 		.dw doret
 
 ; */MOD		n1 n2 n3 -- n4 n5
-;		signed product symmetric remainder and quotient n1*n2/n3;
+;		product with symmetric remainder and quotient n1*n2/n3;
 ;		the result is undefined when n3 = 0
 ;
 ;    : */MOD -ROT M* ROT SM/REM ;
@@ -1512,7 +1508,7 @@ store_a_hl:	ld (hl),a		;
 		.dw doret
 
 ; */		n1 n2 n3 -- n4
-;		signed product symmetric quotient n1*n2/n3;
+;		product with quotient n1*n2/n3;
 ;		the result is undefined when n3 = 0
 ;
 ;    : */ */MOD NIP ;
@@ -1522,7 +1518,7 @@ store_a_hl:	ld (hl),a		;
 		.dw doret
 
 ; M*/		d1 n1 n2 -- d2
-;		signed double product symmetric quotient d1*n1/n2;
+;		double product with quotient d1*n1/n2;
 ;		the result is undefined when n2 = 0
 ;
 ;    : M*/ >R MD* R> SM/REM NIP ;
@@ -1595,6 +1591,116 @@ store_a_hl:	ld (hl),a		;
 		.dw doret
 
 .endif
+
+;- UMD/MOD	ud1 u1 -- u2 ud2
+;		
+;		unsigned remainder and unsigned double quotient ud1/u1;
+;		the result is undefined when u1 = 0;
+;
+;    : UMD/MOD DUP>R 0 SWAP UM/MOD -ROT R> UM/MOD ROT ;
+;
+;		COLON UMD/MOD,umdslashmod
+;		.dw duptor
+;		.dw zero,swap,umslashmod
+;		.dw mrot
+;		.dw rfrom,umslashmod
+;		.dw rot
+;		.dw doret
+
+;+ UD/MOD	ud1 ud2 -- ud3 ud4
+;		unsigned double remainder and quotient ud1/ud2;
+;		the result is undefined when ud2 = 0
+
+		CODE UD/MOD,udslashmod
+		exx			; exchange TOS -> de' with high order divisor, ip in bc'
+		pop de			; pop 2OS -> de with low order divisor
+		pop bc			; pop 3OS -> bc with high order dividend
+		exx			;
+		pop hl			; pop 4OS -> hl' with low order dividend
+		push bc			; save bc' with ip
+		ld b,h			;
+		ld c,l			; hl' -> bc' with low order dividend
+		xor a			;
+		ld h,a			;
+		ld l,a			; 0 -> hl'
+		rl c			;
+		rl b			;
+		exx			;
+		ld h,a			;
+		ld l,a			; 0 -> hl
+		ld a,b			; b -> a
+		rl c			;
+		rla			; ac << 1 -> ac
+		ld b,32			; 32 -> b loop counter
+1$:		adc hl,hl	; 15	;
+		exx		;  4	;
+		adc hl,hl	; 15	;
+		exx		;  4	;   hl'.hl << 1 + cf -> hl'.hl no carry
+		sbc hl,de	; 15	;
+		exx		;  4	;
+		sbc hl,de	; 15	;   hl'.hl - de'.de -> hl'.hl
+		jr nc,2$	; 12/ 7	;   if cf = 1 then
+		exx		;     4	;
+		add hl,de	;    11	;
+		exx		;     4	;
+		adc hl,de	;    15	;     hl'.hl + de'.de -> hl'.hl to undo, sets carry
+2$:		ccf		;  4	;   complement cf
+		rl c		;  8	;
+		rl b		;  8	;
+		exx		;  4	;
+		rl c		;  8	;
+		rla		;  4	;   ac.bc' << 1 + cf
+		djnz 1$		; 13(162); until --b = 0
+		ld d,a			;
+		ld e,c			; save ac -> de with high order quotient as new TOS
+		pop bc			; restore bc with ip
+		push hl			; save hl with low order quotient as new 4OS
+		exx			;
+		push hl			; save hl' with high order remainder as new 3OS
+		push bc			; save bc' with low order quotient as new 2OS
+		exx			;
+		JP_NEXT			; continue
+
+;+ D/MOD	d1 d2 -- d3 d4
+;		double symmetric remainder and quotient d1/d2;
+;		the result is undefined when d2 = 0
+;
+;    : D/MOD
+;      DUP 3 PICK DUP>R XOR >R
+;      DABS 2SWAP DABS 2SWAP
+;      UD/MOD
+;      R> 0< IF DNEGATE THEN
+;      R> 0< IF 2SWAP DNEGATE 2SWAP THEN ;
+
+		COLON D/MOD,dslashmod
+		.dw dup,dolit,3,pick,duptor,xor,tor
+		.dw dabs,twoswap,dabs,twoswap
+		.dw udslashmod
+		.dw rfrom,zeroless,doif,1$
+		.dw   dnegate
+1$:		.dw rfrom,zeroless,doif,2$
+		.dw   twoswap,dnegate,twoswap
+2$:		.dw doret
+
+;+ DMOD		d1 d2 -- d3
+;		double symmetric remainder of d1/d2;
+;		the result is undefined when d2 = 0
+;
+;    : DMOD D/MOD 2DROP ;
+
+		COLON DMOD,dmod
+		.dw dslashmod,twodrop
+		.dw doret
+
+;+ D/		d1 d2 -- d3
+;		double quotient d1/d2;
+;		the result is undefined when d2 = 0
+;
+;    : D/ D/MOD 2SWAP 2DROP ;
+
+		COLON D/,dslash
+		.dw dslashmod,twoswap,twodrop
+		.dw doret
 
 .endif
 

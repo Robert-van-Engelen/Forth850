@@ -20,3 +20,4 @@
 - dec 25, 2022: Forth850 v0.9 fix IEEE 754 math rounding with sticky bits
 - jan  1, 2023: Forth850 v1.0 add more capable line editor to the full version
 - jan  9, 2023: Forth850 v1.1 fix CASE OF not compiling
+- jan 10, 2023: Forth850 v1.2 add UD/MOD, D/MOD, DMOD and D/ words
