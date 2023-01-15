@@ -91,7 +91,7 @@
 
 : FTAN      ( r1 -- r2 ) 2DUP FSIN 2SWAP FCOS F/ ;
 
-\ Accurate FASIN by summing in reverse order using the stack as temporary storage (32 cells)
+\ Accurate FASIN by summing in reverse order using the stack as temporary storage (34 cells)
 
 : FASIN     ( r1 -- r2 )
   1E0 2OVER FABS F< IF -46 THROW THEN
@@ -115,6 +115,7 @@
     2ROT 2ROT     \ -- x (1/2)x^3/3 ... term*x*x*(i-2)/(i-1)/i x*x term*x*x*(i-2)/(i-1)
   2 +LOOP
   2DROP 2DROP
+  \ sum the 17 terms in reverse order
   16 0 DO F+ LOOP
   ROT IF PI/2 2SWAP F- ROT IF FNEGATE THEN THEN ; \ sign(x)*(pi/2-arcsin(sqrt(1-x^2)))
 
@@ -214,7 +215,7 @@
 
 0.69314724E0 2CONSTANT LN2 \ approx ln(2) such that 1E0 FLN = 0
 
-\ Correctly rounded (*) FLN by summing in reverse order using the stack as temporary storage (40 cells)
+\ Correctly rounded (*) FLN by summing in reverse order using the stack as temporary storage (42 cells)
 \ *) but loses accuracy close and above 1.0 such as 1.001 gives 5 digits accuracy instead of exact
 
 : FLN       ( r1 -- r2 )
@@ -232,8 +233,8 @@
     2ROT 2ROT     \ -- x x^2/2 ... term*x/i x term*x
   LOOP
   2DROP 2DROP     \ -- x x^2/2 ... x^19/19
-  \ sum the 20 terms in reverse order
-  22 2 DO F+ LOOP
+  \ sum the 21 terms in reverse order
+  20 0 DO F+ LOOP
   FNEGATE
   ROT S>F LN2 F* F+ ; \ + n*ln(2) with approx ln(2) such that 1E0 FLN = 0
 
@@ -259,7 +260,7 @@
 
 : FLOG      ( r1 -- r2 ) FLN 0.4342945E0 F* ; \ = ln(x)/ln(10) appeox ln(10) such that 10E0 FLOG = 1E0
 
-\ Correctly rounded exp(x) by summing in reverse order using the stack as temporary storage (18 cells)
+\ Correctly rounded exp(x) by summing in reverse order using the stack as temporary storage (20 cells)
 
 : FEXP      ( r1 -- r2 )
   2DUP F0< -ROT
@@ -276,7 +277,7 @@
   LOOP
   2DROP \ -- 1 x x^2/2! ... x^9/9!
   \ sum the 10 terms in reverse order
-  10 1 DO F+ LOOP
+  9 0 DO F+ LOOP
   \ multiply exp(x) by 2^k
   R> 7 LSHIFT +
   \ return reciprocal for negative r1
