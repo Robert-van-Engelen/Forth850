@@ -91,6 +91,8 @@
 
 : FTAN      ( r1 -- r2 ) 2DUP FSIN 2SWAP FCOS F/ ;
 
+\ Accurate FASIN by summing in reverse order using the stack as temporary storage (32 cells)
+
 : FASIN     ( r1 -- r2 )
   1E0 2OVER FABS F< IF -46 THROW THEN
   \ map r1 to [-sqrt(1/2),sqrt(1/2)] using arcsin(x) = pi/2-arcsin(qrt(1-x^2))
@@ -104,19 +106,48 @@
   THEN
   -ROT
   \ Maclaurin series arcsin(x) = x + (1/2)x^3/3 + (1*3)/(2*4)x^5/5 + (1*3*5)/(2*4*6)x^7/7 + ...
-  2DUP 2DUP 2DUP F* 2ROT 2ROT \ -- x*x x x
+  2DUP 2DUP 2DUP F* 2SWAP \ -- x x*x x
   34 3 DO
-    5 PICK 5 PICK F*     \ -- x*x sum term*x*x
-    I 2- S>F F*          \ -- x*x sum term*x*x*(i-2)
-    I 1- S>F F/          \ -- x*x sum term*x*x*(i-2)/(i-1)
-    2SWAP 2OVER I S>F F/ \ -- x*x term*x*x*(i-2)/(i-1) sum term*x*x*(i-2)/(i-1)/i
-    F+                   \ -- x*x term*x*x*(i-2)/(i-1) sum+term*x*x*(i-2)/(i-1)/i
-    2SWAP                \ -- x*x sum+term*x*x*(i-2)/(i-1)/i term*x*x*(i-2)/(i-1)
+    2OVER F*      \ -- x (1/2)x^3/3 ... x*x term*x*x
+    I 2- S>F F*   \ -- x (1/2)x^3/3 ... x*x term*x*x*(i-2)
+    I 1- S>F F/   \ -- x (1/2)x^3/3 ... x*x term*x*x*(i-2)/(i-1)
+    2DUP I S>F F/ \ -- x (1/2)x^3/3 ... x*x term*x*x*(i-2)/(i-1) term*x*x*(i-2)/(i-1)/i
+    2ROT 2ROT     \ -- x (1/2)x^3/3 ... term*x*x*(i-2)/(i-1)/i x*x term*x*x*(i-2)/(i-1)
   2 +LOOP
-  2DROP 2SWAP 2DROP
+  2DROP 2DROP
+  16 0 DO F+ LOOP
   ROT IF PI/2 2SWAP F- ROT IF FNEGATE THEN THEN ; \ sign(x)*(pi/2-arcsin(sqrt(1-x^2)))
 
+\ Slightly less accurate FASIN without temporary storage on the stack
+
+\ : FASIN     ( r1 -- r2 )
+\   1E0 2OVER FABS F< IF -46 THROW THEN
+\   \ map r1 to [-sqrt(1/2),sqrt(1/2)] using arcsin(x) = pi/2-arcsin(qrt(1-x^2))
+\   0.70710678E0 2OVER FABS F< IF \ if |r1| > sqrt(1/2) then
+\     2DUP F0<
+\     -ROT
+\     2DUP F* 1E0 2SWAP F- FSQRT 
+\     TRUE
+\   ELSE
+\     FALSE
+\   THEN
+\   -ROT
+\   \ Maclaurin series arcsin(x) = x + (1/2)x^3/3 + (1*3)/(2*4)x^5/5 + (1*3*5)/(2*4*6)x^7/7 + ...
+\   2DUP 2DUP 2DUP F* 2ROT 2ROT \ -- x*x x x
+\   34 3 DO
+\     5 PICK 5 PICK F*     \ -- x*x sum term*x*x
+\     I 2- S>F F*          \ -- x*x sum term*x*x*(i-2)
+\     I 1- S>F F/          \ -- x*x sum term*x*x*(i-2)/(i-1)
+\     2SWAP 2OVER I S>F F/ \ -- x*x term*x*x*(i-2)/(i-1) sum term*x*x*(i-2)/(i-1)/i
+\     F+                   \ -- x*x term*x*x*(i-2)/(i-1) sum+term*x*x*(i-2)/(i-1)/i
+\     2SWAP                \ -- x*x sum+term*x*x*(i-2)/(i-1)/i term*x*x*(i-2)/(i-1)
+\   2 +LOOP
+\   2DROP 2SWAP 2DROP
+\   ROT IF PI/2 2SWAP F- ROT IF FNEGATE THEN THEN ; \ sign(x)*(pi/2-arcsin(sqrt(1-x^2)))
+
 : FACOS     ( r1 -- r2 ) FASIN PI/2 2SWAP F- ; \ = pi/2 - arcsin(x)
+
+\ Accurate FATAN by summing in reverse order using the stack as temporary storage (16 cells)
 
 : FATAN     ( r1 -- r2 )
   \ map r1 to [-1,1] using arctan(x) = sign(x) * (pi/2-arctan(1/abs(x)))
@@ -137,16 +168,49 @@
   THEN
   -ROT
   \ Maclaurin series arctan(x) = x - x^3/3 + x^5/5 - x^7/7 + ... with x in (-1,1)
-  2DUP 2DUP 2DUP F* FNEGATE 2ROT 2ROT \ -- -x*x x x
+  2DUP 2DUP 2DUP F* FNEGATE 2SWAP \ -- x -x*x x
   16 3 DO
-    5 PICK 5 PICK F* \ -- -x*x sum -x*x*term
-    2DUP I S>F F/    \ -- -x*x sum -x*x*term -x*x*term/i
-    2ROT F+          \ -- -x*x -x*x*term/i sum-x*x*term/i
-    2SWAP            \ -- -x*x sum-x*x*term/i -x*x*term/i
+    2OVER F*      \ -- x -x^3/3 ... -x*x -x*x*term
+    2DUP I S>F F/ \ -- x -x^3/3 ... -x*x -x*x*term -x*x*term/i
+    2ROT 2ROT     \ -- x -x^3/3 ... -x*x*term/i -x*x -x*x*term
   2 +LOOP
-  2DROP 2SWAP 2DROP
+  2DROP 2DROP     \ -- x -x^3/3 ... x^15/15
+  \ sum the 8 terms in reverse order
+  F+ F+ F+ F+ F+ F+ F+
   ROT IF 2E0 F* THEN \ 2*arctan(x/(1+sqrt(1+x^2)))
   ROT IF PI/2 2SWAP F- ROT IF FNEGATE THEN THEN ; \ sign(x) * (pi/2-arctan(1/abs(x)))
+
+\ Slightly less accurate FATAN without temporary storage on the stack
+
+\ : FATAN     ( r1 -- r2 )
+\   \ map r1 to [-1,1] using arctan(x) = sign(x) * (pi/2-arctan(1/abs(x)))
+\   1E0 2OVER FABS F< IF \ if |r1| > 1 then
+\     2DUP F0< -ROT
+\     1E0 2SWAP FABS F/
+\     TRUE
+\   ELSE
+\     FALSE
+\   THEN
+\   -ROT
+\   \ map r1 in [-1,1] to [-sqrt(2)+1,sqrt(2)-1] using arctan(x) = 2*arctan(x/(1+sqrt(1+x^2)))
+\   .41423562E0 2OVER FABS F< IF \ if |r1| > sqrt(2)-1 then
+\     2DUP 2DUP F* 1E0 F+ FSQRT 1E0 F+ F/
+\     TRUE
+\   ELSE
+\     FALSE
+\   THEN
+\   -ROT
+\   \ Maclaurin series arctan(x) = x - x^3/3 + x^5/5 - x^7/7 + ... with x in (-1,1)
+\   2DUP 2DUP 2DUP F* FNEGATE 2ROT 2ROT \ -- -x*x x x
+\   16 3 DO
+\     5 PICK 5 PICK F* \ -- -x*x sum -x*x*term
+\     2DUP I S>F F/    \ -- -x*x sum -x*x*term -x*x*term/i
+\     2ROT F+          \ -- -x*x -x*x*term/i sum-x*x*term/i
+\     2SWAP            \ -- -x*x sum-x*x*term/i -x*x*term/i
+\   2 +LOOP
+\   2DROP 2SWAP 2DROP
+\   ROT IF 2E0 F* THEN \ 2*arctan(x/(1+sqrt(1+x^2)))
+\   ROT IF PI/2 2SWAP F- ROT IF FNEGATE THEN THEN ; \ sign(x) * (pi/2-arctan(1/abs(x)))
 
 0.69314724E0 2CONSTANT LN2 \ approx ln(2) such that 1E0 FLN = 0
 
