@@ -63,13 +63,21 @@ In RUN MODE enter `MON` to enter the Monitor, then enter `USER3FFF` to reserve
     *USER3FFF
     FREE:0100-3FFF
 
-Press `BASIC` to return to RUN MODE.  Load forth850.wav using a cassette
-interface CE-126P or a CE-124:
+Loading via serial requires a serial adapter.  After reserving memory in the
+Monitor as described above, use the `R` command to read the forth850.ihx file
+or the forth850-full.ihx full version sent from your PC to your PC-G850(V)(S):
+
+    *R100
+
+The `R` command is used to transmit/receive data in Intel hex format over SIO.
+This command is for receiving machine code from a personal computer or other
+device.  See the [Sharp PC-G850(V)(S) manual](https://pockemul.com/wp-content/uploads/2020/05/PC-G850VSEng_V3_0.pdf).
+<!-- https://www.dropbox.com/s/02p3ahwlsbgkf21/Sharp%20PC-G850V%28S%29%20%28Eng%29%20V3.0.pdf?dl=0 -->
+
+To load via the cassette interface, press `BASIC` to return to RUN MODE.  Load
+forth850.wav using a cassette interface CE-126P or a CE-124:
 
     BLOADM
-
-Loading via serial is in principle possible.  Instructions will be included
-in this README sometime later once I've figure that out (help is appreciated).
 
 Load the forth850-full.wav "full version" to include many
 [additional words](#additional-words-included-with-the-full-version) and
