@@ -4942,7 +4942,7 @@ comma_de:	ld (hl),e		;
 ;        >BODY
 ;        STATE @ IF
 ;          POSTPONE (2TO)
-;          2,
+;          ,
 ;          EXIT
 ;        THEN
 ;        2!
@@ -4964,7 +4964,7 @@ comma_de:	ld (hl),e		;
 		.dw   tobody
 		.dw   state,fetch,doif,3$
 		.dw     dolit,dotwoto,compilecomma
-		.dw     twocomma
+		.dw     comma
 		.dw     doexit
 3$:		.dw   twostore
 		.dw   doexit

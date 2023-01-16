@@ -1529,7 +1529,7 @@ may throw -32 "invalid name argument"
         >BODY
         STATE @ IF
           POSTPONE (2TO)
-          2,
+          ,
           EXIT
         THEN
         2!
