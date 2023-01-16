@@ -1,6 +1,7 @@
 \ COMPLEX.FTH complex arithmetic
 \ A subset of functions based on Forth Scientific Library Algorithm #60
-\ Requires MATH.FTH FSQRT
+\ Requires MATH.FTH FSQRT for |Z|
+\ Requires MATH.FTH FATAN2 (FATAN) for ZARG
 
 \ Note: floats are double cells, so fdup is 2DUP etc.
 \ Note: -frot is 2ROT 2ROT
@@ -37,7 +38,7 @@ DECIMAL
   F+ F* 2DUP FTMP1 F-
   2SWAP FTMP2 F+ ;
 
-\ Absolute value, preserves precision (versus naive distance)
+\ Absolute value, preserves precision (versus naive distance), requires MATH.FTH FSQRT
 : |Z|   ( r1 i1 -- r2 )
   FABS 2SWAP FABS
   2OVER 2OVER FMAX
@@ -47,6 +48,9 @@ DECIMAL
     2ROT 2ROT FMIN
     2OVER F/ 2DUP F* 1E0 F+ FSQRT F*
   THEN ;
+
+\ Principal argument, requires MATH.FTH FATAN2
+: ZARG  ( r1 i1 -- r2 ) 2SWAP FATAN2 ;
 
 \ Division by a float
 : Z/F   ( r1 i1 r2 -- r3 i3 ) 1E0 2SWAP F/ Z*F ;

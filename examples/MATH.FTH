@@ -213,6 +213,19 @@
 \   ROT IF 2E0 F* THEN \ 2*arctan(x/(1+sqrt(1+x^2)))
 \   ROT IF PI/2 2SWAP F- ROT IF FNEGATE THEN THEN ; \ sign(x) * (pi/2-arctan(1/abs(x)))
 
+: FATAN2    ( r1 r2 -- r3 )
+  2DUP FNEGATE F0< IF
+    F/ FATAN
+  ELSE
+    2SWAP
+    2DUP F0= IF
+      2DROP F0< IF PI ELSE PI/2 THEN
+    ELSE
+      PI/2 2OVER F0< IF FNEGATE THEN
+      2ROT 2ROT F/ FATAN F-
+    THEN
+  THEN ;
+
 0.69314724E0 2CONSTANT LN2 \ approx ln(2) such that 1E0 FLN = 0
 
 \ Correctly rounded (*) FLN by summing in reverse order using the stack as temporary storage (42 cells)
