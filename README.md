@@ -30,7 +30,7 @@ Assembler.  See [ASMDEMO1.FTH](examples/ASMDEMO1.FTH) for an example with an
 explanation.  You can also use the Monitor to set breakpoints and run Forth850
 with `G100` to trigger them.  
 
-To build Forth850 from the Z80 assembly source, you will need to install
+If you want to rebuild Forth850 from source code, you will need to install
 the [asz80](https://shop-pdp.net/ashtml/asz80.htm) assembler part of the
 [ASxxxx Cross Assemblers](https://shop-pdp.net/ashtml/asxget.php).
 
