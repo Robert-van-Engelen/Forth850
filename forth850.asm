@@ -688,7 +688,7 @@ true_next	.equ mone_next		; alias
 		NEXT			; continue
 
 ; -ROT		x1 x2 x3 -- x3 x1 x2
-;		undo (or left) rotate cells
+;		undo (or back, or left) rotate cells
 ;
 ;    : -ROT ROT ROT ;
 
@@ -2850,7 +2850,7 @@ func1ix:	; floating point unary function driver
 		.dw doret
 
 ; BLANK		c-addr u --
-;		fill memory with 0x20 (bl) chars
+;		fill memory with 0x20 (BL) chars
 ;
 ;    : ERASE BL FILL ;
 
@@ -2861,7 +2861,7 @@ func1ix:	; floating point unary function driver
 ; CHOP		c-addr u1 char -- c-addr u2
 ;		truncate a string up to a matching char;
 ;		leaves the string if char not found;
-;		char = 0x20 (bl) chops 0x00 to 0x20 (white space and control)
+;		char = 0x20 (BL) chops 0x00 to 0x20 (white space and control)
 
 		CODE CHOP,chop
 		ld a,e			; char -> a
@@ -2902,7 +2902,7 @@ func1ix:	; floating point unary function driver
 
 ; TRIM		c-addr1 u1 char -- c-addr2 u2
 ;		trim initial chars from a string;
-;		char = 0x20 (bl) trims 0x00 to 0x20 (white space and control)
+;		char = 0x20 (BL) trims 0x00 to 0x20 (white space and control)
 
 		CODE TRIM,trim
 		ld a,e			; char -> a
@@ -2946,7 +2946,7 @@ func1ix:	; floating point unary function driver
 
 ; -TRIM		c-addr u1 char -- c-addr u2
 ;		trim trailing chars from a string;
-;		char = 0x20 (bl) trims 0x00 to 0x20 (white space and control)
+;		char = 0x20 (BL) trims 0x00 to 0x20 (white space and control)
 
 		CODE -TRIM,mtrim
 		ld a,e			; char -> a
@@ -3092,16 +3092,16 @@ y:		.db 0			; cursor row 0 to win_rows - 1
 ; EMIT		char --
 ;		emit char;
 ;		supports the following control codes:
-;		 8 (BS),
+;		 8 (BS backspace, cursor left),
 ;		 9 (TAB),
-;		10 (LF),
+;		10 (LF line feed),
 ;		11 (VT scroll),
-;		12 (FF clear),
-;		13 (CR),
-;		28 (right),
-;		29 (left),
-;		30 (up),
-;		31 (down),
+;		12 (FF clear screen),
+;		13 (CR carriage return),
+;		28 (cursor right),
+;		29 (cursor left),
+;		30 (cursor up),
+;		31 (cursor down)
 
 		CODE EMIT,emit
 		ld a,e			; char -> a
@@ -3191,7 +3191,7 @@ emit_check_dn:	cp 0x1f			;
 		ret			; exit
 
 ; TYPE		c-addr u --
-;		type string to output
+;		type string to output; string may contain control codes, see EMIT
 ;
 ;    : TYPE
 ;      BEGIN DUP WHILE
@@ -3227,7 +3227,7 @@ emit_check_dn:	cp 0x1f			;
 		jp emit
 
 ; SPACES	n --
-;		emit n spaces
+;		emit n spaces (zero or negative n does nothing)
 ;
 ;    : SPACES
 ;      DUP 0< IF
@@ -3621,7 +3621,8 @@ set_base:	ld (base+3),hl		; 10 -> [base]
 ;-------------------------------------------------------------------------------
 
 ; INKEY		-- x
-;		check key, where 0x00 = no key and 0x52 = multiple keys
+;		check for key press and read key code of a key is pressed;
+;		0x00 = no key pressed and 0x52 = multiple keys pressed
 
 		CODE INKEY,inkey
 		push de			; save TOS
@@ -3633,7 +3634,7 @@ set_base:	ld (base+3),hl		; 10 -> [base]
 .if FULL
 
 ;+ KEY-CLEAR	--
-;		wait until no keys pressed
+;		wait until no keys are pressed
 ;
 ;    : KEY-CLEAR BEGIN INKEY 0= UNTIL ;
 
@@ -4036,7 +4037,7 @@ edupd:		; --
 6$:		.dw doret
 
 ; SKIPS		char "<chars>" --
-;		skips chars in input when present, 0x20 (bl) skips 0x00 to 0x20 (white space and control)
+;		skips chars in input when present, 0x20 (BL) skips 0x00 to 0x20 (white space and control)
 ;
 ;    : SKIPS SOURCE >IN @ /STRING ROT TRIM DROP SOURCE DROP - >IN ! ;
 
@@ -4650,7 +4651,7 @@ throw_a:	push de			; Save TOS
 
 ; ALLOT		n --
 ;		allocate n bytes starting from HERE in the dictionary;
-;		undo the last ALLOT with negative n;
+;		undo the last ALLOT with negative n to reclaim memory (only do this when no new words are defined);
 ;		may throw -8 "dictionary overflow"
 
 		CODE ALLOT,allot

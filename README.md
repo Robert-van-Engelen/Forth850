@@ -264,7 +264,7 @@ rotate cells
 
 ### -ROT
 _x1 x2 x3 -- x3 x1 x2_
-undo (or left) rotate cells
+undo (or back, or left) rotate cells
 
     : -ROT ROT ROT ;
 
@@ -832,7 +832,7 @@ fill memory with zeros
 
 ### BLANK
 _c-addr u --_
-fill memory with 0x20 (bl) chars
+fill memory with 0x20 (BL) chars
 
     : ERASE BL FILL ;
 
@@ -840,17 +840,17 @@ fill memory with 0x20 (bl) chars
 _c-addr u1 char -- c-addr u2_
 truncate a string up to a matching char;
 leaves the string if char not found;
-char = 0x20 (bl) chops 0x00 to 0x20 (white space and control)
+char = 0x20 (BL) chops 0x00 to 0x20 (white space and control)
 
 ### TRIM
 _c-addr1 u1 char -- c-addr2 u2_
 trim initial chars from a string;
-char = 0x20 (bl) trims 0x00 to 0x20 (white space and control)
+char = 0x20 (BL) trims 0x00 to 0x20 (white space and control)
 
 ### -TRIM
 _c-addr u1 char -- c-addr u2_
 trim trailing chars from a string;
-char = 0x20 (bl) trims 0x00 to 0x20 (white space and control)
+char = 0x20 (BL) trims 0x00 to 0x20 (white space and control)
 
 ### -TRAILING
 _c-addr u1 -- c-addr u2_
@@ -898,20 +898,20 @@ set column x to u1 (0 to 23) and row y to u2 (0 to 5)
 _char --_
 emit char;
 supports the following control codes:
- 8 (BS),
+ 8 (BS backspace, cursor left),
  9 (TAB),
-10 (LF),
+10 (LF line feed),
 11 (VT scroll),
-12 (FF clear),
-13 (CR),
-28 (right),
-29 (left),
-30 (up),
-31 (down),
+12 (FF clear screen),
+13 (CR carriage return),
+28 (cursor right),
+29 (cursor left),
+30 (cursor up),
+31 (cursor down)
 
 ### TYPE
 _c-addr u --_
-type string to output
+type string to output; string may contain control codes, see EMIT
 
     : TYPE
       BEGIN DUP WHILE
@@ -933,7 +933,7 @@ emit a space (BL)
 
 ### SPACES
 _n --_
-emit n spaces
+emit n spaces (zero or negative n does nothing)
 
     : SPACES
       DUP 0< IF
@@ -1084,7 +1084,8 @@ specify xy with AT-XY
 
 ### INKEY
 _-- x_
-check key, where 0x00 = no key and 0x52 = multiple keys
+check for key press and read key code of a key is pressed;
+0x00 = no key pressed and 0x52 = multiple keys pressed
 
 ### GETKEY
 _-- char_
@@ -1158,7 +1159,7 @@ leaves false when end of input
 
 ### SKIPS
 _char "<chars>" --_
-skips chars in input when present, 0x20 (bl) skips 0x00 to 0x20 (white space and control)
+skips chars in input when present, 0x20 (BL) skips 0x00 to 0x20 (white space and control)
 
     : SKIPS SOURCE >IN @ /STRING ROT TRIM DROP SOURCE DROP - >IN ! ;
 
@@ -1373,7 +1374,7 @@ unused dictionary space
 ### ALLOT
 _n --_
 allocate n bytes starting from HERE in the dictionary;
-undo the last ALLOT with negative n;
+undo the last ALLOT with negative n to reclaim memory (only do this when no new words are defined);
 may throw -8 "dictionary overflow"
 
 ### COMPILE,
@@ -2240,7 +2241,7 @@ sound the speaker for a short ~2KHz beep
 
 ### KEY-CLEAR
 _--_
-wait until no keys pressed
+wait until no keys are pressed
 
     : KEY-CLEAR BEGIN INKEY 0= UNTIL ;
 
