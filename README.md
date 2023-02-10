@@ -21,14 +21,14 @@ Forth850 includes stack under/overflow checks, dictionary overflow checks and
 can be interrupted by pressing BREAK.
 
 You can write Forth source code in the PC-G850(V)(S) built-in TEXT editor and
-read it back into Forth850 with the [TEXT](examples/TEXT.FTH) word included in
+compile it into Forth850 with the [TEXT](examples/TEXT.FTH) word included in
 the full version.
 
 You can extend Forth850 as you wish, including assembly code written on the
 machine itself in the PC-G850(V)(S) TEXT editor and assembled with its Z80
 Assembler.  See [ASMDEMO1.FTH](examples/ASMDEMO1.FTH) for an example with an
 explanation.  You can also use the Monitor to set breakpoints and run Forth850
-with `G100` to trigger them.  
+from the Monitor with `G100` to trigger them.  
 
 If you want to rebuild Forth850 from source code, you will need to install
 the [asz80](https://shop-pdp.net/ashtml/asz80.htm) assembler part of the
@@ -3594,8 +3594,9 @@ further below:
 
 ## Z80 maths
 
-- Z80 the 8-bit number cruncher: <http://www.andreadrian.de/oldcpu/Z80_number_cruncher.html#mozTocId269826>
-- Z80 integer math routines: <https://wikiti.brandonw.net/index.php?title=Category:Z80_Routines:Math>
+- Z80 the 8-bit number cruncher: <http://www.andreadrian.de/oldcpu/Z80_number_cruncher.html>
+- Z80 integer math routines: <http://map.grauw.nl/sources/external/z80bits.html>
+- Z80 bits (integer math routines): <https://wikiti.brandonw.net/index.php?title=Category:Z80_Routines:Math>
 - Z80 advanced math: <http://z80-heaven.wikidot.com/advanced-math>
 - Z80 classic maths libraries: <https://github.com/z88dk/z88dk/wiki/Classic--Maths-Libraries>
 - Z80 IEEE754 floating point library: <https://github.com/Zeda/z80float>
