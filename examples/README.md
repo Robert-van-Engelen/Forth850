@@ -5,14 +5,14 @@ With the Forth850 full version you can load a Forth source code example into
 the PC-G850(V)(S) Text Editor and execute `TEXT` in Forth850 to load it into
 Forth850.
 
-With a serial interface you can load Forth source code via the Text Editor
-SIO command.  By default, the SIO settings in TEXT mode SIO Format "line
-number: yes" adds line numbers automatically when the file is sent (save) to a
-PC.  However, line numbers are not added automatically when a file is received
-(load) from a PC.  If you want to load a file that has no line numbers into the
-PC-G850(V)(S), then you can add line numbers to the file (before sending) with
-the `nl` utility on MacOS, Linux and Android can do this for you with the
-command:
+With a [serial interface](https://www.hpmuseum.org/forum/thread-19431-post-169250.html#pid169250)
+you can load Forth source code via the Text Editor SIO command.  By default,
+the SIO settings in TEXT mode SIO Format "line number: yes" adds line numbers
+automatically when the file is sent (save) to a PC.  However, line numbers are
+not added automatically when a file is received (load) from a PC.  If you want
+to load a file that has no line numbers into the PC-G850(V)(S), then you can
+add line numbers to the file (before sending) with the `nl` utility on MacOS,
+Linux and Android can do this for you with the command:
 
     nl -ba -v10 -i5 -nln -w4 -s' ' filename.fth > numbered_filename.fth
 
