@@ -63,7 +63,7 @@ In RUN MODE enter `MON` to enter the Monitor, then enter `USER3FFF` to reserve
     *USER3FFF
     FREE:0100-3FFF
 
-Loading via Sio (serial) requires a serial adapter.  See my post on the
+Loading via SIO (serial) requires a serial adapter.  See my post on the
 [HP Forum](https://www.hpmuseum.org/forum/thread-19431-post-169250.html#pid169250)
 how to construct one as a DIY project.  After reserving memory in the Monitor
 as described above, use the `R` command to read the forth850.ihx file or the
