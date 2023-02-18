@@ -1,13 +1,11 @@
 \ MATH.FTH collection of floating point math functions
+\ Use TRIG.FTH and LOGS.FTH for stripped-down implementations
 \ Based on IEEE 754 mathr.asm rounding modes SUM/MUL/DIV=2/2/2
 \ Author: Dr. Robert van Engelen
 
-\ Factorial of an integer returns float
+ANEW _MATH_
 
-: FACT      ( u -- r )
-  1E0 ROT 1+ 1 ?DO
-    I S>F F*
-  LOOP ;
+DECIMAL
 
 \ Correctly rounded FSQRT using IEEE 754 binary representation to compute
 \ sqrt(x*2^n) = sqrt(x*2^(n%2))*2^(n/2) with Newton Raphson
@@ -26,8 +24,12 @@
   2SWAP 2DROP
   ROT $7f + 7 LSHIFT 0 SWAP F* ; \ times 2^(n/2)
 
-3.1415928E0 2CONSTANT PI
-1.5707964E0 2CONSTANT PI/2
+\ Constants
+
+  3.1415928E0 2CONSTANT PI
+  1.5707964E0 2CONSTANT PI/2
+  .69314724E0 2CONSTANT LN2  \ approx ln(2) such that 1E0 FLN = 0
+  2.3025853E0 2CONSTANT LN10 \ approx ln(10) such that 1E0 ALOG = 10E0
 
 \ Accurate sine and cosine by summing in reverse order using the stack as temporary storage (8 cells)
 
@@ -226,8 +228,6 @@
     THEN
   THEN ;
 
-0.69314724E0 2CONSTANT LN2 \ approx ln(2) such that 1E0 FLN = 0
-
 \ Correctly rounded (*) FLN by summing in reverse order using the stack as temporary storage (42 cells)
 \ *) but loses accuracy close and above 1.0 such as 1.001 gives 5 digits accuracy instead of exact
 
@@ -323,8 +323,6 @@
 \   ROT IF
 \     1E0 2SWAP F/
 \   THEN ;
-
-2.3025853E0 2CONSTANT LN10 \ approx ln(10) such that 1E0 ALOG = 10E0
 
 : FALOG     ( r1 -- r2 ) LN10 F* FEXP ; \ = exp(x*ln(10))
 

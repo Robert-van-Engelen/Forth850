@@ -5,7 +5,7 @@
 \ - in Forth enter TEXT to read the source code
 \ Note: .( and ( cannot span multiple lines, i.e. a ) must be on the same line
 
-\ Hint: to read Forth source code and overwrite the old version pf the code,
+\ Hint: to read Forth source code and overwrite the old version of the code,
 \ use the ANEW word with a name to give to your program or module.  The ANEW
 \ word creates a MARKER.  For example, loading and reloading the following
 \ program written in the TEXT editor replaces the old rather than adding

@@ -90,29 +90,22 @@ win_size	.equ win_rows*win_cols
 
 ;-------------------------------------------------------------------------------
 ;
-;		PC-G850V(S) SYSCALLS
+;		PC-G850V(S) SYSCALLS - ENABLED WHEN USED
 ;
 ;-------------------------------------------------------------------------------
 
 CLRLN		.equ 0x84f7		; clear bottom line
 GETCHR		.equ 0xbcc4		; returns A with ascii key code
-SERIN		.equ 0xbcdf		; SIO read char without waiting (?)
-SERWIN		.equ 0xbce2		; SIO read char, wait indefinitely (?)
-SERAIN		.equ 0xbce5		; SIO active read, wait indefinitely (?)
-SEROPN		.equ 0xbce8		; SIO open 11pin (?)
-SERCLO		.equ 0xbceb		; SIO close 11pin (?)
 GETKEY		.equ 0xbcfd		; returns A with key code
 RDPSTR		.equ 0xbd00		; read pixel string HL size B at DE=xy
 REGOUT		.equ 0xbd03		; display CPU registers, wait for key
 PUTCHR		.equ 0xbe62		; put A=char at DE=xy, DE=xy unchanged
 INSLN		.equ 0xbe65		; insert line at DE=xy
 INKEY		.equ 0xbe53		; returns A with key code cf=1 or 0 cf=0
-SEROUT		.equ 0xbfb2		; SIO write 0-terminated string HL (?)
 WRPSTR		.equ 0xbfd0		; draw pixel string HL size B at DE=xy
 SCROLL		.equ 0xbfeb		; scroll screen up, DE unchanged
 REPCHR		.equ 0xbfee		; put A=char at DE=xy B times
 PUTSTR		.equ 0xbff1		; put string HL=addr length B at DE=xy
-SHTDWN		.equ 0xbd2d		; power off, ON restarts in RUN mode
 
 ;-------------------------------------------------------------------------------
 ;
@@ -2168,7 +2161,7 @@ true_if_c_next:	sbc a			; -cf -> a
 ;    : 2+ 2 + ;
 
 		CODE 2+,twoplus
-		inc de
+		inc de			;
 		jr oneplus		; set de + 2 -> de as TOS
 
 ; 1-		n1 -- n2
@@ -2186,7 +2179,7 @@ true_if_c_next:	sbc a			; -cf -> a
 ;    : 2- 2 - ;
 
 		CODE 2-,twominus
-		dec de
+		dec de			;
 		jr oneminus		; set de - 2 -> de as TOS
 
 ; 2*		n1 -- n2
@@ -2603,10 +2596,13 @@ func1ix:	; floating point unary function driver
 ;
 ;    : COUNT DUP 1+ SWAP C@ ;
 
-		COLON COUNT,count
-		.dw dup
-		.dw oneplus,swap,cfetch
-		.dw doret
+		CODE COUNT,count
+		ld a,(de)		; fetch length
+		inc de			; increment TOS
+		push de			; save TOS as new 2OS
+		ld e,a			; set a -> de new TOS 
+		ld d,0			;
+		JP_NEXT			; continue
 
 ; COMPARE	c-addr1 u1 c-addr2 u2 -- -1|0|1
 ;		compare strings, leaves -1 = less or 0 = equal or 1 = greater
@@ -3090,7 +3086,7 @@ y:		.db 0			; cursor row 0 to win_rows - 1
 		.dw doret
 
 ; EMIT		char --
-;		emit char;
+;		emit char to screen;
 ;		supports the following control codes:
 ;		 8 (BS backspace, cursor left),
 ;		 9 (TAB),
@@ -3105,7 +3101,7 @@ y:		.db 0			; cursor row 0 to win_rows - 1
 
 		CODE EMIT,emit
 		ld a,e			; char -> a
-		exx			; save regs
+		exx			; save bc with ip
 		cp 0x20			; test if a is a control character
 		jr nc,1$		; if a < 0x20 then
 		call emit_control	;   handle control character
@@ -3116,7 +3112,7 @@ y:		.db 0			; cursor row 0 to win_rows - 1
 		call PUTCHR		;   PUTCHR a at de=xy
 		inc e			;   x + 1 -> x
 2$:		ld (xy),de		; store de -> (xy)
-		exx			; restore regs
+		exx			; restore bc with ip
 		pop de			; pop new TOS
 		JP_NEXT			; continue
 
@@ -3685,7 +3681,7 @@ set_base:	ld (base+3),hl		; 10 -> [base]
 ;		SIN     =$fe register B = $95 BASIC token for SIN (ignored)
 
 		CODE GETKEY,getkey
-		push de			; save TOS
+get_key:	push de			; save TOS
 		push bc			; save bc with ip
 		call GETCHR		; GETCHR ASCII key code, changes bc and bc'
 		pop bc			; restore bc with ip

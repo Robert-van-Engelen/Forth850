@@ -10,14 +10,14 @@ you can load Forth source code via the TEXT Sio Load command.  By default, the
 SIO settings in TEXT Sio Format "line number: yes" adds line numbers
 automatically when the file is sent (Sio Save) to a PC.
 
-**When receiving a file on the PC-G850(V)(S) (Sio Load), letting the
+**When receiving a file on the PC-G850(V)(S) via TEXT Sio Load, letting the
 PC-G850(V)(S) automatically add line numbers is not a good idea, because lines
 that start with a digit will make the resulting concatenated line number
-unusable!**
+unusable! I recommend to use TEXT Sio Format `line number = yes`.  This
+setting accepts files with line numbers and without line numbers.**
 
-Therefore, if you want to load a file that has no line numbers into the
-PC-G850(V)(S), then you should add line numbers to the file with the `nl`
-utility on MacOS, Linux and Android with the command:
+If you do get errors when loading, you should add line numbers to the file that
+you want to send by using the `nl` utility on MacOS, Linux and Android:
 
     nl -ba -v10 -i5 -nln -w4 -s' ' filename.fth > numbered_filename.fth
 

@@ -22,3 +22,4 @@
 - jan  9, 2023: Forth850 v1.1 fix CASE OF not compiling
 - jan 10, 2023: Forth850 v1.2 add UD/MOD, D/MOD, DMOD and D/ words
 - jan 15, 2023: Forth850 v1.2 fix TO for 2VALUE
+- feb 18, 2023: Forth850 v1.3 permit fp constants with no digits after E

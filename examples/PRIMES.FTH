@@ -6,7 +6,7 @@
 
 \ address of temporary array
 
-0 VALUE array
+  0 VALUE array
 
 \ allocate and destroy temporary cell array to store primes found
 
@@ -30,14 +30,14 @@
       2+ \ -- maybeprime
       I 0 ?DO
         I prime@   \ -- maybeprime prime
-	2DUP DUP * \ -- maybeprime prime maybeprime prime*prime
-	< IF
+        2DUP DUP * \ -- maybeprime prime maybeprime prime*prime
+        < IF
           DROP -1 LEAVE \ -- maybeprime true
         ELSE
           OVER SWAP \ -- maybeprime maybeprime prime
-	  MOD 0= IF
-	    0 LEAVE \ -- maybeprime false
-	  THEN
+          MOD 0= IF
+            0 LEAVE \ -- maybeprime false
+          THEN
         THEN
       LOOP \ -- maybeprime isprime
     UNTIL

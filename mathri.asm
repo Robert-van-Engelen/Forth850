@@ -125,6 +125,10 @@ DIVROUND = 2	; fdiv rounding mode (and fpow10 and atof)
 
 ROUND = SUMROUND+MULROUND+DIVROUND	; nonzero if rounding is requested
 
+; Allow empty exponent values with no digits after E (1) or return error (0)
+
+EXPEMPTY = 1
+
 ;-------------------------------------------------------------------------------
 ;
 ;		CONSTANTS
@@ -1403,6 +1407,8 @@ powers:		; table of powers 10**i for i = 1 to 38
 ;			de' unscaled float result & mantissa accumulator
 ;			hl' mantissa accumulator
 ;
+;		EXPEMPTY = 1 allows empty exponent values with no digits after E
+;
 ;-------------------------------------------------------------------------------
 
 atof:		ld b,a			; a -> b string length
@@ -1644,8 +1650,12 @@ parse_exponent:	; parse the decimal exponent part into e with sign d
 		; check for and get next char
 
 		dec b			; decrement remaining length b
+.if EXPEMPTY
+		jr z,parse_done		; if exponent is empty then done parsing
+.else
 		scf			; set cf
 		ret z			; if b = 0 then return error (cf set)
+.endif
 		ld a,(hl)		;
 		inc hl			; [hl++] -> a next char
 
