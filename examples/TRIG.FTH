@@ -1,4 +1,5 @@
 \ TRIG.FTH define PI, PI/2, FSIN, FCOS, FTAN, FASIN, FACOS, FATAN, FATAN2
+\ Requires LOGS.FTH FSQRT
 \ See MATH.FTH for a detailed implementation
 
 ANEW _TRIG_
