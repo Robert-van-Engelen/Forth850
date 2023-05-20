@@ -42,7 +42,7 @@ DECIMAL
 : FEXP      ( r1 -- r2 )
   2DUP F0< -ROT
   FABS
-  2DUP LN2 F/ F>D D>S DUP>R
+  2DUP LN2 F/ F>S DUP>R
   S>F LN2 F* F-
   1E0 2SWAP 2DUP
   10 2 DO
@@ -62,24 +62,45 @@ DECIMAL
 : F^        ( r1 r2 -- r3 ) 2SWAP FLN F* FEXP ;
 
 : F**       ( r1 r2 -- r3 )
-  2DUP F0= IF 2OVER F0= IF -46 THROW THEN THEN
+  2DUP F0= IF
+    2OVER F0= IF -46 THROW THEN
+    2DROP 2DROP 1E0 EXIT
+  THEN
+  2OVER F0= IF
+    2DUP F0< IF -42 THROW THEN
+    2DROP 2DROP 0E0 EXIT
+  THEN
   2DUP 2DUP FTRUNC F= IF
-    2DUP F0< >R
-    FABS F>D 1E0 2SWAP
-    IF -46 THROW THEN
-    >R
-    BEGIN
-      R@ 1 AND IF 2OVER F* THEN
-      R> 1 RSHIFT
-    DUP WHILE
-      >R
-      2SWAP 2DUP F* 2SWAP
-    REPEAT
-    DROP 2SWAP 2DROP
-    R> IF 1E0 2SWAP F/ THEN
-  ELSE
-    F^
-  THEN ;
+    2DUP ['] F>D CATCH 0= IF
+      2DUP DABS 17. DU< IF
+        DROP
+        DUP 0< >R
+        ABS >R
+        2DROP
+        1E0
+        BEGIN
+          R@ 1 AND IF 2OVER F* THEN
+          R> 1 RSHIFT
+        DUP WHILE
+          >R
+          2SWAP 2DUP F* 2SWAP
+        REPEAT
+        DROP 2SWAP 2DROP
+        R> IF 1E0 2SWAP F/ THEN
+        EXIT
+      THEN
+      OVER 1 AND IF
+        2OVER F0< IF
+          D>F 2SWAP FABS 2SWAP F^ FNEGATE EXIT
+        THEN
+      THEN
+      D>F
+      2SWAP FABS 2SWAP
+    ELSE
+      2DROP
+    THEN
+  THEN
+  F^ ;
 
 : FCOSH     ( r1 -- r2 ) FEXP 2DUP 1E0 2SWAP F/ F+ 2E0 F/ ;
 

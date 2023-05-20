@@ -898,7 +898,7 @@ set column x to u1 (0 to 23) and row y to u2 (0 to 5)
 
 ### EMIT
 _char --_
-emit char;
+emit char to screen;
 supports the following control codes:
  8 (BS backspace, cursor left),
  9 (TAB),
@@ -2477,6 +2477,11 @@ widen signed single to float
 ### F>D
 _r -- d_
 narrow float to a signed double;
+may throw -11 "result out of range"
+
+### F>S
+_r -- n_
+narrow float to a signed single;
 may throw -11 "result out of range"
 
 ### >FLOAT

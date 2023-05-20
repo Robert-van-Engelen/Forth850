@@ -15,7 +15,7 @@ DECIMAL
   2DUP F0= IF EXIT THEN
   \ map r1 to [0.5,2) using sqrt(x*2^n) = sqrt(x*2^(n%2))*2^(n/2)
   DUP 8 RSHIFT $3f - -ROT \ 2^(n/2) = 2^(exponent/2 - bias/2)
-  $ff AND $3f00 + \ remove exponent 2^(n/2)
+  $ff AND $3f00 + \ remove exponent 2^(n/2) from x
   \ Newton Raphson
   2DUP \ initial estimate is copy of x
   5 0 DO
@@ -279,7 +279,7 @@ DECIMAL
   2DUP F0< -ROT
   FABS
   \ map |r1| to [0,ln(2)) using exp(x+k*ln(2)) = exp(x)*2^k
-  2DUP LN2 F/ F>D D>S DUP>R
+  2DUP LN2 F/ F>S DUP>R
   S>F LN2 F* F-
   \ Maclaurin series exp(x) = 1 + x + x^2/2! + x^3/3! + ...
   1E0 2SWAP 2DUP \ -- 1 x x
@@ -304,7 +304,7 @@ DECIMAL
 \   2DUP F0< -ROT
 \   FABS
 \   \ map |r1| to [0,ln(2)) using exp(x+k*ln(2)) = exp(x)*2^k
-\   2DUP 0.693147245E0 F/ F>D D>S DUP>R
+\   2DUP 0.693147245E0 F/ F>S DUP>R
 \   S>F 0.693147245E0 F* F-
 \   \ Maclaurin series expm1(x) = exp(x) - 1 = x + x^2/2! + x^3/3! + ...
 \   2DUP 2OVER \ -- x x x
@@ -326,33 +326,53 @@ DECIMAL
 
 : FALOG     ( r1 -- r2 ) LN10 F* FEXP ; \ = exp(x*ln(10))
 
-\ Exponentiation (simple version)
+\ Exponentiation, simple version requires r1 > 0
 
 : F^        ( r1 r2 -- r3 ) 2SWAP FLN F* FEXP ;
 
-\ A more powerful F** using exponentiation by squaring when r2 is integer
+\ A complete F**, uses exponentiation by squaring when r2 is a small integer
 
 : F**       ( r1 r2 -- r3 )
-  \ r1 and r2 cannot be both zero
-  2DUP F0= IF 2OVER F0= IF -46 THROW THEN THEN
-  2DUP 2DUP FTRUNC F= IF
-    \ exponentiation by squaring
-    2DUP F0< >R \ r2 is negative
-    FABS F>D 1E0 2SWAP \ -- r1 1 ud
-    IF -46 THROW THEN \ error when exponent ud exceeds 16 bits
-    >R
-    BEGIN
-      R@ 1 AND IF 2OVER F* THEN
-      R> 1 RSHIFT \ -- r1^n product u>>1
-    DUP WHILE
-      >R
-      2SWAP 2DUP F* 2SWAP \ -- r1^n^2 product u>>1
-    REPEAT
-    DROP 2SWAP 2DROP \ -- product
-    R> IF 1E0 2SWAP F/ THEN \ r2 was negative
-  ELSE
-    F^
-  THEN ;
+  2DUP F0= IF \ r2 = 0
+    2OVER F0= IF -46 THROW THEN \ error if r1 = 0 and r2 = 0
+    2DROP 2DROP 1E0 EXIT \ return 1.0
+  THEN
+  2OVER F0= IF \ r1 = 0
+    2DUP F0< IF -42 THROW THEN \ error if r1 = 0 and r2 < 0
+    2DROP 2DROP 0E0 EXIT \ return 0.0
+  THEN
+  \ exponentiation by squaring r1^n when n is a small integer |n|<=16
+  2DUP 2DUP FTRUNC F= IF \ r2 has no fractional part
+    2DUP ['] F>D CATCH 0= IF \ r2 is convertable to a double n
+      2DUP DABS 17. DU< IF \ |n| <= 16
+        DROP \ drop high order of n
+        DUP 0< >R \ save sign of n
+        ABS >R \ save |n|
+        2DROP \ drop old r2
+        1E0 \ -- r1 1.0
+        BEGIN
+          R@ 1 AND IF 2OVER F* THEN
+          R> 1 RSHIFT \ -- r1^n product u>>1
+        DUP WHILE
+          >R
+          2SWAP 2DUP F* 2SWAP \ -- r1^n^2 product u>>1
+        REPEAT
+        DROP 2SWAP 2DROP \ -- product
+        R> IF 1E0 2SWAP F/ THEN \ reciprocal when exponent was negative
+        EXIT
+      THEN
+      OVER 1 AND IF \ n is odd
+        2OVER F0< IF \ r1 is negative
+          D>F 2SWAP FABS 2SWAP F^ FNEGATE EXIT \ return -(|r1|^n)
+        THEN
+      THEN
+      D>F \ convert even integer n back to r2
+      2SWAP FABS 2SWAP \ we want to return |r1|^r2
+    ELSE
+      2DROP \ drop copy of r2
+    THEN
+  THEN
+  F^ ;
 
 \ Hyperbolics
 

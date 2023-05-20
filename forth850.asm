@@ -2469,6 +2469,14 @@ func1ix:	; floating point unary function driver
 		pop de			; pop new TOS
 		JP_NEXT			; continue
 
+;= F>S		r -- n
+;		narrow float to a signed single;
+;		may throw -11 "result out of range"
+
+		COLON F>S,ftos
+		.dw ftod,dtos
+		.dw doret
+
 ;= >FLOAT	c-addr u -- r true | false
 ;		convert string to float;
 ;		leaves the float and true if string is converted;
