@@ -344,11 +344,11 @@ DECIMAL
   \ exponentiation by squaring r1^n when n is a small integer |n|<=16
   2DUP 2DUP FTRUNC F= IF \ r2 has no fractional part
     2DUP ['] F>D CATCH 0= IF \ r2 is convertable to a double n
+      2SWAP 2DROP \ drop old r2
       2DUP DABS 17. DU< IF \ |n| <= 16
         DROP \ drop high order of n
         DUP 0< >R \ save sign of n
         ABS >R \ save |n|
-        2DROP \ drop old r2
         1E0 \ -- r1 1.0
         BEGIN
           R@ 1 AND IF 2OVER F* THEN

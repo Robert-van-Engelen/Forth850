@@ -72,11 +72,11 @@ DECIMAL
   THEN
   2DUP 2DUP FTRUNC F= IF
     2DUP ['] F>D CATCH 0= IF
+      2SWAP 2DROP
       2DUP DABS 17. DU< IF
         DROP
         DUP 0< >R
         ABS >R
-        2DROP
         1E0
         BEGIN
           R@ 1 AND IF 2OVER F* THEN
