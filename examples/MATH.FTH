@@ -31,35 +31,36 @@ DECIMAL
   .69314724E0 2CONSTANT LN2  \ approx ln(2) such that 1E0 FLN = 0
   2.3025853E0 2CONSTANT LN10 \ approx ln(10) such that 1E0 ALOG = 10E0
 
-\ Accurate sine and cosine by summing in reverse order using the stack as temporary storage (8 cells)
+\ Accurate sine and cosine by summing in reverse order using the stack as temporary storage (10 cells)
 
 : FCOSI     ( r1 flag -- r2 ) \ r2=sin(r1) if flag=-1 else r2=cos(r1) if flag=0
   >R
   \ map r1 to x in [-pi/4,pi/4]
   PI/2 F/
-  \ floor(x + .5)
+  \ floor(2x/pi + .5)
   2DUP .5E0 F+ F>D
-  \ save (floor(x + .5) + flag) mod 4 quadrant 0,1,2,3 where flag is -1 (sin) or 0 (cos)
-  OVER R> + 3 AND >R
-  \ pi/2 * (x - floor(x + .5))
+  \ save (floor(2x/pi + .5) + flag + 1) mod 4 quadrant 0,1,2,3 where flag is -1 (sin) or 0 (cos)
+  OVER R> + 1+ >R
+  \ pi/2 * (2x/pi - floor(2x/pi + .5))
   D>F F- PI/2 F*
   2DUP 2DUP F* FNEGATE 2SWAP \ -- -x*x x
-  R> CASE
-  0 OF 2DROP  1E0 2SWAP 1 ENDOF \  cos(x) =  1 - x^2/2! + x^4/4! - x^6/6! + ...
-  1 OF FNEGATE    2SWAP 2 ENDOF \ -sin(x) = -x + x^3/3! - x^5/5! + x^7/7! - ...
-  2 OF 2DROP -1E0 2SWAP 1 ENDOF \ -cos(x) = -1 + x^2/2! - x^4/4! + x^6/6! - ...
-  3 OF            2SWAP 2 ENDOF \  sin(x) =  x - x^3/3! + x^5/5! - x^7/7! + ...
-  ENDCASE
-  \ Maclaurin series with 5 terms 0,2,4,6,8 (cos) or 1,3,5,7,9 (sin)
-  9 SWAP DO
+  \ quadrant 0:  sin(x) =  x - x^3/3! + x^5/5! - x^7/7! + ...
+  \ quadrant 1:  cos(x) =  1 - x^2/2! + x^4/4! - x^6/6! + ...
+  \ quadrant 2: -sin(x) = -x + x^3/3! - x^5/5! + x^7/7! - ...
+  \ quadrant 3: -cos(x) = -1 + x^2/2! - x^4/4! + x^6/6! - ...
+  R@ 1 AND IF 2DROP 1E0 THEN
+  R@ 2 AND IF FNEGATE THEN
+  2SWAP \ -- x|1|-x|-1 -x*x
+  \ Maclaurin series with 7 terms 0,2,4,6,8,10,12 (cos) or 1,3,5,7,9,11,13 (sin)
+  13 2 R> 1 AND - DO
     2OVER 2OVER F* \ -- ... term -x*x -x*x*term
     I DUP 1+ *     \ -- ... term -x*x -x*x*term i*(i+1)
     S>F F/         \ -- ... term -x*x -x*x*term/(i*(i+1))
     2SWAP          \ -- ... term -x*x*term/(i*(i+1)) -x*x
   2 +LOOP
   2DROP
-  \ sum the 5 terms in reverse order
-  F+ F+ F+ F+ ;
+  \ sum the 7 terms in reverse order
+  F+ F+ F+ F+ F+ F+ ;
 
 : FSIN      ( r1 -- f2 ) TRUE FCOSI ;
 

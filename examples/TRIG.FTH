@@ -13,23 +13,20 @@ DECIMAL
   >R
   PI/2 F/
   2DUP .5E0 F+ F>D
-  OVER R> + 3 AND >R
+  OVER R> + 1+ >R
   D>F F- PI/2 F*
   2DUP 2DUP F* FNEGATE 2SWAP
-  R> CASE
-  0 OF 2DROP  1E0 2SWAP 1 ENDOF
-  1 OF FNEGATE    2SWAP 2 ENDOF
-  2 OF 2DROP -1E0 2SWAP 1 ENDOF
-  3 OF            2SWAP 2 ENDOF
-  ENDCASE
-  9 SWAP DO
+  R@ 1 AND IF 2DROP 1E0 THEN
+  R@ 2 AND IF FNEGATE THEN
+  2SWAP
+  13 2 R> 1 AND - DO
     2OVER 2OVER F*
     I DUP 1+ *
     S>F F/
     2SWAP
   2 +LOOP
   2DROP
-  F+ F+ F+ F+ ;
+  F+ F+ F+ F+ F+ F+ ;
 
 : FSIN      ( r1 -- f2 ) TRUE FCOSI ;
 
