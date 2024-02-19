@@ -94,63 +94,6 @@ DECIMAL
 
 : FTAN      ( r1 -- r2 ) 2DUP FSIN 2SWAP FCOS F/ ;
 
-\ Accurate FASIN by summing in reverse order using the stack as temporary storage (34 cells)
-
-: FASIN     ( r1 -- r2 )
-  1E0 2OVER FABS F< IF -46 THROW THEN
-  \ map r1 to [-sqrt(1/2),sqrt(1/2)] using arcsin(x) = pi/2-arcsin(qrt(1-x^2))
-  0.70710678E0 2OVER FABS F< IF \ if |r1| > sqrt(1/2) then
-    2DUP F0<
-    -ROT
-    2DUP F* 1E0 2SWAP F- FSQRT 
-    TRUE
-  ELSE
-    FALSE
-  THEN
-  -ROT
-  \ Maclaurin series arcsin(x) = x + (1/2)x^3/3 + (1*3)/(2*4)x^5/5 + (1*3*5)/(2*4*6)x^7/7 + ...
-  2DUP 2DUP 2DUP F* 2SWAP \ -- x x*x x
-  34 3 DO
-    2OVER F*      \ -- x (1/2)x^3/3 ... x*x term*x*x
-    I 2- S>F F*   \ -- x (1/2)x^3/3 ... x*x term*x*x*(i-2)
-    I 1- S>F F/   \ -- x (1/2)x^3/3 ... x*x term*x*x*(i-2)/(i-1)
-    2DUP I S>F F/ \ -- x (1/2)x^3/3 ... x*x term*x*x*(i-2)/(i-1) term*x*x*(i-2)/(i-1)/i
-    2ROT 2ROT     \ -- x (1/2)x^3/3 ... term*x*x*(i-2)/(i-1)/i x*x term*x*x*(i-2)/(i-1)
-  2 +LOOP
-  2DROP 2DROP
-  \ sum the 17 terms in reverse order
-  16 0 DO F+ LOOP
-  ROT IF PI/2 2SWAP F- ROT IF FNEGATE THEN THEN ; \ sign(x)*(pi/2-arcsin(sqrt(1-x^2)))
-
-\ Slightly less accurate FASIN without temporary storage on the stack
-
-\ : FASIN     ( r1 -- r2 )
-\   1E0 2OVER FABS F< IF -46 THROW THEN
-\   \ map r1 to [-sqrt(1/2),sqrt(1/2)] using arcsin(x) = pi/2-arcsin(qrt(1-x^2))
-\   0.70710678E0 2OVER FABS F< IF \ if |r1| > sqrt(1/2) then
-\     2DUP F0<
-\     -ROT
-\     2DUP F* 1E0 2SWAP F- FSQRT 
-\     TRUE
-\   ELSE
-\     FALSE
-\   THEN
-\   -ROT
-\   \ Maclaurin series arcsin(x) = x + (1/2)x^3/3 + (1*3)/(2*4)x^5/5 + (1*3*5)/(2*4*6)x^7/7 + ...
-\   2DUP 2DUP 2DUP F* 2ROT 2ROT \ -- x*x x x
-\   34 3 DO
-\     5 PICK 5 PICK F*     \ -- x*x sum term*x*x
-\     I 2- S>F F*          \ -- x*x sum term*x*x*(i-2)
-\     I 1- S>F F/          \ -- x*x sum term*x*x*(i-2)/(i-1)
-\     2SWAP 2OVER I S>F F/ \ -- x*x term*x*x*(i-2)/(i-1) sum term*x*x*(i-2)/(i-1)/i
-\     F+                   \ -- x*x term*x*x*(i-2)/(i-1) sum+term*x*x*(i-2)/(i-1)/i
-\     2SWAP                \ -- x*x sum+term*x*x*(i-2)/(i-1)/i term*x*x*(i-2)/(i-1)
-\   2 +LOOP
-\   2DROP 2SWAP 2DROP
-\   ROT IF PI/2 2SWAP F- ROT IF FNEGATE THEN THEN ; \ sign(x)*(pi/2-arcsin(sqrt(1-x^2)))
-
-: FACOS     ( r1 -- r2 ) FASIN PI/2 2SWAP F- ; \ = pi/2 - arcsin(x)
-
 \ Accurate FATAN by summing in reverse order using the stack as temporary storage (16 cells)
 
 : FATAN     ( r1 -- r2 )
@@ -216,6 +159,8 @@ DECIMAL
 \   ROT IF 2E0 F* THEN \ 2*arctan(x/(1+sqrt(1+x^2)))
 \   ROT IF PI/2 2SWAP F- ROT IF FNEGATE THEN THEN ; \ sign(x) * (pi/2-arctan(1/abs(x)))
 
+\ FATAN2 returns atan2(r1,r2) = arctan(r1/r2) but more accurate
+
 : FATAN2    ( r1 r2 -- r3 )
   2DUP FNEGATE F0< IF
     F/ FATAN
@@ -228,6 +173,73 @@ DECIMAL
       2ROT 2ROT F/ FATAN F-
     THEN
   THEN ;
+
+\ Simple and fast FASIN using FATAN and FSQRT
+
+: FASIN     ( r1 -- r2 )
+  2DUP F0= IF EXIT THEN
+  2DUP FABS 1E0 F= IF
+    PI/2 2SWAP F0< IF FNEGATE THEN \ = sign(x)*pi/2
+  ELSE
+    2DUP 2DUP F* 1E0 2SWAP F- FSQRT FATAN2 \ = arctan(x/sqrt(1-x^2)) = atan2(x,sqrt(1-x*x))
+  THEN ;
+
+\ Accurate FASIN by summing in reverse order using the stack as temporary storage (34 cells)
+
+\ : FASIN     ( r1 -- r2 )
+\   1E0 2OVER FABS F< IF -46 THROW THEN
+\   \ map r1 to [-sqrt(1/2),sqrt(1/2)] using arcsin(x) = pi/2-arcsin(qrt(1-x^2))
+\   0.70710678E0 2OVER FABS F< IF \ if |r1| > sqrt(1/2) then
+\     2DUP F0<
+\     -ROT
+\     2DUP F* 1E0 2SWAP F- FSQRT 
+\     TRUE
+\   ELSE
+\     FALSE
+\   THEN
+\   -ROT
+\   \ Maclaurin series arcsin(x) = x + (1/2)x^3/3 + (1*3)/(2*4)x^5/5 + (1*3*5)/(2*4*6)x^7/7 + ...
+\   2DUP 2DUP 2DUP F* 2SWAP \ -- x x*x x
+\   34 3 DO
+\     2OVER F*      \ -- x (1/2)x^3/3 ... x*x term*x*x
+\     I 2- S>F F*   \ -- x (1/2)x^3/3 ... x*x term*x*x*(i-2)
+\     I 1- S>F F/   \ -- x (1/2)x^3/3 ... x*x term*x*x*(i-2)/(i-1)
+\     2DUP I S>F F/ \ -- x (1/2)x^3/3 ... x*x term*x*x*(i-2)/(i-1) term*x*x*(i-2)/(i-1)/i
+\     2ROT 2ROT     \ -- x (1/2)x^3/3 ... term*x*x*(i-2)/(i-1)/i x*x term*x*x*(i-2)/(i-1)
+\   2 +LOOP
+\   2DROP 2DROP
+\   \ sum the 17 terms in reverse order
+\   16 0 DO F+ LOOP
+\   ROT IF PI/2 2SWAP F- ROT IF FNEGATE THEN THEN ; \ sign(x)*(pi/2-arcsin(sqrt(1-x^2)))
+
+\ Slightly less accurate FASIN without temporary storage on the stack
+
+\ : FASIN     ( r1 -- r2 )
+\   1E0 2OVER FABS F< IF -46 THROW THEN
+\   \ map r1 to [-sqrt(1/2),sqrt(1/2)] using arcsin(x) = pi/2-arcsin(qrt(1-x^2))
+\   0.70710678E0 2OVER FABS F< IF \ if |r1| > sqrt(1/2) then
+\     2DUP F0<
+\     -ROT
+\     2DUP F* 1E0 2SWAP F- FSQRT 
+\     TRUE
+\   ELSE
+\     FALSE
+\   THEN
+\   -ROT
+\   \ Maclaurin series arcsin(x) = x + (1/2)x^3/3 + (1*3)/(2*4)x^5/5 + (1*3*5)/(2*4*6)x^7/7 + ...
+\   2DUP 2DUP 2DUP F* 2ROT 2ROT \ -- x*x x x
+\   34 3 DO
+\     5 PICK 5 PICK F*     \ -- x*x sum term*x*x
+\     I 2- S>F F*          \ -- x*x sum term*x*x*(i-2)
+\     I 1- S>F F/          \ -- x*x sum term*x*x*(i-2)/(i-1)
+\     2SWAP 2OVER I S>F F/ \ -- x*x term*x*x*(i-2)/(i-1) sum term*x*x*(i-2)/(i-1)/i
+\     F+                   \ -- x*x term*x*x*(i-2)/(i-1) sum+term*x*x*(i-2)/(i-1)/i
+\     2SWAP                \ -- x*x sum+term*x*x*(i-2)/(i-1)/i term*x*x*(i-2)/(i-1)
+\   2 +LOOP
+\   2DROP 2SWAP 2DROP
+\   ROT IF PI/2 2SWAP F- ROT IF FNEGATE THEN THEN ; \ sign(x)*(pi/2-arcsin(sqrt(1-x^2)))
+
+: FACOS     ( r1 -- r2 ) FASIN PI/2 2SWAP F- ; \ = pi/2 - arcsin(x)
 
 \ Correctly rounded (*) FLN by summing in reverse order using the stack as temporary storage (42 cells)
 \ *) but loses accuracy close and above 1.0 such as 1.001 gives 5 digits accuracy instead of exact
