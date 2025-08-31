@@ -36,7 +36,7 @@ the [asz80](https://shop-pdp.net/ashtml/asz80.htm) assembler part of the
 
 If you plan to use parts of Forth850 and/or the optimized Z80 code in a project
 that you plan to share or redistribute, then please give me credit for my work
-as per [BCD-3 license](license.txt).
+as per [BSD-3 license](license.txt).
 
 Discuss: [HP Forum](https://www.hpmuseum.org/forum/thread-19085.html) and
 [reddit](https://www.reddit.com/r/Forth/comments/ytat79/a_fast_forth_for_vintage_sharp_pcg850_pocket)
@@ -2607,14 +2607,14 @@ routines and the string routines.
 Forth850 is built with the [asz80](https://shop-pdp.net/ashtml/asz80.htm)
 assembler and aslink linker.
 
-## Z80 Forth system routines
+## Fast Z80 Forth system routines
 
 Forth850 uses direct threaded code (DTC).  Faster would be to use subroutine
 threaded code (STC), but this would significantly increase the overall code
 size and Forth compilation complexity, which are less desirable for a small
 Z80-based system.
 
-The following Z80 Forth routines are inspired by the article
+The following Z80 Forth850 routines I wrote are inspired by the article
 [Moving Forth](https://www.bradrodriguez.com/papers/moving1.htm).  However,
 I've decided to use a different Z80 register mapping that is more efficient:
 
@@ -2636,6 +2636,11 @@ a `jp next` that takes 10 cycles.  Inlining the "next routine" eliminates
 this overhead, but increases the code size.  Inlining should only be applied to
 performance-critical words that are frequently used.  See macros `NEXT` and
 `JP_NEXT` defined in the section below.
+
+These critical choices for Forth850 makes it more efficient requiring fewer CPU
+cycles than CP/M DX Forth and Z80 Forth, and faster than CamelForth and the
+Jupiter Ace.  See [Resources](#forth-resources) for links to Forth
+implementations.
 
 ### Next fetch and execute
 
@@ -3591,6 +3596,7 @@ further below:
 - CamelForth for the Z80: <http://www.camelforth.com/page.php?5>
 - eForth: <https://github.com/lispnik/eforth/blob/master/z80efort/EFZ80.ASM>
 - Jupiter Ace ROM listing: <http://www.jupiter-ace.co.uk/romlisting.html#L085F>
+- Z80 Forth and DX Forth for CP/M <http://www.cpm.z80.de/binary.html#languages>
 
 ## Z80 resources
 
