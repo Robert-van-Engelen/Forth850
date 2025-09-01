@@ -8,8 +8,9 @@
 ;    FF       OO    OO RR RR      TT    HH    HH  88   88        55 00    00
 ;   FF       OO    OO RR  RR     TT    HH    HH 88     88       55 00    00
 ;  FF       OO    OO RR   RR    TT    HH    HH  88   88  55    55  00  00
-; FF        OOOOOO  RR    RR   TT    HH    HH   88888    555555    0000    v1.0
+; FF        OOOOOO  RR    RR   TT    HH    HH   88888    555555    0000    v1.4
 ;
+; a Forth 2012 standard system for the Sharp PC-850(G)(V)
 ;
 ; Author:
 ;   Dr. Robert van Engelen, Copyright 2022
@@ -138,11 +139,11 @@ TMP1		.equ 0x7e00		; temporary string buffer 1 (next temp)
 ;
 ;-------------------------------------------------------------------------------
 
-length_bits	.equ 0x3f		; word length bitmask and max length
+length_mask	.equ 0x3f		; word length bitmask and max length
 smudge_bit	.equ 6			; smudge bit, should be bit 6
-smudge_bits	.equ 1<<smudge_bit	; smudge bitmask
+smudge_mask	.equ 1<<smudge_bit	; smudge bitmask
 immediate_bit	.equ 7			; immediate bit, must be bit 7
-immediate_bits	.equ 1<<immediate_bit	; immediate bitmask
+immediate_mask	.equ 1<<immediate_bit	; immediate bitmask
 
 ;-------------------------------------------------------------------------------
 ;
@@ -150,7 +151,7 @@ immediate_bits	.equ 1<<immediate_bit	; immediate bitmask
 ;
 ;-------------------------------------------------------------------------------
 
-fig_kludge	.equ 0x2001|smudge_bits	; a blank name with smudge bit set
+fig_kludge	.equ 0x2001|smudge_mask	; a blank name with smudge bit set
 
 ;-------------------------------------------------------------------------------
 ;
@@ -190,7 +191,7 @@ label:
 		last_link = .
 		.nchr len,^|name|
 		.dw link
-		.db len|immediate_bits
+		.db len|immediate_mask
 		.str ^|name|
 label:
 .endm
@@ -833,7 +834,7 @@ true_next	.equ mone_next		; alias
 		CODE SP!,spstore
 		ex de,hl		;
 		ld sp,hl		; addr -> sp
-		pop de			;
+		pop de			; pop new TOS
 		JP_NEXT			; continue
 
 .if 0 ; unused, but perhaps useful later
@@ -4086,12 +4087,12 @@ edupd:		; --
 ;
 ;    : CHECK-NAME
 ;      DUP 0= IF -16 THROW THEN
-;      DUP length_bits U> IF -19 THROW THEN ;
+;      DUP length_mask U> IF -19 THROW THEN ;
 
 		COLON CHECK-NAME,checkname
 		.dw dup,zeroequal,doif,1$
 		.dw   dolit,-16,throw
-1$:		.dw dup,dolit,length_bits,ugreater,doif,2$
+1$:		.dw dup,dolit,length_mask,ugreater,doif,2$
 		.dw   dolit,-19,throw
 2$:		.dw doret
 
@@ -4337,7 +4338,7 @@ edupd:		; --
 ;		convert name token (nfa) to string
 
 		COLON NAME>STRING,nametostring
-		.dw count,dolit,length_bits,and
+		.dw count,dolit,length_mask,and
 		.dw doret
 
 ; NAME>		nt -- xt
@@ -4370,7 +4371,7 @@ edupd:		; --
 		ld a,(hl)	;  7	;   get word length
 		bit smudge_bit,a;  8	;
 		jr nz,2$	;  7	;   if smudge bit not set then
-		and length_bits	;  7	;     ignore control bits
+		and length_mask	;  7	;     ignore control bits
 		inc a		;  4	;
 		ld c,a		;  4	;     word length + 1
 		add hl,bc	; 11	;     hl + length + 1 -> hl with cfa
@@ -4509,7 +4510,7 @@ edupd:		; --
 		.dw context			; -- 0 l
 1$:		.dw fetch,qdup,doif,5$
 		.dw   dup,ltoname		; -- n l nfa
-		.dw   dup,cfetch,dolit,smudge_bits,and,doif,2$
+		.dw   dup,cfetch,dolit,smudge_mask,and,doif,2$
 		.dw     drop
 		.dw   doahead,4$
 2$:		.dw     rot,swap		; -- l n nfa
@@ -4581,36 +4582,36 @@ store_state:	ld (state+3),hl		; hl -> STATE
 ; HIDE		--
 ;		hide the last definition
 ;
-;    : HIDE CURRENT @ L>NAME DUP C@ smudge_bits OR SWAP C! ;
+;    : HIDE CURRENT @ L>NAME DUP C@ smudge_mask OR SWAP C! ;
 
 		COLON HIDE,hide
 		.dw current,fetch
 		.dw ltoname,dup,cfetch
-		.dw dolit,smudge_bits,or
+		.dw dolit,smudge_mask,or
 		.dw swap,cstore
 		.dw doret
 
 ; REVEAL	--
 ;		reveal the last definition
 ;
-;    : REVEAL CURRENT @ L>NAME DUP C@ ~smudge_bits AND SWAP C! ;
+;    : REVEAL CURRENT @ L>NAME DUP C@ ~smudge_mask AND SWAP C! ;
 
 		COLON REVEAL,reveal
 		.dw current,fetch
 		.dw ltoname,dup,cfetch
-		.dw dolit,~smudge_bits,and
+		.dw dolit,~smudge_mask,and
 		.dw swap,cstore
 		.dw doret
 
 ; IMMEDIATE	--
 ;		make the last definition immediate
 ;
-;    : IMMEDIATE CURRENT @ L>NAME DUP C@ immediate_bits OR SWAP C! ;
+;    : IMMEDIATE CURRENT @ L>NAME DUP C@ immediate_mask OR SWAP C! ;
 
 		COLON IMMEDIATE,immediate
 		.dw current,fetch
 		.dw ltoname,dup,cfetch
-		.dw dolit,immediate_bits,or
+		.dw dolit,immediate_mask,or
 		.dw swap,cstore
 		.dw doret
 
