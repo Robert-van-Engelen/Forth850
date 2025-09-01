@@ -2638,9 +2638,9 @@ performance-critical words that are frequently used.  See macros `NEXT` and
 `JP_NEXT` defined in the section below.
 
 These critical choices for Forth850 makes it more efficient requiring fewer CPU
-cycles than CP/M DX Forth and Z80 Forth, and faster than CamelForth and the
-Jupiter Ace.  See [Resources](#forth-resources) for links to Forth
-implementations.
+cycles to execute Forth core internals and Forth colon definitions than DX
+Forth and Z80 Forth for CP/M, CamelForth, Firth, and the Jupiter Ace.  See
+[Resources](#forth-resources) for links to Forth implementations.
 
 ### Next fetch and execute
 
@@ -3595,8 +3595,9 @@ further below:
 
 - CamelForth for the Z80: <http://www.camelforth.com/page.php?5>
 - eForth: <https://github.com/lispnik/eforth/blob/master/z80efort/EFZ80.ASM>
+- Firth <https://github.com/jhlagado/firth>
 - Jupiter Ace ROM listing: <http://www.jupiter-ace.co.uk/romlisting.html#L085F>
-- Z80 Forth and DX Forth for CP/M <http://www.cpm.z80.de/binary.html#languages>
+- Z80 Forth and DX Forth for CP/M: <http://www.cpm.z80.de/binary.html#languages>
 
 ## Z80 resources
 
