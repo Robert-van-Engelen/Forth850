@@ -292,18 +292,22 @@ DECIMAL
   2DUP F0< -ROT
   FABS
   \ map |r1| to [0,ln(2)) using exp(x+k*ln(2)) = exp(x)*2^k
-  2DUP LN2 F/ F>S DUP>R
+  2DUP LN2 F/ F>S
+  \ multiply by 2^k later will overflow?
+  DUP $7f > IF -43 THROW THEN
+  DUP>R
   S>F LN2 F* F-
   \ Maclaurin series exp(x) = 1 + x + x^2/2! + x^3/3! + ...
-  1E0 2SWAP 2DUP \ -- 1 x x
+  2DUP \ -- 1 x x
   10 2 DO
     2OVER 2OVER F* \ -- 1 x x^2/2! ... term x term*x
     I S>F F/       \ -- 1 x x^2/2! ... term x term*x/i
     2SWAP          \ -- 1 x x^2/2! ... term term*x/i x
   LOOP
   2DROP \ -- 1 x x^2/2! ... x^9/9!
-  \ sum the 10 terms in reverse order
-  9 0 DO F+ LOOP
+  \ sum the 9 terms in reverse order
+  F+ F+ F+ F+ F+ F+ F+ F+
+  1E0 F+
   \ multiply exp(x) by 2^k
   R> 7 LSHIFT +
   \ return reciprocal for negative r1
@@ -317,8 +321,10 @@ DECIMAL
 \   2DUP F0< -ROT
 \   FABS
 \   \ map |r1| to [0,ln(2)) using exp(x+k*ln(2)) = exp(x)*2^k
-\   2DUP 0.693147245E0 F/ F>S DUP>R
-\   S>F 0.693147245E0 F* F-
+\   2DUP LN2 F/ F>S
+\   DUP $7f > IF -43 THROW THEN
+\   DUP>R
+\   S>F LN2 F* F-
 \   \ Maclaurin series expm1(x) = exp(x) - 1 = x + x^2/2! + x^3/3! + ...
 \   2DUP 2OVER \ -- x x x
 \   10 2 DO

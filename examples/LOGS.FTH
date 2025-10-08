@@ -42,16 +42,19 @@ DECIMAL
 : FEXP      ( r1 -- r2 )
   2DUP F0< -ROT
   FABS
-  2DUP LN2 F/ F>S DUP>R
+  2DUP LN2 F/ F>S
+  DUP $7f > IF -43 THROW THEN
+  DUP>R
   S>F LN2 F* F-
-  1E0 2SWAP 2DUP
+  2DUP
   10 2 DO
     2OVER 2OVER F*
     I S>F F/
     2SWAP
   LOOP
   2DROP
-  9 0 DO F+ LOOP
+  F+ F+ F+ F+ F+ F+ F+ F+
+  1E0 F+
   R> 7 LSHIFT +
   ROT IF
     1E0 2SWAP F/
