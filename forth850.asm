@@ -1511,18 +1511,60 @@ store_a_hl:	ld (hl),a		;
 		.dw starslashmod,nip
 		.dw doret
 
+; UM*/MOD	ud1 u1 u2 -- u3 ud2
+;		unsigned double product and quotient ud1*u1/u2 with single remainder u3,
+;		with intermediate triple-cell product;
+;		the result is undefined when u2 = 0
+;
+;    \ assume d = dh.dl     = hi.lo parts
+;    \ assume t = th.tm.tl  = hi.mid.lo parts
+;    \ then
+;    \ dl*n -> tm.tl
+;    \ dh*n+tm -> th.tm
+;    \ gives d*n -> t
+;    : UMT*     ( ud u -- ut )
+;      DUP>R
+;      ROT UM*
+;      ROT 0 SWAP R> UM* D+ ;
+;    \ assume d = dh.dl     = hi.lo parts
+;    \ assume t = th.tm.tl  = hi.mid.lo parts
+;    \ then
+;    \ (th.tm)/n -> dh
+;    \ (th.tm)%n -> r
+;    \ (r.tl)/n -> dl
+;    \ (r.tl)%n -> r
+;    \ gives t/n -> d remainder r
+;    : UMT/MOD  ( ut u1 -- u2 ud )
+;      DUP>R
+;      UM/MOD R> SWAP >R
+;      UM/MOD R> ;
+;    : UM*/MOD >R UMT* R> UMT/MOD ;
+
+		COLON UM*/MOD,umstarslashmod
+		.dw tor
+		.dw duptor,rot,umstar,rot,zero,swap,rfrom,umstar,dplus
+		.dw rfrom
+		.dw duptor,umslashmod,rfrom,swap,tor,umslashmod,rfrom
+		.dw doret
+
 ; M*/		d1 n1 n2 -- d2
-;		double product with quotient d1*n1/n2;
+;		double product with quotient d1*n1/n2,
+;		with intermediate triple-cell product;
 ;		the result is undefined when n2 = 0
 ;
-;    : M*/ >R MD* R> SM/REM NIP ;
+;    : M*/
+;      2DUP XOR 3 PICK XOR >R
+;      ABS SWAP ABS SWAP 2SWAP DABS 2SWAP
+;      UM*/MOD DROP
+;      >R 0< IF DNEGATE THEN ;
 
 		COLON M*/,mstarslash
-		.dw tor
-		.dw mdstar
-		.dw rfrom
-		.dw smslashrem,nip
-		.dw doret
+		.dw twodup,xor,dolit,3,pick,xor,tor
+		.dw abs,swap,abs,swap,twoswap,dabs,twoswap
+		.dw umstarslashmod,rot,drop
+		.dw rfrom,zeroless,doif,1$
+		.dw   dnegate
+1$:		.dw doret
 
 .if FULL
 
@@ -2676,9 +2718,9 @@ func1ix:	; floating point unary function driver
 		.dw doret
 
 ; SEARCH	c-addr1 u1 c-addr2 u2 -- c-addr3 u3 flag
-;		true if the second string is in the first;
-;		leaves matching address, remaining length and true;
-;		or leaves the first string and false
+;		true if the first string contains the second string;
+;		leaves matching address, remaining length, and TRUE;
+;		or leaves the first string and FALSE
 
 		CODE SEARCH,search
 		push de			; save TOS
@@ -2690,27 +2732,28 @@ func1ix:	; floating point unary function driver
 		sbc hl,bc		; u1 - u2 -> hl
 		jr c,5$			; if u2 > u1 then impossible search
 		push bc			;
-		pop ix			; u2 -> ix
+		pop iy			; u2 -> iy
 		ld a,c			;
 		or b			;
-		jr z,4$			; if u2 = 0 then found
 		ld c,l			;
-		ld b,h			;
+		ld b,h			; u1 - u2 -> bc
+		jr z,4$			; if u2 = 0 then found
 		inc bc			; u1 - u2 + 1 -> bc correct for cpir
 		pop hl			;
 		push hl			; c-addr1 -> hl, keep c-addr1 on the stack
 
 		; find char match
 
-1$:		push de			; loop, save de with c-addr2
+1$:		ld a,c			; loop
+		or b			;
+		jr z,6$			;   if bc = 0 then not found
 		ld a,(de)		;   [de] -> a
 		cpir		; 21/16	;   repeat until a = [hl++] or --bc = 0
 		jr nz,6$		;   if no match then not found
-		pop de			;   restore de with c-addr2
-		push bc			;
-		push de			;
-		push hl			;   save bc,de,hl
-		push ix			;
+		push bc			;   save bc with remaining u1-k chars to search
+		push de			;   save de with c-addr2
+		push hl			;   save hl with c-addr1+k search position
+		push iy			;
 		pop bc			;   u2 -> bc
 
 		; compare substrings
@@ -2725,35 +2768,38 @@ func1ix:	; floating point unary function driver
 		jr nz,3$	;  7	;       while characters [hl] and [de] are equal
 		inc de		;  6	;       de++
 		jp pe,2$	; 10(46);     until bc = 0
-3$:		pop hl			;
-		pop de			;
-		pop bc			;   restore bc,de,hl
-		jr nz,1$		; repeat
+3$:		pop hl			;   restore hl with c-addr1+k search position
+		pop de			;   restore de with c-addr2
+		pop bc			;   restore bc with remaining u1-k chars to search
+		jr nz,1$		; until substring match
 
 		; substrings match
 
 		dec hl			; hl-- to correct cpir overshoot
 		ex (sp),hl		; save hl with c-addr3, discard c-addr1
-		add ix,bc		; compute u3 = u2 + bc
-4$:		push ix			; save ix with u3 as new 2OS
+4$:		add iy,bc		; compute u3 = u2 + bc
+		push iy			; save iy with u3 as new 2OS
 		exx			; restore bc with ip
+		ld iy,next		; restore iy
 		jp true_next		; set new TOS to TRUE
 
 		; impossible search
 
 5$:		add hl,bc		; u1 - u2 + u2 -> hl = u1
-		push hl			; save hl with u1
-		exx			; restore bc with ip
-		jp false_next		; set new TOS to FALSE
+		jr 7$			;
 
 		; not found
 
-6$:		pop de			; pop to discard c-addr2
+6$:		push iy			;
+		pop bc			;
+		dec bc			; u2 - 1 -> bc
+		add hl,bc		; c-addr1 + u2 - 1 -> hl
 		pop de			;
 		push de			; c-addr1 -> de, keep c-addr1 as 3OS
-		sbc hl,de		; c-addr1 + u1 - de -> hl = u1, cf = 0 asserted
-		push hl			; save hl with u1 as 2OS
+		sbc hl,de		; c-addr1 + u1 - de -> hl = u1
+7$:		push hl			; save hl with u1 as 2OS
 		exx			; restore bc with ip
+		ld iy,next		; restore iy
 		jp false_next		; set new TOS to FALSE
 
 ; CMOVE		c-addr1 c-addr2 u --
